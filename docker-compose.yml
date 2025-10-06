@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  backend:
+    build: .
+    container_name: SMS-topsun-backend
+    ports:
+      - "5001:5001"
+    env_file:
+      - .env.docker
+    environment:
+      - DOCKER_ENV=true
+    depends_on:
+      - mongo
+      - redis
+    command: npm run start
+    restart: always
+
+  mongo:
+    image: mongo:6
+    container_name: SMS_topsun-backend_mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  redis:
+    image: redis:7
+    container_name: SMS_topsun-backend_redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+volumes:
+  mongo_data:
