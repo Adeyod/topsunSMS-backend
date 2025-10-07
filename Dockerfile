@@ -17,7 +17,7 @@ COPY . .
 RUN npm run build
 
 # Expose app port
-EXPOSE 5000
+EXPOSE 10000
 
 # Start the app
 CMD ["npm", "run", "start"]
