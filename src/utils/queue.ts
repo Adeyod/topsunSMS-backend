@@ -28,41 +28,27 @@ import {
   processSubjectCumScoreUpdate,
 } from '../repository/result.repository';
 
-// const isDocker = process.env.DOCKER_ENV === 'true';
-
-// const redisUrl = isDocker ? 'redis://redis:6379' : process.env.REDIS_HOST;
-
-// console.log('REDIS URL:', redisUrl);
-
-// if (!redisUrl) {
-//   throw new Error('REDIS_URL is not defined...');
-// }
-
-// const redisConnectionString = redisUrl.replace('redis://', '');
-
-// const [host, port] = redisConnectionString.split(':');
-
-// const redisOptions: RedisOptions = {
-//   host: host,
-//   port: parseInt(port || '6379', 10),
-//   maxRetriesPerRequest: null,
-// };
-
 const isDocker = process.env.DOCKER_ENV === 'true';
 
-// Prefer a full REDIS_URL if available, otherwise build it manually
-const redisHost = isDocker ? 'redis' : process.env.REDIS_HOST || '127.0.0.1';
-const redisPort = process.env.REDIS_PORT || '6379';
-const redisUrl = `redis://${redisHost}:${redisPort}`;
+const redisUrl = process.env.REDIS_URL;
 
 console.log('REDIS URL:', redisUrl);
 
+if (!redisUrl) {
+  throw new Error('REDIS_URL is not defined...');
+}
+
+const redisConnectionString = redisUrl.replace('redis://', '');
+
+const [host, port] = redisConnectionString.split(':');
+
 const redisOptions: RedisOptions = {
-  host: redisHost,
-  port: parseInt(redisPort, 10),
+  host: host,
+  port: parseInt(port || '6379', 10),
   maxRetriesPerRequest: null,
 };
 
+console.log('REDIS URL:', redisUrl);
 console.log('Connecting to Redis using:', redisOptions);
 const connection = new Redis(redisOptions);
 
