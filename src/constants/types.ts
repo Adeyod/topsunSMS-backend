@@ -450,19 +450,6 @@
 //   updatedAt: Date;
 // };
 
-// type StudentFeePaymentType = {
-//   student_id: string;
-//   session_id: string;
-//   staff_who_approve?: object;
-//   term: string;
-//   amount_paying: number;
-//   teller_number?: string;
-//   bank_name?: string;
-//   payment_method?: string;
-//   userId?: object;
-//   userRole?: string;
-// };
-
 // type BusPaymentType = {
 //   route?: string;
 //   student_id: string;
@@ -471,26 +458,6 @@
 //   term: string;
 //   is_using: boolean;
 //   trip_type?: string;
-// };
-
-// type PaymentSummaryType = {
-//   amount_paid: number;
-//   date_paid: Date;
-//   payment_method: string;
-//   transaction_id: string;
-//   status: string;
-//   staff_who_approve?: object;
-// };
-
-// type WaitingForConfirmationType = {
-//   amount_paid: number;
-//   date_paid: Date;
-//   payment_method: string;
-//   transaction_id: string;
-//   bank_name: string;
-//   status: string;
-//   staff_who_approve?: object;
-//   _id: object;
 // };
 
 // type StudentUpdateType = {
@@ -526,14 +493,6 @@
 // type AddressValidationType = {
 //   home_address: string;
 //   close_bus_stop: string;
-// };
-
-// type ApproveStudentPayloadType = {
-//   amount_paid: number;
-//   transaction_id: string;
-//   bank_name: string;
-//   payment_id: string;
-//   bursar_id: object;
 // };
 
 // type BankApprovalType = {
@@ -904,7 +863,6 @@
 //   StudentUpdateType,
 //   PaymentDocument,
 //   BusPaymentType,
-//   StudentFeePaymentType,
 //   SchoolBusValidationType,
 //   SchoolFeesDocument,
 //   SchoolBusDocument,
@@ -1662,19 +1620,7 @@ type PaymentSummaryType = {
   transaction_id: string;
   status: string;
   staff_who_approve?: mongoose.Types.ObjectId;
-  fees_payment_breakdown: FeeBreakdownType[];
-};
-
-type WaitingForConfirmationType = {
-  amount_paid: number;
-  date_paid: Date;
-  payment_method: string;
-  transaction_id: string;
-  bank_name: string;
-  fees_payment_breakdown: FeeBreakdownType[];
-  status: string;
-  staff_who_approve?: mongoose.Types.ObjectId;
-  _id: mongoose.Types.ObjectId;
+  // fees_payment_breakdown: FeeBreakdownType[];
 };
 
 type FeeBreakdownType = {
@@ -1682,7 +1628,7 @@ type FeeBreakdownType = {
   amount: number;
 };
 
-type PaymentDocument = {
+type PaymentDocument = Document & {
   student: mongoose.Types.ObjectId;
   class: mongoose.Types.ObjectId;
   class_level: string;
@@ -1695,7 +1641,7 @@ type PaymentDocument = {
   is_submit_response: boolean;
   remaining_amount: number;
   payment_summary: PaymentSummaryType[];
-  waiting_for_confirmation: WaitingForConfirmationType[];
+  waiting_for_confirmation: mongoose.Types.DocumentArray<WaitingForConfirmationType>;
 };
 
 type StudentWithPaymentType = UserWithoutPassword & {
@@ -2836,7 +2782,43 @@ type SubmissionDocument = Document & {
   feedback?: string;
 };
 
+type StudentFeePaymentType = {
+  student_id: string;
+  session_id: string;
+  staff_who_approve?: mongoose.Types.ObjectId;
+  term: string;
+  amount_paying: number;
+  teller_number?: string;
+  bank_name?: string;
+  payment_method: string;
+  userId?: mongoose.Types.ObjectId;
+  userRole?: string;
+};
+
+type ApproveStudentPayloadType = {
+  amount_paid: number;
+  transaction_id: string;
+  bank_name: string;
+  payment_id: string;
+  bursar_id: mongoose.Types.ObjectId;
+};
+
+type WaitingForConfirmationType = {
+  amount_paid: number;
+  date_paid: Date;
+  payment_method: string;
+  transaction_id: string;
+  bank_name: string;
+  // fees_payment_breakdown: FeeBreakdownType[];
+  status: string;
+  staff_who_approve?: mongoose.Types.ObjectId;
+  _id?: mongoose.Types.ObjectId;
+};
+
 export {
+  ApproveStudentPayloadType,
+  WaitingForConfirmationType,
+  StudentFeePaymentType,
   SubmissionDocument,
   AssignmentDocument,
   TransactionDocument,

@@ -1,7 +1,6 @@
 import express from 'express';
 import {
   createPaymentDocumentForAllStudent,
-  makeCardPayment,
   getAllStudentPaymentDocumentsByStudentId,
   approveBankPaymentWithId,
   getAllPaymentDocuments,
@@ -11,8 +10,6 @@ import {
   getPaymentDetailsByPaymentId,
   getAPaymentDocumentOfStudentByStudentIdAndPaymentId,
   getAllPaymentSummaryFailedAndSuccessful,
-  getPaystackCallBack,
-  getPaystackWebHook,
   getAPaymentNeedingApprovalById,
   getAllPaymentsNeedingApproval,
   getAllPaymentsApprovedByBursarId,
@@ -21,7 +18,6 @@ import {
   addFeeToStudentPaymentDocument,
   createPaymentPriority,
   getPaymentPriority,
-  processStudentWalletDepositWebhook,
 } from '../controllers/payment.controller';
 import { verifyAccessToken } from '../middleware/jwtAuth';
 import { permission } from '../middleware/authorization';
@@ -43,11 +39,7 @@ const router = express.Router();
 
 // FILTER AMOUNT, ID AND DATE PAID
 
-router.post('/paystack-web-hook', getPaystackWebHook);
-
 router.use(verifyAccessToken);
-
-router.get('/paystack-call-back/:reference/:student_id', getPaystackCallBack);
 
 router.get(
   '/get-payment-by-payment-id/:payment_id',
@@ -125,12 +117,6 @@ router.put(
   '/approve-bank-payment/:payment_id',
   permission(['super_admin', 'admin']),
   approveBankPaymentWithId
-);
-
-router.post(
-  '/make-card-payment/:session_id/:student_id',
-  permission(['super_admin', 'admin', 'parent', 'student']),
-  makeCardPayment
 );
 
 export default router;

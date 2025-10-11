@@ -374,17 +374,17 @@ const termClassCbtAssessmentTimetableCreation = async (
       );
     }
 
-    for (const entry of timetable) {
-      const key = `${new Date(entry.start_time).toISOString()}`;
+    // for (const entry of timetable) {
+    //   const key = `${new Date(entry.start_time).toISOString()}`;
 
-      if (timeSlot.has(key)) {
-        throw new AppError(
-          `Duplicate time slot detected ${formatDate(entry.start_time)}.`,
-          400
-        );
-      }
-      timeSlot.add(key);
-    }
+    //   if (timeSlot.has(key)) {
+    //     throw new AppError(
+    //       `Duplicate time slot detected ${formatDate(entry.start_time)}.`,
+    //       400
+    //     );
+    //   }
+    //   timeSlot.add(key);
+    // }
 
     let userExist: UserDocument | null = null;
 
@@ -459,15 +459,24 @@ const termClassCbtAssessmentTimetableCreation = async (
       );
     }
 
-    const compoments = classResultSetting.components.map((a) => a.name);
-    const exam_component_name =
-      classResultSetting.exam_components.component.map((b) => b.name);
+    // const compoments = classResultSetting.components.map((a) => a.name);
+    // const exam_component_name =
+    //   classResultSetting.exam_components.component.map((b) => b.name);
 
-    const savedAssessmentTypes = [...compoments, ...exam_component_name].map(
-      (item) => item.toLowerCase()
-    );
+    // const savedAssessmentTypes = [...compoments, ...exam_component_name].map(
+    //   (item) => item.toLowerCase()
+    // );
 
-    if (!savedAssessmentTypes.includes(assessment_type.toLowerCase())) {
+    // if (!savedAssessmentTypes.includes(assessment_type.toLowerCase())) {
+    //   throw new AppError('Invalid assessment type.', 400);
+    // }
+
+    const exam_component_key =
+      classResultSetting.exam_components.component.find((b) => b.key === 'obj');
+
+    if (
+      exam_component_key?.name.toLowerCase() !== assessment_type.toLowerCase()
+    ) {
       throw new AppError('Invalid assessment type.', 400);
     }
 
@@ -518,88 +527,45 @@ const termClassCbtAssessmentTimetableCreation = async (
       throw new AppError('Unable to invalidate previous timetable.', 400);
     }
 
-    const schoolCutoffTimeExist = await CbtCutoff.findOne();
+    // const schoolCutoffTimeExist = await CbtCutoff.findOne();
 
-    if (!schoolCutoffTimeExist) {
-      throw new AppError(
-        `Please tell the school authority to contact the developer so as to set the school cut off times. This is needed to proceed.`,
-        400
-      );
-    }
+    // if (!schoolCutoffTimeExist) {
+    //   throw new AppError(
+    //     `Please tell the school authority to contact the developer so as to set the school cut off times. This is needed to proceed.`,
+    //     400
+    //   );
+    // }
 
     // Get all the subject that have the same date and check if there is enough time between two subject time table
     // There is an issue here that is preventing exam from happening the same day so fix it
-    const groupedByDate: Record<string, typeof timetable> = {};
     for (const entry of timetable) {
-      const date = new Date(entry.start_time).toISOString().split('T')[0];
-      const time = new Date(entry.start_time).toISOString().split('T')[1];
-
       const currentTime = new Date();
       const entryStartTime = new Date(entry.start_time);
 
       console.log('currentTime:', currentTime);
       console.log('entryStartTime:', entryStartTime);
-      if (currentTime > entryStartTime) {
+
+      const entryDateOnly = new Date(
+        entryStartTime.getFullYear(),
+        entryStartTime.getMonth(),
+        entryStartTime.getDate()
+      );
+
+      const currentDateOnly = new Date(
+        currentTime.getFullYear(),
+        currentTime.getMonth(),
+        currentTime.getDate()
+      );
+
+      if (currentDateOnly > entryDateOnly) {
         throw new AppError(
           `Please ensure that the time chosen for all subject are not in the past.`,
           400
         );
       }
 
-      console.log('date:', date);
-      console.log('time:', time);
-      if (!groupedByDate[date]) {
-        groupedByDate[date] = [];
-      }
-      groupedByDate[date].push(entry);
-      console.log('groupedByDate:', groupedByDate);
-    }
-
-    for (const date in groupedByDate) {
-      const subjects = groupedByDate[date];
-      console.log('subjects:', subjects);
-
-      subjects.sort(
-        (a, b) =>
-          new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
-      );
-
-      for (let i = 0; i < subjects.length - 1; i++) {
-        const current = subjects[i];
-        const next = subjects[i + 1];
-
-        console.log('current:', current);
-        console.log('next:', next);
-
-        const currentStart = new Date(current.start_time);
-        const currentDuration = (current.duration || 0) / 60;
-        const cutoffTimeSum =
-          schoolCutoffTimeExist.first_cutoff_minutes +
-          schoolCutoffTimeExist.last_cutoff_minutes;
-        const bufferMinutes = currentDuration + cutoffTimeSum;
-
-        console.log('currentStart:', currentStart);
-        console.log('currentDuration:', currentDuration);
-        console.log('bufferMinutes:', bufferMinutes);
-
-        const currentEndWithBuffer = new Date(
-          currentStart.getTime() + bufferMinutes * 60 * 1000
-        );
-        console.log('currentEndWithBuffer:', currentEndWithBuffer);
-
-        const nextStart = new Date(next.start_time);
-        console.log('nextStart:', nextStart);
-
-        const responseError = `Time table with subject with ID: ${next.subject_id} can only be set to start anytime from ${currentEndWithBuffer}`;
-
-        console.log(
-          `Next subject can only start after: ${currentEndWithBuffer.toISOString()} but is set to: ${nextStart.toISOString()}`
-        );
-
-        if (nextStart < currentEndWithBuffer) {
-          throw new AppError(responseError, 400);
-        }
-      }
+      console.log('currentDateOnly:', currentDateOnly);
+      console.log('entryDateOnly:', entryDateOnly);
     }
 
     if (timetableExist) {

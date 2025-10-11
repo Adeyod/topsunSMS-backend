@@ -604,93 +604,6 @@
 //   }
 // };
 
-// const approveStudentBankPayment = async (
-//   payload: ApproveStudentPayloadType
-// ) => {
-//   const { transaction_id, bank_name, payment_id, bursar_id, amount_paid } =
-//     payload;
-//   try {
-//     const findPayment = await Payment.findOne({
-//       waiting_for_confirmation: {
-//         $elemMatch: {
-//           _id: payment_id,
-//         },
-//       },
-//     });
-
-//     if (!findPayment) {
-//       throw new AppError('Payment not found.', 404);
-//     }
-
-//     const actualTransaction = findPayment.waiting_for_confirmation.find(
-//       (p) => p.transaction_id === transaction_id
-//     );
-
-//     if (!actualTransaction) {
-//       throw new AppError(`Transaction with ${transaction_id} not found`, 404);
-//     }
-
-//     if (!actualTransaction.amount_paid) {
-//       throw new AppError('Amount paid is null.', 400);
-//     }
-
-//     if (actualTransaction.amount_paid !== amount_paid) {
-//       throw new AppError('Amount paid does not match.', 400);
-//     }
-
-//     if (actualTransaction.bank_name !== bank_name) {
-//       throw new AppError('Bank name does not match.', 400);
-//     }
-
-//     if (!actualTransaction.transaction_id) {
-//       throw new AppError('Transaction ID not present.', 400);
-//     }
-
-//     const receipt = {
-//       amount_paid: actualTransaction.amount_paid,
-//       date_paid: actualTransaction.date_paid,
-//       payment_method: actualTransaction.payment_method,
-//       transaction_id: actualTransaction.transaction_id,
-//       bank_name: actualTransaction.bank_name,
-//       status: paymentStatusEnum[1],
-//       _id: actualTransaction._id,
-//     };
-
-//     const payload = {
-//       student_id: findPayment.student.toString(),
-//       session_id: findPayment.session.toString(),
-//       term: findPayment.term,
-//       amount_paying: actualTransaction?.amount_paid,
-//       bank_name,
-//       teller_number: actualTransaction.transaction_id,
-//       staff_who_approve: bursar_id,
-//       payment_method: 'bank',
-//     };
-
-//     const result = await calculateAndUpdateStudentPaymentDocuments(
-//       payload,
-//       'bank'
-//     );
-
-//     if (!result) {
-//       throw new AppError('Unable to update student payment.', 400);
-//     }
-
-//     const transactionObj = {
-//       result,
-//       receipt,
-//     };
-//     return transactionObj;
-//   } catch (error) {
-//     if (error instanceof AppError) {
-//       throw new AppError(error.message, error.statusCode);
-//     } else {
-//       console.error(error);
-//       throw new Error('Something happened');
-//     }
-//   }
-// };
-
 // const fetchStudentOutstandingPaymentDoc = async (student_id: string) => {
 //   try {
 //     const currentTerm = await Session.findOne({
@@ -842,40 +755,6 @@
 //       throw new AppError(error.message, error.statusCode);
 //     } else {
 //       throw new Error('Something happened.');
-//     }
-//   }
-// };
-
-// const fetchAPaymentNeedingApprovalById = async (
-//   payment_id: string
-// ): Promise<WaitingForConfirmationType> => {
-//   try {
-//     const response = await Payment.find({
-//       'waiting_for_confirmation.0': { $exists: true },
-//     });
-
-//     if (!response) {
-//       throw new AppError('Payment not found.', 404);
-//     }
-
-//     const result = response
-//       ?.map((payment) =>
-//         payment.waiting_for_confirmation.find(
-//           (p) => p._id.toString() === payment_id
-//         )
-//       )
-//       .filter(Boolean);
-
-//     if (!result) {
-//       throw new AppError('Payment not found.', 404);
-//     }
-
-//     return result[0] as WaitingForConfirmationType;
-//   } catch (error) {
-//     if (error instanceof AppError) {
-//       throw new AppError(error.message, error.statusCode);
-//     } else {
-//       throw new Error('Something happened');
 //     }
 //   }
 // };
@@ -1605,12 +1484,19 @@ import {
   PaymentPayloadType,
   PaymentPriorityType,
   AccountDetailsType,
+  StudentFeePaymentType,
+  WaitingForConfirmationType,
+  ApproveStudentPayloadType,
 } from '../constants/types';
 import Payment from '../models/payment.model';
-import { addFeeToStudentPaymentDoc } from '../repository/payment.repository';
+import {
+  addFeeToStudentPaymentDoc,
+  calculateAndUpdateStudentPaymentDocuments,
+} from '../repository/payment.repository';
 import PaymentPriority from '../models/payment_priority.model';
 import { Request, Response } from 'express';
 import { bankWebhook } from '../utils/bank';
+import { paymentEnum, paymentStatusEnum } from '../constants/enum';
 // import BusSubscription from '../models/bus_subscription.model';
 
 const createSchoolFeePaymentDocumentForStudents = async (
@@ -2475,22 +2361,264 @@ const fetchPaymentPriorityForMySchool = async () => {
 
 // }
 
-const studentWalletDepositProcessing = async (req: Request, res: Response) => {
+const studentBankFeePayment = async (
+  payload: StudentFeePaymentType
+): Promise<PaymentDocument> => {
   try {
-    const response = await bankWebhook(req, res);
-    return response;
+    const {
+      student_id,
+      session_id,
+      term,
+      amount_paying,
+      teller_number,
+      bank_name,
+      userId,
+      userRole,
+    } = payload;
+
+    const student = await Student.findById({
+      _id: student_id,
+    });
+
+    if (!student) {
+      throw new AppError(`Student not found.`, 404);
+    }
+
+    if (userRole === 'parent' && userId) {
+      if (!student.parent_id?.includes(userId)) {
+        throw new AppError(
+          `You are not a parent to ${student.first_name} ${student.last_name}.`,
+          403
+        );
+      }
+    }
+
+    const findPaymentDocument = await Payment.findOne({
+      student: student_id,
+      session: session_id,
+      term,
+    });
+
+    if (!findPaymentDocument) {
+      throw new AppError('No payment record found', 404);
+    }
+
+    if (findPaymentDocument.is_submit_response === false) {
+      throw new AppError(
+        'You need to inform us if you are subscribing to school bus for this term or not.',
+        400
+      );
+    }
+
+    if (findPaymentDocument.is_payment_complete === true) {
+      throw new AppError(
+        'Payment for this term has already being completed.',
+        400
+      );
+    }
+
+    if (!findPaymentDocument.remaining_amount) {
+      throw new AppError('Remaining amount field is null.', 400);
+    }
+
+    const feeSummary = {
+      fee_name: 'school-fees',
+      amount: amount_paying,
+    };
+
+    const paymentPayload = {
+      amount_paid: amount_paying,
+      date_paid: new Date(),
+      payment_method: paymentEnum[1],
+      transaction_id: teller_number,
+      bank_name: bank_name,
+      status: paymentStatusEnum[0],
+    };
+
+    findPaymentDocument.waiting_for_confirmation.push(paymentPayload);
+
+    await findPaymentDocument.save();
+
+    return findPaymentDocument as PaymentDocument;
   } catch (error) {
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
-      console.log(error);
+      throw new Error('Something happened.');
+    }
+  }
+};
+
+const studentCashFeePayment = async (payload: StudentFeePaymentType) => {
+  try {
+    const { student_id, session_id, term, amount_paying, payment_method } =
+      payload;
+
+    const currentTermPayment = await Payment.findOne({
+      student: student_id,
+      session: session_id,
+      term: term,
+    });
+
+    if (!currentTermPayment) {
+      throw new AppError('No payment record found for the current term.', 404);
+    }
+
+    const result = await calculateAndUpdateStudentPaymentDocuments(
+      payload,
+      'cash'
+    );
+    const student = await Student.findById({
+      _id: student_id,
+    });
+
+    if (!student) {
+      throw new AppError('Student not found.', 404);
+    }
+
+    const { password, ...others } = student.toObject();
+
+    const obj = {
+      paymentDoc: result,
+      student: others,
+    };
+
+    return obj;
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw new AppError(error.message, error.statusCode);
+    } else {
+      throw new Error('Something happened.');
+    }
+  }
+};
+
+const approveStudentBankPayment = async (
+  payload: ApproveStudentPayloadType
+) => {
+  const { transaction_id, bank_name, payment_id, bursar_id, amount_paid } =
+    payload;
+  try {
+    const findPayment = await Payment.findOne({
+      waiting_for_confirmation: {
+        $elemMatch: {
+          _id: payment_id,
+        },
+      },
+    });
+
+    if (!findPayment) {
+      throw new AppError('Payment not found.', 404);
+    }
+
+    const actualTransaction = findPayment.waiting_for_confirmation.find(
+      (p) => p.transaction_id === transaction_id
+    );
+
+    if (!actualTransaction) {
+      throw new AppError(`Transaction with ${transaction_id} not found`, 404);
+    }
+
+    if (!actualTransaction.amount_paid) {
+      throw new AppError('Amount paid is null.', 400);
+    }
+
+    if (actualTransaction.amount_paid !== amount_paid) {
+      throw new AppError('Amount paid does not match.', 400);
+    }
+
+    if (actualTransaction.bank_name !== bank_name) {
+      throw new AppError('Bank name does not match.', 400);
+    }
+
+    if (!actualTransaction.transaction_id) {
+      throw new AppError('Transaction ID not present.', 400);
+    }
+
+    const receipt = {
+      amount_paid: actualTransaction.amount_paid,
+      date_paid: actualTransaction.date_paid,
+      payment_method: actualTransaction.payment_method,
+      transaction_id: actualTransaction.transaction_id,
+      bank_name: actualTransaction.bank_name,
+      status: paymentStatusEnum[1],
+      _id: actualTransaction._id,
+    };
+
+    const payload = {
+      student_id: findPayment.student.toString(),
+      session_id: findPayment.session.toString(),
+      term: findPayment.term,
+      amount_paying: actualTransaction?.amount_paid,
+      bank_name,
+      teller_number: actualTransaction.transaction_id,
+      staff_who_approve: bursar_id,
+      payment_method: 'bank',
+    };
+
+    const result = await calculateAndUpdateStudentPaymentDocuments(
+      payload,
+      'bank'
+    );
+
+    if (!result) {
+      throw new AppError('Unable to update student payment.', 400);
+    }
+
+    const transactionObj = {
+      result,
+      receipt,
+    };
+    return transactionObj;
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw new AppError(error.message, error.statusCode);
+    } else {
+      console.error(error);
+      throw new Error('Something happened');
+    }
+  }
+};
+
+const fetchAPaymentNeedingApprovalById = async (
+  payment_id: string
+): Promise<WaitingForConfirmationType> => {
+  try {
+    const response = await Payment.find({
+      'waiting_for_confirmation.0': { $exists: true },
+    });
+
+    if (!response) {
+      throw new AppError('Payment not found.', 404);
+    }
+
+    const result = response
+      ?.map((payment) =>
+        payment.waiting_for_confirmation.find(
+          (p) => p?._id?.toString() === payment_id
+        )
+      )
+      .filter(Boolean);
+
+    if (!result) {
+      throw new AppError('Payment not found.', 404);
+    }
+
+    return result[0] as WaitingForConfirmationType;
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw new AppError(error.message, error.statusCode);
+    } else {
       throw new Error('Something happened');
     }
   }
 };
 
 export {
-  studentWalletDepositProcessing,
+  fetchAPaymentNeedingApprovalById,
+  studentCashFeePayment,
+  approveStudentBankPayment,
+  studentBankFeePayment,
   fetchPaymentPriorityForMySchool,
   paymentPriorityCreation,
   fetchAllPaymentSummaryFailedAndSuccessful,

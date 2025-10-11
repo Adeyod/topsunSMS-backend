@@ -737,7 +737,10 @@ import {
   fetchStudentSinglePaymentDoc,
   paymentPriorityCreation,
   fetchPaymentPriorityForMySchool,
-  studentWalletDepositProcessing,
+  studentCashFeePayment,
+  approveStudentBankPayment,
+  studentBankFeePayment,
+  fetchAPaymentNeedingApprovalById,
 } from '../services/payment.service';
 import { AppError } from '../utils/app.error';
 // import { company_subdomain } from '../utils/code';
@@ -746,7 +749,10 @@ import catchErrors from '../utils/tryCatch';
 import {
   joiAccountArrayValidation,
   joiPriorityOrderValidation,
+  bankApprovalValidation,
   optionalFeesValidation,
+  cashPaymentValidation,
+  bankPaymentValidation,
 } from '../utils/validation';
 // import { saveLog } from '../logs/log.service';
 
@@ -1407,59 +1413,208 @@ const getPaymentPriority = catchErrors(async (req, res) => {
   });
 });
 
-const processStudentWalletDepositWebhook = catchErrors(async (req, res) => {
-  // const start = Date.now();
+const getAPaymentNeedingApprovalById = catchErrors(async (req, res) => {
+  const { payment_id } = req.params;
 
-  const result = await studentWalletDepositProcessing(req, res);
-
-  if (!result) {
-    throw new AppError('Unable to process wallet deposit.', 400);
+  if (!payment_id) {
+    throw new AppError('Payment ID required.', 404);
   }
 
-  // const duration = Date.now() - start;
+  const result = await fetchAPaymentNeedingApprovalById(payment_id);
 
-  // const savelogPayload = {
-  //   level: 'info',
-  //   message: 'Wallet credited successfully.',
-  //   service: 'klazik schools',
-  //   method: req.method,
-  //   route: req.originalUrl,
-  //   status_code: 200,
-  //   user_id: req.user?.userId,
-  //   user_role: req.user?.userRole,
-  //   ip: req.ip || 'unknown',
-  //   duration_ms: duration,
-  //   stack: undefined,
-  //   school_id: req.user?.school_id
-  //     ? new mongoose.Types.ObjectId(req.user.school_id)
-  //     : undefined,
-  // };
-
-  // await saveLog(savelogPayload);
+  if (!result) {
+    throw new AppError('Unable to fetch payment for approval.', 404);
+  }
 
   return res.status(200).json({
-    message: 'Wallet credited successfully.',
+    message: 'Payment fetched successfully.',
     success: true,
     status: 200,
+    payment: result,
   });
 });
 
-const makeCardPayment = catchErrors(async (req, res) => {});
+const approveBankPaymentWithId = catchErrors(async (req, res) => {
+  const { payment_id } = req.params;
+  const { amount_paid, transaction_id, bank_name } = req.body;
+  const bursar_id = req.user?.userId;
 
-const approveBankPaymentWithId = catchErrors(async (req, res) => {});
-const getPaystackCallBack = catchErrors(async (req, res) => {});
-const getPaystackWebHook = catchErrors(async (req, res) => {});
-const getAPaymentNeedingApprovalById = catchErrors(async (req, res) => {});
+  if (!bursar_id) {
+    throw new AppError('Please login to continue.', 400);
+  }
+
+  if (!payment_id) {
+    throw new AppError('Payment ID is required to proceed.', 400);
+  }
+
+  const payload = {
+    amount_paid,
+    transaction_id,
+    bank_name,
+  };
+
+  const validateInput = bankApprovalValidation(payload);
+
+  const { success, value } = validateInput;
+
+  const paymentPayload = {
+    transaction_id: value.transaction_id,
+    bank_name: value.bank_name,
+    payment_id,
+    bursar_id,
+    amount_paid,
+  };
+  const result = await approveStudentBankPayment(paymentPayload);
+  if (!result) {
+    throw new AppError('Unable to approve student bank payment.', 400);
+  }
+
+  return res.status(200).json({
+    message: 'Student payment was successfully approved.',
+    status: 200,
+    success: true,
+    payment: result.receipt,
+  });
+});
+
+const makeBankPayment = catchErrors(async (req, res) => {
+  const { student_id, session_id } = req.params;
+  const {
+    term,
+    amount_paying,
+    class_id,
+    payment_method,
+    teller_number,
+    bank_name,
+  } = req.body;
+
+  const userId = req.user?.userId;
+  const userRole = req.user?.userRole;
+
+  const requiredFields = {
+    student_id,
+    session_id,
+    term,
+    amount_paying,
+    class_id,
+    teller_number,
+    bank_name,
+  };
+  const missingField = Object.entries(requiredFields).find(
+    ([key, value]) => !value
+  );
+
+  if (missingField) {
+    throw new AppError(
+      `Please provide ${missingField[0].replace('_', ' ')} to proceed.`,
+      400
+    );
+  }
+  const payload = {
+    student_id,
+    session_id,
+    term,
+    amount_paying,
+    class_id,
+    teller_number,
+    bank_name,
+  };
+
+  const validateInput = bankPaymentValidation(payload);
+
+  const { success, value } = validateInput;
+
+  if (!userId || !userRole) {
+    throw new AppError('Please login to continue.', 400);
+  }
+
+  const paymentInput = {
+    student_id: value.student_id,
+    session_id: value.session_id,
+    term: value.term,
+    amount_paying: value.amount_paying,
+    class_id: value.class_id,
+    teller_number: value.teller_number,
+    bank_name: value.bank_name,
+    userId,
+    payment_method: payment_method,
+    userRole,
+  };
+
+  const result = await studentBankFeePayment(paymentInput);
+
+  if (!result) {
+    throw new AppError('Unable to process payment request.', 400);
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: `Your payment is pending as this needed to be confirmed from the bank. You will be notified very soon. Thank you very much.`,
+    status: 200,
+    payment: result,
+  });
+});
+
+const makeCashPayment = catchErrors(async (req, res) => {
+  const { student_id, session_id } = req.params;
+  const { term, amount_paying, class_id, payment_method } = req.body;
+  if (
+    !student_id ||
+    !session_id ||
+    !term ||
+    !amount_paying ||
+    !class_id ||
+    !payment_method
+  ) {
+    throw new AppError(
+      'Please provide student ID, payment method amount to be paid, class ID, session ID and term to proceed.',
+      400
+    );
+  }
+  const payload = {
+    student_id,
+    session_id,
+    term,
+    amount_paying,
+    class_id,
+  };
+
+  const validateInput = cashPaymentValidation(payload);
+
+  const { success, value } = validateInput;
+
+  const paymentInput = {
+    student_id: value.student_id,
+    session_id: value.session_id,
+    term: value.term,
+    amount_paying: value.amount_paying,
+    class_id: value.class_id,
+    payment_method,
+  };
+
+  const result = await studentCashFeePayment(paymentInput);
+  if (!result) {
+    throw new AppError('Unable to process payment request.', 400);
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: `Payment of ${amount_paying} was successfully processed for ${result.student.first_name} ${result.student.last_name}`,
+    status: 200,
+    payment: result,
+  });
+});
+
 const getAllPaymentsNeedingApproval = catchErrors(async (req, res) => {});
 const getAllPaymentsApprovedByBursarId = catchErrors(async (req, res) => {});
 
 export {
-  processStudentWalletDepositWebhook,
   getPaymentPriority,
   createPaymentPriority,
   createPaymentDocumentForAllStudent,
   addFeeToStudentPaymentDocument,
-  makeCardPayment,
+  makeBankPayment,
+  makeCashPayment,
   getAllStudentPaymentDocumentsByStudentId,
   getAllPaymentDocuments,
   getAllOutstandingPaymentDocumentsOfStudent,
@@ -1470,8 +1625,6 @@ export {
   getAllPaymentSummaryFailedAndSuccessful,
   ////////////////////////////////////////////////////
   approveBankPaymentWithId,
-  getPaystackCallBack,
-  getPaystackWebHook,
   getAPaymentNeedingApprovalById,
   getAllPaymentsNeedingApproval,
   getAllPaymentsApprovedByBursarId,
