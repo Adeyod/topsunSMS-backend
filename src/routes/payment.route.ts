@@ -13,6 +13,8 @@ import {
   getAPaymentNeedingApprovalById,
   getAllPaymentsNeedingApproval,
   getAllPaymentsApprovedByBursarId,
+  makeBankPayment,
+  makeCashPayment,
 
   ////////////////////////////////////
   addFeeToStudentPaymentDocument,
@@ -45,6 +47,12 @@ router.get(
   '/get-payment-by-payment-id/:payment_id',
   permission(['super_admin', 'parent', 'student', 'admin']),
   getPaymentDetailsByPaymentId
+);
+
+router.put(
+  '/add-fee-to-student-payment-document/:session_id',
+  permission(['super_admin', 'admin']),
+  addFeeToStudentPaymentDocument
 );
 
 router.get(
@@ -117,6 +125,18 @@ router.put(
   '/approve-bank-payment/:payment_id',
   permission(['super_admin', 'admin']),
   approveBankPaymentWithId
+);
+
+router.post(
+  '/make-bank-payment/:session_id/:student_id',
+  permission(['parent', 'student']),
+  makeBankPayment
+);
+
+router.post(
+  '/make-cash-payment/:session_id/:student_id',
+  permission(['super_admin', 'admin']),
+  makeCashPayment
 );
 
 export default router;
