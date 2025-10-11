@@ -1091,8 +1091,6 @@ const getTermOptionalFees = catchErrors(async (req, res) => {
 });
 
 const updateSchoolFeesById = catchErrors(async (req, res) => {});
-const getSchoolBusByGroup = catchErrors(async (req, res) => {});
-const getSchoolBus = catchErrors(async (req, res) => {});
 
 export {
   getSchoolFees,
@@ -1105,8 +1103,6 @@ export {
   createMandatoryFees,
   getASchoolFeeById,
   getASchoolFeeByLevelAndTerm,
-  getSchoolBusByGroup,
-  getSchoolBus,
   getTermFees,
   getAllMandatoryFees,
   getAllOptionalFees,

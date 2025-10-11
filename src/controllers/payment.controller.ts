@@ -735,8 +735,6 @@ import {
   fetchPaymentTransactionHistoryByStudentId,
   fetchStudentOutstandingPaymentDoc,
   fetchStudentSinglePaymentDoc,
-  paymentPriorityCreation,
-  fetchPaymentPriorityForMySchool,
   studentCashFeePayment,
   approveStudentBankPayment,
   studentBankFeePayment,
@@ -1311,108 +1309,6 @@ const getAllPaymentSummaryFailedAndSuccessful = catchErrors(
   }
 );
 
-const createPaymentPriority = catchErrors(async (req, res) => {
-  // const start = Date.now();
-
-  const { priority_order } = req.body;
-
-  const userRole = req.user?.userRole;
-
-  if (!priority_order || priority_order.length === 0) {
-    throw new AppError('Priority order is required.', 400);
-  }
-
-  const priorityValidation = joiPriorityOrderValidation(priority_order);
-
-  if (!priorityValidation) {
-    throw new AppError('Error validating priority order', 400);
-  }
-
-  const { success, value } = priorityValidation;
-
-  const payload = {
-    priority_order,
-  };
-
-  const validateOrder = validatePriorityOrder(priority_order);
-
-  if (!validateOrder) {
-    throw new AppError('Unable to validate priority order.', 400);
-  }
-
-  const result = await paymentPriorityCreation(payload);
-
-  if (!result) {
-    throw new AppError('Unable to create payment priority document.', 400);
-  }
-
-  // const duration = Date.now() - start;
-
-  // const savelogPayload = {
-  //   level: 'info',
-  //   message: 'Payment priority created successfully',
-  //   service: 'klazik schools',
-  //   method: req.method,
-  //   route: req.originalUrl,
-  //   status_code: 200,
-  //   user_id: req.user?.userId,
-  //   user_role: req.user?.userRole,
-  //   ip: req.ip || 'unknown',
-  //   duration_ms: duration,
-  //   stack: undefined,
-  //   school_id: req.user?.school_id
-  //     ? new mongoose.Types.ObjectId(req.user.school_id)
-  //     : undefined,
-  // };
-
-  // await saveLog(savelogPayload);
-
-  return res.status(201).json({
-    message: 'Payment priority created successfully',
-    success: true,
-    status: 201,
-    priorityDoc: result,
-  });
-});
-
-const getPaymentPriority = catchErrors(async (req, res) => {
-  // const start = Date.now();
-
-  const result = await fetchPaymentPriorityForMySchool();
-
-  if (!result) {
-    throw new AppError('Unable to fetch payment priority document.', 400);
-  }
-
-  // const duration = Date.now() - start;
-
-  // const savelogPayload = {
-  //   level: 'info',
-  //   message: 'Payment priority document fetched successfully.',
-  //   service: 'klazik schools',
-  //   method: req.method,
-  //   route: req.originalUrl,
-  //   status_code: 200,
-  //   user_id: req.user?.userId,
-  //   user_role: req.user?.userRole,
-  //   ip: req.ip || 'unknown',
-  //   duration_ms: duration,
-  //   stack: undefined,
-  //   school_id: req.user?.school_id
-  //     ? new mongoose.Types.ObjectId(req.user.school_id)
-  //     : undefined,
-  // };
-
-  // await saveLog(savelogPayload);
-
-  return res.status(200).json({
-    message: 'Payment priority document fetched successfully.',
-    status: 200,
-    success: true,
-    payment_priority: result,
-  });
-});
-
 const getAPaymentNeedingApprovalById = catchErrors(async (req, res) => {
   const { payment_id } = req.params;
 
@@ -1609,8 +1505,6 @@ const getAllPaymentsNeedingApproval = catchErrors(async (req, res) => {});
 const getAllPaymentsApprovedByBursarId = catchErrors(async (req, res) => {});
 
 export {
-  getPaymentPriority,
-  createPaymentPriority,
   createPaymentDocumentForAllStudent,
   addFeeToStudentPaymentDocument,
   makeBankPayment,

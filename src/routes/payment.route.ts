@@ -15,11 +15,9 @@ import {
   getAllPaymentsApprovedByBursarId,
   makeBankPayment,
   makeCashPayment,
+  addFeeToStudentPaymentDocument,
 
   ////////////////////////////////////
-  addFeeToStudentPaymentDocument,
-  createPaymentPriority,
-  getPaymentPriority,
 } from '../controllers/payment.controller';
 import { verifyAccessToken } from '../middleware/jwtAuth';
 import { permission } from '../middleware/authorization';

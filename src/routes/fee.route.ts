@@ -89,8 +89,6 @@ import {
   getTermOptionalFees,
   ///////////////////////////////////
   updateSchoolFeesById,
-  getSchoolBusByGroup,
-  getSchoolBus,
 } from '../controllers/fee.controller';
 
 const router = express.Router();
@@ -137,7 +135,6 @@ router.get(
   getAllSchoolFeesPerTerm
 );
 
-router.get('/school-bus-by-group', getSchoolBusByGroup);
 router.get(
   '/get-school-fees',
   permission(['admin', 'super_admin', 'student', 'parent']),
@@ -172,7 +169,6 @@ router.get(
   permission(['admin', 'super_admin', 'student', 'parent']),
   getTermOptionalFees
 );
-router.get('/get-school-bus', getSchoolBus);
 
 router.get(
   '/get-school-fee/:school_fee_id',

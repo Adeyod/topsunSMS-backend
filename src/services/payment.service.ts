@@ -1493,7 +1493,6 @@ import {
   addFeeToStudentPaymentDoc,
   calculateAndUpdateStudentPaymentDocuments,
 } from '../repository/payment.repository';
-import PaymentPriority from '../models/payment_priority.model';
 import { Request, Response } from 'express';
 import { bankWebhook } from '../utils/bank';
 import { paymentEnum, paymentStatusEnum } from '../constants/enum';
@@ -2292,75 +2291,6 @@ const fetchAllPaymentSummaryFailedAndSuccessful =
     }
   };
 
-const paymentPriorityCreation = async (payload: PaymentPriorityType) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  try {
-    const { priority_order } = payload;
-
-    const paymentPriorityExist = await PaymentPriority.findOne({}).session(
-      session
-    );
-
-    if (paymentPriorityExist) {
-      throw new AppError('School has already set payment priority.', 400);
-    }
-
-    const newPaymentPriority = await new PaymentPriority({
-      priority_order: priority_order,
-    }).save({ session });
-
-    await session.commitTransaction();
-    session.endSession();
-    return newPaymentPriority;
-  } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-    if (error instanceof AppError) {
-      throw new AppError(error.message, error.statusCode);
-    } else {
-      console.log(error);
-      throw new Error('Something happened');
-    }
-  }
-};
-
-const fetchPaymentPriorityForMySchool = async () => {
-  try {
-    const paymentPriorityExist = await PaymentPriority.findOne({});
-
-    if (!paymentPriorityExist) {
-      throw new AppError('Payment priority not found.', 404);
-    }
-
-    return paymentPriorityExist;
-  } catch (error) {
-    if (error instanceof AppError) {
-      throw new AppError(error.message, error.statusCode);
-    } else {
-      console.log(error);
-      throw new Error('Something happened');
-    }
-  }
-};
-
-// const processPayment = async(payload: PaymentPayloadType)=>{
-
-//   const {school_id, student_id, amount_paid} = payload
-//   const school = Object(school_id)
-//   const student = Object(student_id)
-
-//   const paymentPreference = await PaymentPreference
-
-// const studentPayment = await Payment.findOne({
-//   student: student,
-//   school: school,
-
-// })
-
-// }
-
 const studentBankFeePayment = async (
   payload: StudentFeePaymentType
 ): Promise<PaymentDocument> => {
@@ -2619,8 +2549,6 @@ export {
   studentCashFeePayment,
   approveStudentBankPayment,
   studentBankFeePayment,
-  fetchPaymentPriorityForMySchool,
-  paymentPriorityCreation,
   fetchAllPaymentSummaryFailedAndSuccessful,
   fetchStudentSinglePaymentDoc,
   fetchPaymentDetailsByPaymentId,
