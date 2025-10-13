@@ -278,7 +278,11 @@ const resultSettingCreation = async (
       );
     }
 
-    let resultComponentArray = [];
+    let resultComponentArray: {
+      name: string;
+      percentage: number;
+      column: number;
+    }[] = [];
 
     const nameSet: Set<string> = new Set();
     const columnSet: Set<number> = new Set();
@@ -297,13 +301,13 @@ const resultSettingCreation = async (
         );
       }
 
-      if (nameSet.has(itemName)) {
+      if (nameSet.has(itemName.trim().toLowerCase())) {
         throw new AppError(
           `Duplicate name detected: ${itemName}. Each name must be unique.`,
           400
         );
       }
-      nameSet.add(itemName);
+      nameSet.add(itemName.trim().toLowerCase());
 
       if (columnSet.has(itemColumn)) {
         throw new AppError(
@@ -315,7 +319,7 @@ const resultSettingCreation = async (
       columnSet.add(itemColumn);
 
       const itemObj = {
-        name: itemName,
+        name: itemName.trim().toLowerCase(),
         percentage: itemPercentage,
         column: itemColumn,
       };
@@ -368,11 +372,21 @@ const resultSettingCreation = async (
       );
     }
 
+    const { component, exam_name } = exam_components;
+    const formattedExamComponents = {
+      exam_name: exam_name.trim().toLowerCase(),
+      component: component.map((comp) => ({
+        key: comp.key,
+        name: comp.name.trim().toLowerCase(),
+        percentage: comp.percentage,
+      })),
+    };
+
     const newResultSetting = new ResultSetting({
       components: resultComponentArray,
       grading_and_remark: grading_array,
       level: level,
-      exam_components: exam_components,
+      exam_components: formattedExamComponents,
     });
 
     await newResultSetting.save();
