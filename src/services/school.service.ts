@@ -382,9 +382,15 @@ const resultSettingCreation = async (
       })),
     };
 
+    const formattedGrading = grading_array.map((g) => ({
+      value: g.value,
+      grade: g.grade.trim().toUpperCase(),
+      remark: g.remark.trim().toLowerCase(),
+    }));
+
     const newResultSetting = new ResultSetting({
       components: resultComponentArray,
-      grading_and_remark: grading_array,
+      grading_and_remark: formattedGrading,
       level: level,
       exam_components: formattedExamComponents,
     });
