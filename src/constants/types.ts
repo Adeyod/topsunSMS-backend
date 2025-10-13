@@ -2482,8 +2482,8 @@ type CbtQuestionDocument = Document & {
   subject_id: mongoose.Types.ObjectId;
   obj_questions: ObjQuestionsDocument[];
   obj_start_time: Date;
-  obj_final_cutoff_time: Date;
-  obj_initial_cutoff_time: Date;
+  // obj_final_cutoff_time: Date;
+  // obj_initial_cutoff_time: Date;
   theory_start_time: Date;
   theory_initial_cutoff_time: Date;
   theory_final_cutoff_time: Date;

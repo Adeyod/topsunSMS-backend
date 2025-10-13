@@ -73,6 +73,31 @@ const termCbtAssessmentDocumentCreation = async (
     }
 
     for (const assessment_doc of assessmentDocumentArray) {
+      const levelResultSetting = await ResultSetting.findOne({
+        level: assessment_doc.level,
+      });
+
+      if (!levelResultSetting) {
+        throw new AppError(
+          `${assessment_doc.level} does not have result settings yet.`,
+          404
+        );
+      }
+
+      const allowedComponent =
+        levelResultSetting.exam_components.component.find(
+          (a) => a.key === 'obj'
+        );
+
+      if (
+        assessment_doc.assessment_type.toLowerCase() !== allowedComponent?.name
+      ) {
+        throw new AppError(
+          `${allowedComponent?.name} is the only assessment recognized.`,
+          400
+        );
+      }
+
       const exists = await CbtExam.findOne({
         term,
         level: assessment_doc.level,
@@ -854,29 +879,31 @@ const objQestionSetting = async (
     const subjectExamDuration = actualSubjectExamTime.duration;
 
     // create cbt cut off time inside the function file and call it since it is for a single school
-    const schoolCutoff = await CbtCutoff.findOne();
 
-    if (!schoolCutoff) {
-      throw new AppError(
-        `Please reach out to developer to setup your school cutoff minutes before proceeding.`,
-        400
-      );
-    }
+    //  WE DO NOT NEED CUTOFF TIME LOGIC AGAIN
+    // const schoolCutoff = await CbtCutoff.findOne();
 
-    const first_cutoff_minutes = schoolCutoff.first_cutoff_minutes;
-    const last_cutoff_minutes = schoolCutoff.last_cutoff_minutes;
+    // if (!schoolCutoff) {
+    //   throw new AppError(
+    //     `Please reach out to developer to setup your school cutoff minutes before proceeding.`,
+    //     400
+    //   );
+    // }
 
-    const initial_cutoff_time = new Date(
-      start_time.getTime() + first_cutoff_minutes * 60000
-    );
+    // const first_cutoff_minutes = schoolCutoff.first_cutoff_minutes;
+    // const last_cutoff_minutes = schoolCutoff.last_cutoff_minutes;
 
-    const final_cutoff_time = new Date(
-      start_time.getTime() +
-        first_cutoff_minutes * 60000 +
-        subjectExamDuration * 1000 +
-        // subjectExamDuration * 60000 +
-        last_cutoff_minutes * 60000
-    );
+    // const initial_cutoff_time = new Date(
+    //   start_time.getTime() + first_cutoff_minutes * 60000
+    // );
+
+    // const final_cutoff_time = new Date(
+    //   start_time.getTime() +
+    //     first_cutoff_minutes * 60000 +
+    //     subjectExamDuration * 1000 +
+    //     // subjectExamDuration * 60000 +
+    //     last_cutoff_minutes * 60000
+    // );
 
     const questionsToLowerCase = normalizeQuestions(questions_array);
 
@@ -891,8 +918,8 @@ const objQestionSetting = async (
       obj_questions: questionsToLowerCase,
       // obj_questions: questions_array,
       obj_start_time: actualSubjectExamTime?.start_time,
-      obj_initial_cutoff_time: initial_cutoff_time,
-      obj_final_cutoff_time: final_cutoff_time,
+      // obj_initial_cutoff_time: initial_cutoff_time,
+      // obj_final_cutoff_time: final_cutoff_time,
       obj_total_time_allocated: subjectExamDuration,
     });
 
@@ -1055,13 +1082,11 @@ const studentCbtSubjectCbtAssessmentAuthorization = async (
 
     const current_time = new Date().getTime();
     const start_time = new Date(questionExist.obj_start_time).getTime();
-    const examCutoffTime = new Date(
-      questionExist.obj_final_cutoff_time
-    ).getTime();
+    // const examCutoffTime = new Date(
+    //   questionExist.obj_final_cutoff_time
+    // ).getTime();
 
     console.log('current_time:', current_time);
-    console.log('start_time:', start_time);
-    console.log('examCutoffTime:', examCutoffTime);
 
     if (current_time < start_time) {
       throw new AppError(
@@ -1286,14 +1311,36 @@ const subjectCbtObjCbtAssessmentStarting = async (
 
     const current_time = Date.now();
 
-    // if (current_time > examCutoffTime) {
-    //   throw new AppError(
-    //     `You can not take this subject CBT exam again as the grace period has passed. Reach out to the school authority.`,
-    //     400
-    //   );
-    // }
-    const end_time = exam.obj_final_cutoff_time.getTime();
+    const actualExamTimeTable = await ClassExamTimetable.findOne({
+      academic_session_id: academicSessionExist._id,
+      class_id: classExist._id,
+      term: term,
+      exam_id: exam.exam_id,
+      assessment_type: examDocExist.assessment_type,
+    }).session(session);
+
+    if (!actualExamTimeTable) {
+      throw new AppError(
+        `There is no timetable for ${classExist.name} in this ${term} in ${academicSessionExist.academic_session}.`,
+        400
+      );
+    }
+
+    const findSubjectTimetable = actualExamTimeTable.scheduled_subjects.find(
+      (s) => s.subject_id.toString() === subject_id
+    );
+
+    if (!findSubjectTimetable) {
+      throw new AppError(
+        `The time to write this subject exam is not taken care off in the timetable.`,
+        400
+      );
+    }
+
     const start_time = new Date(exam.obj_start_time).getTime();
+    const studentStartTime = new Date();
+    const examDurationInMs = findSubjectTimetable.duration * 1000;
+    const end_time = new Date(current_time + examDurationInMs);
     console.log('end_time:', end_time);
     console.log('start_time:', start_time);
 
@@ -1307,14 +1354,14 @@ const subjectCbtObjCbtAssessmentStarting = async (
     }
 
     // I WILL UNCOMMENT LATER
-    // if (current_time > end_time) {
-    //   throw new AppError(
-    //     `This exam has ended because the time for the exam has passed. Exam End time: ${formatDate(
-    //       exam.obj_final_cutoff_time
-    //     )}`,
-    //     401
-    //   );
-    // }
+    if (current_time > end_time.getTime()) {
+      throw new AppError(
+        `This exam has ended because the time for the exam has passed. Exam End time: ${formatDate(
+          end_time
+        )}`,
+        401
+      );
+    }
 
     let result = await CbtResult.findOne({
       exam_id: examDocExist._id,
@@ -1329,19 +1376,6 @@ const subjectCbtObjCbtAssessmentStarting = async (
     }
 
     if (!result) {
-      const intial_cutoff_time = new Date(
-        exam.obj_initial_cutoff_time
-      ).getTime();
-
-      console.log('current_time:', current_time);
-
-      // if (current_time > intial_cutoff_time) {
-      //   throw new AppError(
-      //     `You cannot start the CBT subject Objective exam again because you are already late. Reach out to the school admin.`,
-      //     401
-      //   );
-      // }
-
       const expectedQuestionPerStudent =
         examDocExist.number_of_questions_per_student;
 
@@ -1376,8 +1410,8 @@ const subjectCbtObjCbtAssessmentStarting = async (
         shuffled_obj_questions: shuffledQuestions,
         obj_total_time_allocated: exam.obj_total_time_allocated,
         obj_time_left: exam.obj_total_time_allocated,
-        obj_final_cutoff_time: exam.obj_final_cutoff_time,
-        obj_start_time: exam.obj_start_time,
+        obj_final_cutoff_time: end_time,
+        obj_start_time: studentStartTime,
         obj_status: examStatusEnum[1],
       });
 
@@ -1396,32 +1430,6 @@ const subjectCbtObjCbtAssessmentStarting = async (
     const sanitizedQuestions = shuffled_obj_questions.map(
       ({ correct_answer, question_original_number, score, ...rest }) => rest
     );
-
-    const actualExamTimeTable = await ClassExamTimetable.findOne({
-      academic_session_id: academicSessionExist._id,
-      class_id: classExist._id,
-      term: term,
-      exam_id: exam.exam_id,
-      assessment_type: examDocExist.assessment_type,
-    }).session(session);
-
-    if (!actualExamTimeTable) {
-      throw new AppError(
-        `There is no timetable for ${classExist.name} in this ${term} in ${academicSessionExist.academic_session}.`,
-        400
-      );
-    }
-
-    const findSubjectTimetable = actualExamTimeTable.scheduled_subjects.find(
-      (s) => s.subject_id.toString() === subject_id
-    );
-
-    if (!findSubjectTimetable) {
-      throw new AppError(
-        `The time to write this subject exam is not taken care off in the timetable.`,
-        400
-      );
-    }
 
     // const studentAlreadyInside =
     //   findSubjectTimetable.students_that_have_started.includes(
@@ -1531,7 +1539,7 @@ const subjectCbtObjCbtAssessmentUpdate = async (
 
     if (current_time > examCutoffTime) {
       throw new AppError(
-        `You can not update this subject CBT exam again as the subject CBT exam has ended. Reach out to the school authority.`,
+        `You can not update this subject CBT exam again as you have reached your allocated time.`,
         400
       );
     }

@@ -44,24 +44,6 @@ const examStatusUpdatejob = () => {
           subject.exam_subject_status = 'not_started';
           exactTimetable.markModified('scheduled_subjects');
         }
-      } else if (
-        now > exam.obj_start_time &&
-        now <= exam.obj_final_cutoff_time
-      ) {
-        exam.exam_subject_status = 'ongoing';
-        exam.markModified('exam_subject_status');
-        if (subject && exactTimetable) {
-          subject.exam_subject_status = 'ongoing';
-          exactTimetable.markModified('scheduled_subjects');
-        }
-        if (
-          now > exam.obj_initial_cutoff_time &&
-          now <= exam.obj_final_cutoff_time
-        ) {
-          if (subject) {
-            subject.has_subject_grace_period_ended = true;
-          }
-        }
       } else {
         exam.exam_subject_status = 'ended';
         exam.markModified('exam_subject_status');
