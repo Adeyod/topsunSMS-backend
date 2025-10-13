@@ -100,9 +100,8 @@ const termCbtAssessmentDocumentCreation = async (
       );
 
       if (!updateDocument) {
-        throw new AppError(
-          `Unable to invalidate CBT exam document for ${assessment_doc.level}.`,
-          400
+        console.log(
+          `No active CBT exam found to deactivate for level ${assessment_doc.level} in ${term}.`
         );
       }
     }
