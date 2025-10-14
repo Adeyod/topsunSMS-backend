@@ -445,7 +445,7 @@ const getStudentsInClassOfferingTeacherSubject = catchErrors(
       userId: userRole === 'teacher' ? userId : undefined,
     };
 
-    console.log('payload:', payload);
+    // console.log('payload:', payload);
 
     const result = await fetchStudentsInClassOfferingTeacherSubject(payload);
 

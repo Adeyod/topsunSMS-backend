@@ -2212,7 +2212,7 @@ const fetchStudentsInClassOfferingTeacherSubject = async (
       throw new AppError(`Subject with ID: ${subject_id} does not exist.`, 404);
     }
 
-    // console.log('subjectExist:', subjectExist);
+    console.log('subjectExist:', subjectExist);
 
     if (userRole === 'teacher') {
       const findTeacher = await Teacher.findById({
@@ -2318,13 +2318,19 @@ const fetchStudentsInClassOfferingTeacherSubject = async (
 
           const result = await SubjectResult.findOne({
             enrolment: classDetails._id,
-            class: classExist._id,
-            academic_session_id: sessionExist._id,
-            // student: student.student,
             student: student.student._id,
+            class: classExist._id,
+            session: sessionExist._id,
+            // student: student.student,
+            subject: subjectExist._id,
           });
 
-          console.log('result:', result);
+          // console.log('subjectExist._id:', subjectExist._id);
+          // console.log('classDetails._id:', classDetails._id);
+          // console.log('classExist._id:', classExist._id);
+          // console.log('sessionExist._id:', sessionExist._id);
+          // console.log('result:', result);
+          // console.log('subjectExist:', subjectExist);
 
           const currentTermResult = result?.term_results.find(
             (term) => term.term === activeTerm?.name
