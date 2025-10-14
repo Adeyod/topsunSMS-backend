@@ -293,7 +293,7 @@ const recordScore = async (
       session: sessionId,
       subject: subjectId,
       // subject_teacher: teacherId,
-    });
+    }).session(session);
 
     if (!studentSubjectResult) {
       studentSubjectResult = new SubjectResult({

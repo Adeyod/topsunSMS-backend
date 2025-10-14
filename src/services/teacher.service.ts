@@ -2329,8 +2329,8 @@ const fetchStudentsInClassOfferingTeacherSubject = async (
           // console.log('classDetails._id:', classDetails._id);
           // console.log('classExist._id:', classExist._id);
           // console.log('sessionExist._id:', sessionExist._id);
-          // console.log('result:', result);
-          // console.log('subjectExist:', subjectExist);
+          console.log('result:', result);
+          // console.log('student.student._id:', student.student._id);
 
           const currentTermResult = result?.term_results.find(
             (term) => term.term === activeTerm?.name
