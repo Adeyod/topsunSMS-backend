@@ -341,12 +341,13 @@ const recordScore = async (
     }
 
     studentSubjectResult.markModified('term_results');
-    try {
-      await studentSubjectResult.save({ session });
-    } catch (error) {
-      console.error('Error saving SubjectResult:', error);
-      throw error;
-    }
+    await studentSubjectResult.save({ session });
+    // try {
+    //   await studentSubjectResult.save({ session });
+    // } catch (error) {
+    //   console.error('Error saving SubjectResult:', error);
+    //   throw error;
+    // }
     console.log(
       'after full recording studentSubjectResult:',
       studentSubjectResult
