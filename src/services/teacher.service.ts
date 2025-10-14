@@ -1272,6 +1272,7 @@ import Session from '../models/session.model';
 import TeacherAssignment from '../models/teacher_assignment.model';
 import ClassEnrolment from '../models/classes_enrolment.model';
 import Result from '../models/result.model';
+import { SubjectResult } from '../models/subject_result.model';
 
 const classTeacherAssignedEndpoint = async (
   payload: TeacherToSubjectType
@@ -2295,7 +2296,27 @@ const fetchStudentsInClassOfferingTeacherSubject = async (
             p._id.equals(subjectExist._id)
           );
 
-          const result = await Result.findOne({
+          // const result = await Result.findOne({
+          //   enrolment: classDetails._id,
+          //   class: classExist._id,
+          //   academic_session_id: sessionExist._id,
+          //   // student: student.student,
+          //   student: student.student._id,
+          // });
+
+          // console.log('result:', result);
+
+          // const currentTermResult = result?.term_results.find(
+          //   (term) => term.term === activeTerm?.name
+          // );
+
+          //   const subjectResult = currentTermResult?.subject_results.find((s) => {
+          //   const subject =
+          //     s.subject.toString() === subjectExist?._id.toString();
+          //   return subject;
+          // });
+
+          const result = await SubjectResult.findOne({
             enrolment: classDetails._id,
             class: classExist._id,
             academic_session_id: sessionExist._id,
@@ -2303,19 +2324,14 @@ const fetchStudentsInClassOfferingTeacherSubject = async (
             student: student.student._id,
           });
 
-          // console.log('result:', result);
+          console.log('result:', result);
 
           const currentTermResult = result?.term_results.find(
             (term) => term.term === activeTerm?.name
           );
-
           // console.log('currentTermResult:', currentTermResult);
 
-          const subjectResult = currentTermResult?.subject_results.find((s) => {
-            const subject =
-              s.subject.toString() === subjectExist?._id.toString();
-            return subject;
-          });
+          const subjectResult = currentTermResult;
 
           // console.log('subjectResult:', subjectResult);
 
