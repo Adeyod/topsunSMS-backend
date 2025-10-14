@@ -548,7 +548,7 @@ const termClassCbtAssessmentTimetableCreation = async (
     );
 
     if (!activeTimetableExist) {
-      throw new AppError('Unable to invalidate previous timetable.', 400);
+      console.log('Unable to invalidate previous timetable.');
     }
 
     // const schoolCutoffTimeExist = await CbtCutoff.findOne();
