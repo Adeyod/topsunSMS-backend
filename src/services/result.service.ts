@@ -1049,8 +1049,8 @@ const fetchLevelResultSetting = async (level: string) => {
 const recordStudentScore = async (
   payload: ScoreParamType
 ): Promise<SubjectResultDocument> => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
+  // const session = await mongoose.startSession();
+  // session.startTransaction();
   try {
     const {
       term,
@@ -1074,7 +1074,7 @@ const recordStudentScore = async (
       score_name,
       class_enrolment_id,
       class_id,
-      session,
+      // session,
     };
 
     const result = await recordScore(resultPayload);
@@ -1083,12 +1083,12 @@ const recordStudentScore = async (
       throw new AppError('Unable to process score.', 400);
     }
 
-    await session.commitTransaction();
-    session.endSession();
+    // await session.commitTransaction();
+    // session.endSession();
     return result;
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
+    // await session.abortTransaction();
+    // session.endSession();
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
@@ -1098,8 +1098,8 @@ const recordStudentScore = async (
 };
 
 const recordManyStudentScores = async (payload: MultipleScoreParamType) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
+  // const session = await mongoose.startSession();
+  // session.startTransaction();
   try {
     const {
       result_objs, // Array of { student_id, score }
@@ -1123,7 +1123,7 @@ const recordManyStudentScores = async (payload: MultipleScoreParamType) => {
         class_id,
         student_id: student.student_id,
         score: student.score,
-        session,
+        // session,
       })
         .then((result) => {
           const currentTermResult = result.term_results.find(
@@ -1204,8 +1204,8 @@ const recordManyStudentScores = async (payload: MultipleScoreParamType) => {
       await studentResultQueue.addBulk(jobs);
     }
 
-    await session.commitTransaction();
-    session.endSession();
+    // await session.commitTransaction();
+    // session.endSession();
 
     return {
       successfulRecords: successfulRecords,
@@ -1214,8 +1214,8 @@ const recordManyStudentScores = async (payload: MultipleScoreParamType) => {
       all_results: results,
     };
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
+    // await session.abortTransaction();
+    // session.endSession();
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {

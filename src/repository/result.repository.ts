@@ -183,7 +183,7 @@ const recordScore = async (
       score_name,
       class_enrolment_id,
       class_id,
-      session,
+      // session,
     } = payload;
 
     console.log(`I want to record for ${score_name} now`);
@@ -197,7 +197,8 @@ const recordScore = async (
 
     const studentExist = await Student.findById({
       _id: studentId,
-    }).session(session);
+    });
+    // .session(session);
 
     if (!studentExist) {
       throw new AppError('Student not found.', 404);
@@ -206,7 +207,8 @@ const recordScore = async (
     const sessionActive = await Session.findOne({
       _id: sessionId,
       is_active: true,
-    }).session(session);
+    });
+    // .session(session);
 
     if (!sessionActive) {
       throw new AppError('Session not found or it is not active.', 404);
@@ -220,7 +222,8 @@ const recordScore = async (
 
     const classExist = await Class.findById({
       _id: classId,
-    }).session(session);
+    });
+    // .session(session);
 
     if (!classExist) {
       throw new AppError('Class not found.', 404);
@@ -228,7 +231,8 @@ const recordScore = async (
 
     const resultSettings = await ResultSetting.findOne({
       level: classExist.level,
-    }).session(session);
+    });
+    // .session(session);
 
     if (!resultSettings) {
       throw new AppError('Result setting not found for this level.', 404);
@@ -264,7 +268,8 @@ const recordScore = async (
 
     const classEnrolmentExist = await ClassEnrolment.findById({
       _id: classEnrolmentId,
-    }).session(session);
+    });
+    // .session(session);
 
     if (!classEnrolmentExist) {
       throw new AppError('Class enrolment not found.', 404);
@@ -293,7 +298,8 @@ const recordScore = async (
       session: sessionId,
       subject: subjectId,
       // subject_teacher: teacherId,
-    }).session(session);
+    });
+    // .session(session);
 
     if (!studentSubjectResult) {
       studentSubjectResult = new SubjectResult({
@@ -341,7 +347,7 @@ const recordScore = async (
     }
 
     studentSubjectResult.markModified('term_results');
-    await studentSubjectResult.save({ session });
+    await studentSubjectResult.save();
     // try {
     //   await studentSubjectResult.save({ session });
     // } catch (error) {

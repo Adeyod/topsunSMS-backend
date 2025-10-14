@@ -1877,7 +1877,7 @@ type ScoreParamType = {
 };
 
 type ScoreRecordingParamType = ScoreParamType & {
-  session: mongoose.ClientSession;
+  // session: mongoose.ClientSession;
 };
 
 type CumScoreParamType = {
