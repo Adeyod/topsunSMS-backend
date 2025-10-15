@@ -1330,8 +1330,6 @@ const recordManyStudentCumScores = async (
 const recordManyStudentExamScores = async (
   payload: MultipleExamScoreParamType
 ) => {
-  // const session = await mongoose.startSession();
-  // session.startTransaction();
   try {
     const {
       result_objs, // Array of { student_id, score_obj }
@@ -1414,7 +1412,6 @@ const recordManyStudentExamScores = async (
       session: session_id,
       subject: subject,
     });
-
     // **********
 
     const checkCBTScore = async (
@@ -1484,14 +1481,14 @@ const recordManyStudentExamScores = async (
         continue;
       }
 
-      // const schoolCurrentPlan = schoolSubscriptionPlan
-      // const subObj = hasFeatureAccess(schoolCurrentPlan, 'objective_exam');
-      // const subTheory = hasFeatureAccess(schoolCurrentPlan, 'theory_exam');
-
       let scoreToRecord = result.score;
+
+      console.log('actualScoreObj.key:', actualScoreObj.key);
 
       if (actualScoreObj.key === 'obj') {
         const objScore = await checkCBTScore('obj', result.student_id);
+        console.log('objScore:', objScore);
+
         if (objScore !== undefined && objScore !== scoreToRecord) {
           scoreToRecord = objScore;
         }
@@ -1499,15 +1496,18 @@ const recordManyStudentExamScores = async (
 
       if (actualScoreObj.key === 'theory') {
         const theoryScore = await checkCBTScore('theory', result.student_id);
+        console.log('theoryScore:', theoryScore);
         if (theoryScore !== undefined && theoryScore !== scoreToRecord) {
           scoreToRecord = theoryScore;
         }
       }
 
       if (scoreToRecord === undefined) {
+        console.log('scoreToRecord:', scoreToRecord);
         scoreToRecord = result.score;
         continue;
       }
+      console.log('scoreToRecord:', scoreToRecord);
 
       const scoreObject = {
         score_name,
@@ -1515,9 +1515,18 @@ const recordManyStudentExamScores = async (
         key: actualScoreObj.key,
       };
 
+      console.log('scoreObject:', scoreObject);
       termResult.exam_object.push(scoreObject);
 
       termResult.scores.push(scoreObject);
+
+      const studentIdStr = studentResult.student.toString();
+
+      // Always mark successful and push to queue, even if partial (obj/theory only)
+      successfulStudentIds.add(studentIdStr);
+      successfulResultsMap.set(studentIdStr, scoreObject);
+      console.log('successfulStudentIds:', successfulStudentIds);
+      console.log('successfulResultsMap:', successfulResultsMap);
 
       const expectedKeys = exam_components.map((a) => a.key);
       const recordedKeys = termResult.exam_object.map((b) => b.key);
@@ -1525,6 +1534,13 @@ const recordManyStudentExamScores = async (
       const allKeysRecorded = expectedKeys.every((key) =>
         recordedKeys.includes(key)
       );
+
+      console.log(
+        'termResult.exam_object.length:',
+        termResult.exam_object.length
+      );
+      console.log('expected_length:', expected_length);
+      console.log('allKeysRecorded:', allKeysRecorded);
 
       if (
         termResult.exam_object.length === expected_length &&
@@ -1543,9 +1559,16 @@ const recordManyStudentExamScores = async (
           termResult.scores.map((s) => s.score_name.toLowerCase())
         );
 
+        console.log('recordedNames:', recordedNames);
+        console.log(
+          '!nonExamComponentNames.some((name) => !recordedNames.has(name)):',
+          !nonExamComponentNames.some((name) => !recordedNames.has(name))
+        );
+
         const hasAllComponents =
           !nonExamComponentNames.some((name) => !recordedNames.has(name)) &&
           recordedNames.has(exam_component_name.toLowerCase());
+        console.log('hasAllComponents:', hasAllComponents);
 
         if (hasAllComponents) {
           const examComponentNames = termResult.exam_object.map((b) =>
@@ -1575,12 +1598,9 @@ const recordManyStudentExamScores = async (
 
           termResult.total_score = total;
           termResult.last_term_cumulative = last_term_cumulative;
-
-          await studentResult.save();
-          const studentIdStr = studentResult.student.toString();
-          successfulStudentIds.add(studentIdStr);
-          successfulResultsMap.set(studentIdStr, scoreObject);
         }
+
+        await studentResult.save();
       }
     }
 
@@ -1590,14 +1610,32 @@ const recordManyStudentExamScores = async (
 
     const jobs = existingResults.map((studentRes) => {
       const termResult = studentRes.term_results.find((t) => t.term === term);
+      // console.log('termResult:', termResult);
+
       const studentIdStr = studentRes.student.toString();
+      console.log('studentIdStr:', studentIdStr);
+      console.log(
+        'successfulStudentIds.has(studentRes.student.toString()):',
+        successfulStudentIds.has(studentRes.student.toString())
+      );
+      console.log(
+        'successfulResultsMap.has(studentRes.student.toString()):',
+        successfulResultsMap.has(studentRes.student.toString())
+      );
+      console.log(
+        'termResult.scores.some:',
+        termResult?.scores.some(
+          (s) =>
+            s.score_name.toLowerCase() === actualScoreObj.name.toLowerCase()
+        )
+      );
 
       if (
         termResult &&
         successfulStudentIds.has(studentRes.student.toString()) &&
         termResult.scores.some(
           (s) =>
-            s.score_name.toLowerCase() === exam_component_name.toLowerCase()
+            s.score_name.toLowerCase() === actualScoreObj.name.toLowerCase()
         )
       ) {
         return {
@@ -1629,7 +1667,10 @@ const recordManyStudentExamScores = async (
       return null;
     });
 
+    console.log('jobs:', jobs);
     const validJobs = jobs.filter((j) => j !== null);
+
+    console.log('validJobs:', validJobs);
 
     if (validJobs.length > 0) {
       await studentResultQueue.addBulk(validJobs as any);

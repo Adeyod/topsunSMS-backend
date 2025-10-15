@@ -673,6 +673,8 @@ const processStudentExamResultUpdate = async (
       `Updating exam result for student: ${student_id}, subject: ${subject_id}, term: ${term}`
     );
 
+    console.log('resultObj:', resultObj);
+
     const resultExist = await Result.findOne({
       enrolment: class_enrolment_id,
       student: student_id,
