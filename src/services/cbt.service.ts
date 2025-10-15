@@ -507,6 +507,7 @@ const termClassCbtAssessmentTimetableCreation = async (
     const cbtExamExist = await CbtExam.findOne({
       academic_session_id: academicSessionExist._id,
       term: term,
+      level: classExist.level,
       assessment_type: assessment_type.toLowerCase(),
       is_active: true,
     });
@@ -1055,6 +1056,7 @@ const studentCbtSubjectCbtAssessmentAuthorization = async (
 
     const examDocExist = await CbtExam.findOne({
       academic_session_id: academicSessionExist._id,
+      level: classExist.level,
       term: term,
       is_active: true,
     });
@@ -1268,6 +1270,7 @@ const subjectCbtObjCbtAssessmentStarting = async (
     const examDocExist = await CbtExam.findOne({
       academic_session_id: academicSessionExist._id,
       term: term,
+      level: classExist.level,
       is_active: true,
     }).session(session);
 
