@@ -1890,7 +1890,6 @@ type CumScoreParamType = {
   class_enrolment_id: string;
   class_id: string;
   // school_id: string;
-  session: mongoose.ClientSession;
 };
 
 type ResultObjType = {

@@ -382,13 +382,13 @@ const recordCumScore = async (
       subject_id,
       class_enrolment_id,
       class_id,
-      session,
+      // session,
     } = payload;
 
     console.log(`I want to record for last_term_cumulative now`);
     const studentExist = await Student.findById({
       _id: student_id,
-    }).session(session);
+    });
 
     if (!studentExist) {
       throw new AppError('Student not found.', 404);
@@ -397,7 +397,7 @@ const recordCumScore = async (
     const sessionActive = await Session.findOne({
       _id: session_id,
       is_active: true,
-    }).session(session);
+    });
 
     if (!sessionActive) {
       throw new AppError('Session not found or it is not active.', 404);
@@ -414,7 +414,7 @@ const recordCumScore = async (
 
     const classExist = await Class.findById({
       _id: class_id,
-    }).session(session);
+    });
 
     if (!classExist) {
       throw new AppError('Class not found.', 404);
@@ -422,7 +422,7 @@ const recordCumScore = async (
 
     const resultSettings = await ResultSetting.findOne({
       level: classExist.level,
-    }).session(session);
+    });
 
     if (!resultSettings) {
       throw new AppError(
@@ -446,7 +446,7 @@ const recordCumScore = async (
 
     const classEnrolmentExist = await ClassEnrolment.findById({
       _id: class_enrolment_id,
-    }).session(session);
+    });
 
     if (!classEnrolmentExist) {
       throw new AppError('Class enrolment not found.', 404);
@@ -460,7 +460,7 @@ const recordCumScore = async (
       class: class_id,
       session: session_id,
       subject: subject,
-    }).session(session);
+    });
 
     if (!resultExist) {
       throw new AppError('No result found for this student.', 404);
@@ -516,7 +516,7 @@ const recordCumScore = async (
     resultExist.markModified('term_results.subject_results');
     resultExist.markModified('term_results.subject_results.scores');
 
-    const updatedResult = await resultExist.save({ session });
+    const updatedResult = await resultExist.save();
 
     console.log('updatedResult:', updatedResult);
 

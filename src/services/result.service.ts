@@ -1227,8 +1227,8 @@ const recordManyStudentScores = async (payload: MultipleScoreParamType) => {
 const recordManyStudentCumScores = async (
   payload: MultipleLastCumParamType
 ) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
+  // const session = await mongoose.startSession();
+  // session.startTransaction();
   try {
     const {
       last_term_cumulative_objs, // Array of { student_id, score }
@@ -1271,7 +1271,7 @@ const recordManyStudentCumScores = async (
         class_id,
         student_id: student.student_id,
         score: student.score,
-        session,
+        // session,
       };
 
       const result = await recordCumScore(singleStudentPayload);
@@ -1314,26 +1314,24 @@ const recordManyStudentCumScores = async (
       }
     }
 
-    await session.commitTransaction();
+    // await session.commitTransaction();
     return { successfulRecords: results, failedRecords: [] };
   } catch (error) {
-    await session.abortTransaction();
+    // await session.abortTransaction();
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
       console.log(error);
       throw new Error('Something happened.');
     }
-  } finally {
-    session.endSession();
   }
 };
 
 const recordManyStudentExamScores = async (
   payload: MultipleExamScoreParamType
 ) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
+  // const session = await mongoose.startSession();
+  // session.startTransaction();
   try {
     const {
       result_objs, // Array of { student_id, score_obj }
@@ -1349,7 +1347,7 @@ const recordManyStudentExamScores = async (
 
     const classExist = await Class.findById({
       _id: class_id,
-    }).session(session);
+    });
     if (!classExist) {
       throw new AppError('Class not found.', 404);
     }
@@ -1369,7 +1367,8 @@ const recordManyStudentExamScores = async (
 
     const sessionExist = await Session.findById({
       _id: session_id,
-    }).session(session);
+    });
+
     if (!sessionExist) {
       throw new AppError(`Session does not exist.`, 404);
     }
@@ -1384,7 +1383,8 @@ const recordManyStudentExamScores = async (
 
     const resultSettings = await ResultSetting.findOne({
       level: classExist.level,
-    }).session(session);
+    });
+
     if (!resultSettings) {
       throw new AppError('Result setting not found.', 404);
     }
@@ -1413,7 +1413,7 @@ const recordManyStudentExamScores = async (
       class: class_id,
       session: session_id,
       subject: subject,
-    }).session(session);
+    });
 
     // **********
 
@@ -1426,7 +1426,7 @@ const recordManyStudentExamScores = async (
         term: termExist.name,
         student_id,
         subject_id,
-      }).session(session);
+      });
       return type === 'obj'
         ? result?.objective_total_score
         : result?.theory_total_score;
@@ -1576,7 +1576,7 @@ const recordManyStudentExamScores = async (
           termResult.total_score = total;
           termResult.last_term_cumulative = last_term_cumulative;
 
-          await studentResult.save({ session });
+          await studentResult.save();
           const studentIdStr = studentResult.student.toString();
           successfulStudentIds.add(studentIdStr);
           successfulResultsMap.set(studentIdStr, scoreObject);
@@ -1585,7 +1585,7 @@ const recordManyStudentExamScores = async (
     }
 
     for (const result of existingResults) {
-      await result.save({ session });
+      await result.save();
     }
 
     const jobs = existingResults.map((studentRes) => {
@@ -1635,13 +1635,8 @@ const recordManyStudentExamScores = async (
       await studentResultQueue.addBulk(validJobs as any);
     }
 
-    await session.commitTransaction();
-    session.endSession();
-
     return existingResults;
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
