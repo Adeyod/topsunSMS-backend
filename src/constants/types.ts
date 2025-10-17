@@ -2317,6 +2317,10 @@ type TimetableArrayType = {
   duration: number;
 }[];
 
+type NewDateTimetable = {
+  selected_time: Date;
+};
+
 type SubjectObjQuestionDocumentCreationType = {
   teacher_id: mongoose.Types.ObjectId;
   academic_session_id: string;
@@ -2814,7 +2818,15 @@ type WaitingForConfirmationType = {
   _id?: mongoose.Types.ObjectId;
 };
 
+type ChangeSubjectStartTimeType = {
+  timetable_id: mongoose.Types.ObjectId;
+  subject_id: mongoose.Types.ObjectId;
+  selected_time: Date;
+};
+
 export {
+  ChangeSubjectStartTimeType,
+  NewDateTimetable,
   ApproveStudentPayloadType,
   WaitingForConfirmationType,
   StudentFeePaymentType,

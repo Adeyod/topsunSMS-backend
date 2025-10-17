@@ -19,6 +19,7 @@ import {
   ExamScoreType,
   ScoreType,
   CbtAssessmentDocumentArrayType,
+  ChangeSubjectStartTimeType,
 } from '../constants/types';
 import CbtCutoff from '../models/cbt_cutoffs.model';
 import CbtExam from '../models/cbt_exam.model';
@@ -613,6 +614,74 @@ const termClassCbtAssessmentTimetableCreation = async (
     await newTimetable.save();
 
     return newTimetable;
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw new AppError(`${error.message}`, 400);
+    } else {
+      console.error(error);
+      throw new Error('Something went wrong');
+    }
+  }
+};
+
+const termClassCbtAssessmentTimetableToChangeSubjectDateUpdating = async (
+  payload: ChangeSubjectStartTimeType
+) => {
+  try {
+    const { timetable_id, subject_id, selected_time } = payload;
+
+    const timetableExist = await ClassExamTimetable.findById({
+      _id: timetable_id,
+    });
+
+    if (!timetableExist) {
+      throw new AppError(`Timetable does not exist.`, 404);
+    }
+
+    const cbtExamDoc = await CbtExam.findById({
+      _id: timetableExist.exam_id,
+    });
+
+    if (!cbtExamDoc || cbtExamDoc.is_active === false) {
+      throw new AppError(
+        'Exam document does not exist or the exam period for the school is already over.',
+        400
+      );
+    }
+
+    const subject = timetableExist.scheduled_subjects.find(
+      (s) => s.subject_id.toString() === subject_id.toString()
+    );
+
+    if (!subject) {
+      throw new AppError(
+        `Subject with ID ${subject_id} not part of exam to be done.`,
+        400
+      );
+    }
+
+    if (subject.exam_subject_status === 'ended') {
+      throw new AppError('This exam has already ended.', 400);
+    }
+    subject.start_time = selected_time;
+
+    const questionExist = await CbtQuestion.findOneAndUpdate(
+      {
+        academic_session_id: timetableExist.academic_session_id,
+        exam_id: timetableExist.exam_id,
+        class_id: timetableExist.class_id,
+        subject_id: subject.subject_id,
+      },
+      {
+        obj_start_time: selected_time,
+      },
+      { new: true }
+    );
+
+    timetableExist.markModified('scheduled_subjects');
+    await timetableExist.save();
+
+    return timetableExist;
   } catch (error) {
     if (error instanceof AppError) {
       throw new AppError(`${error.message}`, 400);
@@ -1337,6 +1406,18 @@ const subjectCbtObjCbtAssessmentStarting = async (
     if (!findSubjectTimetable) {
       throw new AppError(
         `The time to write this subject exam is not taken care off in the timetable.`,
+        400
+      );
+    }
+
+    const hasSubmitted =
+      findSubjectTimetable.students_that_have_submitted.includes(
+        studentExist._id
+      );
+
+    if (hasSubmitted) {
+      throw new AppError(
+        'You have submitted this exam before and you can not take it again.',
         400
       );
     }
@@ -2462,6 +2543,7 @@ const theoryQestionSetting = async (
 export {
   subjectCbtObjCbtAssessmentRemainingTimeUpdate,
   fetchTermClassCbtAssessmentTimetable,
+  termClassCbtAssessmentTimetableToChangeSubjectDateUpdating,
   subjectCbtObjCbtAssessmentSubmission,
   subjectCbtObjCbtAssessmentUpdate,
   studentCbtSubjectCbtAssessmentAuthorization,

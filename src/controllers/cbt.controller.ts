@@ -15,6 +15,7 @@ import {
   fetchCbtAssessmentDocumentById,
   fetchAllClassCbtAssessmentTimetables,
   fetchAllCbtAssessmentDocument,
+  termClassCbtAssessmentTimetableToChangeSubjectDateUpdating,
 } from '../services/cbt.service';
 import { AppError } from '../utils/app.error';
 import catchErrors from '../utils/tryCatch';
@@ -23,6 +24,7 @@ import {
   joiValidateExamInputFields,
   joiValidateTimetableArray,
   joiValidateAssessmentDocumentArray,
+  joiValidateNewDateTimetable,
 } from '../utils/validation';
 import { studentResultQueue } from '../utils/queue';
 import { QueueEvents } from 'bullmq';
@@ -372,6 +374,65 @@ const createTermClassCbtAssessmentTimetable = catchErrors(async (req, res) => {
     timetable: result,
   });
 });
+
+const updateTermClassCbtAssessmentTimetableToChangeSubjectDate = catchErrors(
+  async (req, res) => {
+    const start = Date.now();
+
+    const { timetable_id, subject_id } = req.params;
+    const { selected_time } = req.body;
+
+    const user_id = req.user?.userId;
+    const userRole = req.user?.userRole;
+
+    if (!user_id || !userRole) {
+      throw new AppError('Please login to continue.', 400);
+    }
+
+    const requiredFields = {
+      timetable_id,
+      subject_id,
+      selected_time,
+    };
+
+    const missingField = Object.entries(requiredFields).find(
+      ([key, value]) => !value
+    );
+
+    if (missingField) {
+      throw new AppError(
+        `Please provide ${missingField[0].replace('_', ' ')} to proceed.`,
+        400
+      );
+    }
+
+    const validateTimetableArray = joiValidateNewDateTimetable(selected_time);
+
+    if (validateTimetableArray.error) {
+      throw new AppError(validateTimetableArray.error, 400);
+    }
+
+    const payload = {
+      timetable_id: Object(timetable_id),
+      subject_id: Object(subject_id),
+      selected_time: validateTimetableArray.value,
+    };
+
+    const result =
+      await termClassCbtAssessmentTimetableToChangeSubjectDateUpdating(payload);
+
+    if (!result) {
+      throw new AppError('Unable to update Subject assessment time.', 400);
+    }
+
+    return res.status(200).json({
+      message: `Subject time updated successfully.`,
+      status: 200,
+      success: true,
+      timetable: result,
+    });
+  }
+);
 
 const setSubjectCbtObjQuestionsForAClass = catchErrors(async (req, res) => {
   console.log('req.body:', req.body);
@@ -786,6 +847,7 @@ const setSubjectCbtTheroyQuestionsForAClass = catchErrors(async (req, res) => {
 
 export {
   getCbtAssessmentDocumentById,
+  updateTermClassCbtAssessmentTimetableToChangeSubjectDate,
   getAllClassCbtAssessmentTimetables,
   getTermClassCbtAssessmentTimetables,
   getTermCbtAssessmentDocument,

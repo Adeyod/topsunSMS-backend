@@ -611,6 +611,7 @@ import {
   TimetableArrayType,
   CbtCutoffPayload,
   AssessmentDocumentType,
+  NewDateTimetable,
 } from '../constants/types';
 import { JoiError } from './app.error';
 
@@ -1512,6 +1513,21 @@ const joiValidateTimetableArray = (
   return { success: true, value };
 };
 
+const joiValidateNewDateTimetable = (
+  payload: NewDateTimetable[]
+): {
+  success: boolean;
+  value?: any;
+  error?: string;
+} => {
+  const schema = Joi.date().required();
+  const { error, value } = schema.validate(payload);
+  if (error) {
+    return { success: false, error: error.details[0].message };
+  }
+  return { success: true, value };
+};
+
 const joiValidateCutoffs = (
   payload: CbtCutoffPayload
 ): {
@@ -1532,6 +1548,7 @@ const joiValidateCutoffs = (
 };
 
 export {
+  joiValidateNewDateTimetable,
   joiValidateAssessmentDocumentArray,
   joiValidateCutoffs,
   joiValidateTimetableArray,

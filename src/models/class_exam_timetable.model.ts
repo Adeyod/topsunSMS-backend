@@ -39,6 +39,7 @@ const subjectScheduleSchema = new mongoose.Schema({
   theory_start_time: { type: Date },
   theory_duration: { type: Number },
   is_subject_question_set: { type: Boolean, default: false },
+
   has_subject_grace_period_ended: { type: Boolean, default: false },
 });
 
