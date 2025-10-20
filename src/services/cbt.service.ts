@@ -346,7 +346,14 @@ const fetchTermClassCbtAssessmentTimetable = async (
       );
     }
 
-    return timetableExists;
+    const formattedTimeTable = timetableExists.scheduled_subjects.map(
+      (item: any) => ({
+        ...item,
+        timetable_id: timetableExists._id,
+      })
+    );
+
+    return formattedTimeTable;
   } catch (error) {
     if (error instanceof AppError) {
       throw new AppError(`${error.message}`, 400);
@@ -613,7 +620,14 @@ const termClassCbtAssessmentTimetableCreation = async (
 
     await newTimetable.save();
 
-    return newTimetable;
+    const formattedTimeTable = newTimetable.scheduled_subjects.map(
+      (item: any) => ({
+        ...item,
+        timetable_id: newTimetable._id,
+      })
+    );
+
+    return formattedTimeTable;
   } catch (error) {
     if (error instanceof AppError) {
       throw new AppError(`${error.message}`, 400);
@@ -681,7 +695,14 @@ const termClassCbtAssessmentTimetableToChangeSubjectDateUpdating = async (
     timetableExist.markModified('scheduled_subjects');
     await timetableExist.save();
 
-    return timetableExist;
+    const formattedTimeTable = timetableExist.scheduled_subjects.map(
+      (item: any) => ({
+        ...item,
+        timetable_id: timetableExist._id,
+      })
+    );
+
+    return formattedTimeTable;
   } catch (error) {
     if (error instanceof AppError) {
       throw new AppError(`${error.message}`, 400);
