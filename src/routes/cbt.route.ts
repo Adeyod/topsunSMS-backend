@@ -9,6 +9,7 @@ import {
   updateSubjectCbtObjCbtAssessmentRemainingTimeForAClass,
   classTeacherAuthorizeStudentsToWriteSubjectCbt,
   createTermClassCbtAssessmentTimetable,
+  updateTermClassCbtAssessmentTimetableToChangeSubjectDate,
   startSubjectCbtObjCbtAssessmentForAClass,
   setSubjectCbtObjQuestionsForAClass,
   createTermCbtAssessmentDocument,
@@ -61,6 +62,13 @@ router.post(
   permission(['super_admin', 'admin']),
   developerProtected,
   createTermClassCbtAssessmentTimetable
+);
+
+router.put(
+  '/update-term-class-exam-timetable/:timetable_id/:subject_id',
+  permission(['super_admin', 'admin']),
+  developerProtected,
+  updateTermClassCbtAssessmentTimetableToChangeSubjectDate
 );
 
 router.get(
