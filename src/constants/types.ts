@@ -2824,7 +2824,13 @@ type ChangeSubjectStartTimeType = {
   selected_time: Date;
 };
 
+type EndSubjectInATimetableType = {
+  timetable_id: mongoose.Types.ObjectId;
+  subject_id: mongoose.Types.ObjectId;
+};
+
 export {
+  EndSubjectInATimetableType,
   ChangeSubjectStartTimeType,
   NewDateTimetable,
   ApproveStudentPayloadType,

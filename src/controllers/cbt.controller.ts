@@ -15,6 +15,7 @@ import {
   fetchCbtAssessmentDocumentById,
   fetchAllClassCbtAssessmentTimetables,
   fetchAllCbtAssessmentDocument,
+  endSubjectInATimetable,
   termClassCbtAssessmentTimetableToChangeSubjectDateUpdating,
 } from '../services/cbt.service';
 import { AppError } from '../utils/app.error';
@@ -434,6 +435,52 @@ const updateTermClassCbtAssessmentTimetableToChangeSubjectDate = catchErrors(
   }
 );
 
+const endTakingASubjectInATimetableForATerm = catchErrors(async (req, res) => {
+  const start = Date.now();
+
+  const { timetable_id, subject_id } = req.params;
+
+  const user_id = req.user?.userId;
+  const userRole = req.user?.userRole;
+
+  if (!user_id || !userRole) {
+    throw new AppError('Please login to continue.', 400);
+  }
+
+  const requiredFields = {
+    timetable_id,
+    subject_id,
+  };
+
+  const missingField = Object.entries(requiredFields).find(
+    ([key, value]) => !value
+  );
+
+  if (missingField) {
+    throw new AppError(
+      `Please provide ${missingField[0].replace('_', ' ')} to proceed.`,
+      400
+    );
+  }
+
+  const payload = {
+    timetable_id: Object(timetable_id),
+    subject_id: Object(subject_id),
+  };
+
+  const result = await endSubjectInATimetable(payload);
+
+  if (!result) {
+    throw new AppError('Unable to end Subject timetable.', 400);
+  }
+
+  return res.status(200).json({
+    message: `Subject time ended successfully.`,
+    status: 200,
+    success: true,
+  });
+});
+
 const setSubjectCbtObjQuestionsForAClass = catchErrors(async (req, res) => {
   console.log('req.body:', req.body);
   const { academic_session_id, class_id } = req.params;
@@ -846,6 +893,7 @@ const setSubjectCbtTheroyQuestionsForAClass = catchErrors(async (req, res) => {
 });
 
 export {
+  endTakingASubjectInATimetableForATerm,
   getCbtAssessmentDocumentById,
   updateTermClassCbtAssessmentTimetableToChangeSubjectDate,
   getAllClassCbtAssessmentTimetables,

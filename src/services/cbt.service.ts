@@ -20,6 +20,7 @@ import {
   ScoreType,
   CbtAssessmentDocumentArrayType,
   ChangeSubjectStartTimeType,
+  EndSubjectInATimetableType,
 } from '../constants/types';
 import CbtCutoff from '../models/cbt_cutoffs.model';
 import CbtExam from '../models/cbt_exam.model';
@@ -688,6 +689,79 @@ const termClassCbtAssessmentTimetableToChangeSubjectDateUpdating = async (
       },
       {
         obj_start_time: selected_time,
+      },
+      { new: true }
+    );
+
+    timetableExist.markModified('scheduled_subjects');
+    await timetableExist.save();
+
+    const formattedTimeTable = timetableExist.scheduled_subjects.map(
+      (item: any) => ({
+        ...item,
+        timetable_id: timetableExist._id,
+      })
+    );
+
+    return formattedTimeTable;
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw new AppError(`${error.message}`, 400);
+    } else {
+      console.error(error);
+      throw new Error('Something went wrong');
+    }
+  }
+};
+
+const endSubjectInATimetable = async (payload: EndSubjectInATimetableType) => {
+  try {
+    const { timetable_id, subject_id } = payload;
+
+    const timetableExist = await ClassExamTimetable.findById({
+      _id: timetable_id,
+    });
+
+    if (!timetableExist) {
+      throw new AppError(`Timetable does not exist.`, 404);
+    }
+
+    const cbtExamDoc = await CbtExam.findById({
+      _id: timetableExist.exam_id,
+    });
+
+    if (!cbtExamDoc || cbtExamDoc.is_active === false) {
+      throw new AppError(
+        'Exam document does not exist or the exam period for the school is already over.',
+        400
+      );
+    }
+
+    const subject = timetableExist.scheduled_subjects.find(
+      (s) => s.subject_id.toString() === subject_id.toString()
+    );
+
+    if (!subject) {
+      throw new AppError(
+        `Subject with ID ${subject_id} not part of exam to be done.`,
+        400
+      );
+    }
+
+    if (subject.exam_subject_status === 'ended') {
+      throw new AppError('This exam has already ended.', 400);
+    }
+    subject.exam_subject_status = 'ended';
+
+    const questionExist = await CbtQuestion.findOneAndUpdate(
+      {
+        academic_session_id: timetableExist.academic_session_id,
+        exam_id: timetableExist.exam_id,
+        class_id: timetableExist.class_id,
+        subject_id: subject.subject_id,
+      },
+      {
+        exam_subject_status: 'ended',
       },
       { new: true }
     );
@@ -2577,4 +2651,5 @@ export {
   fetchCbtAssessmentDocumentById,
   fetchAllClassCbtAssessmentTimetables,
   fetchAllCbtAssessmentDocument,
+  endSubjectInATimetable,
 };

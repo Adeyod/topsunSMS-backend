@@ -15,6 +15,7 @@ import {
   createTermCbtAssessmentDocument,
   setSubjectCbtTheroyQuestionsForAClass,
   getAllCbtAssessmentDocument,
+  endTakingASubjectInATimetableForATerm,
 } from '../controllers/cbt.controller';
 // import requireFeatureAccess from '../middleware/featureAccess';
 import { permission } from '../middleware/authorization';
@@ -62,6 +63,13 @@ router.post(
   permission(['super_admin', 'admin']),
   developerProtected,
   createTermClassCbtAssessmentTimetable
+);
+
+router.put(
+  '/end-subject-term-class-exam-timetable/:timetable_id/:subject_id',
+  permission(['super_admin', 'admin']),
+  developerProtected,
+  endTakingASubjectInATimetableForATerm
 );
 
 router.put(
