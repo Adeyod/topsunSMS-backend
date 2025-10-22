@@ -20,8 +20,6 @@ const fetchAllAdmins = async () => {
       return others;
     });
 
-    console.log('adminsWithoutPassword:', adminsWithoutPassword);
-
     return adminsWithoutPassword;
   } catch (error) {
     if (error instanceof AppError) {
@@ -55,8 +53,6 @@ const fetchMySchoolSummary = async (userRole: string) => {
     const activeClassEnrolments = await ClassEnrolment.find({
       is_active: true,
     }).populate('students.student class', '-password');
-
-    console.log('activeClassEnrolments:', activeClassEnrolments);
 
     let schoolAdmins: {}[] = [];
 
@@ -139,7 +135,6 @@ const fetchMySchoolSummary = async (userRole: string) => {
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
-      console.log(error);
       throw new Error('Something happened');
     }
   }

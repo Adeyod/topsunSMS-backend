@@ -65,8 +65,6 @@
 //     payload
 //   );
 
-//   console.log(info);
-
 //   if (!info) {
 //     throw new AppError('Unable to enrol students', 400);
 //   }
@@ -407,8 +405,6 @@ const getASingleEnrollmentById = catchErrors(async (req, res) => {
   // };
 
   // await saveLog(savelogPayload);
-
-  console.log('ENROLLMENT:', result);
 
   return res.status(200).json({
     message: 'Enrollment fetched successfully',

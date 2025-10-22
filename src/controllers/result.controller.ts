@@ -25,8 +25,6 @@
 //     class_id,
 //   } = req.body;
 
-//   console.log('req.body', req.body);
-
 //   const teacherId = req.user?.userId;
 //   const role = req.user?.userRole;
 
@@ -128,10 +126,6 @@
 //     class_enrolment_id,
 //     class_id,
 //   } = req.body;
-
-//   console.log(`I want to record for ${score_type} now`);
-
-//   // console.log('body:', req.body);
 
 //   const teacherId = req.user?.userId;
 //   const role = req.user?.userRole;
@@ -815,8 +809,6 @@ const recordAllStudentsScoresPerTerm = catchErrors(async (req, res) => {
     class_enrolment_id,
     class_id,
   };
-
-  console.log('result_objs:', result_objs);
 
   const result = await recordManyStudentScores(payload);
 

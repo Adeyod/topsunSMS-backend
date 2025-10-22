@@ -249,8 +249,6 @@
 
 //     await findPaymentDocument.save();
 
-//     console.log('findPaymentDocument', findPaymentDocument);
-
 //     return paystackResult;
 //   } catch (error) {
 //     if (error instanceof AppError) {
@@ -281,8 +279,6 @@
 //     });
 
 //     if (parent_id) {
-//       console.log('parent_id:', parent_id);
-
 //       if (
 //         !studentDoc?.parent_id
 //           ?.map((id) => id.toString())
@@ -389,7 +385,6 @@
 //         } else {
 //           amount = fetchBusFee?.school_bus?.close_group?.single_trip;
 //           route = payload.route;
-//           console.log('route', route);
 //         }
 //       }
 
@@ -399,7 +394,6 @@
 //         } else {
 //           amount = fetchBusFee?.school_bus?.far_group?.single_trip;
 //           route = payload.route;
-//           console.log('route', route);
 //         }
 //       }
 
@@ -624,7 +618,6 @@
 //     });
 
 //     outstandingPayments.map((p) => {
-//       console.log('remaining_amount', p.remaining_amount);
 //     });
 
 //     return outstandingPayments;
@@ -667,8 +660,6 @@
 //     if (!paystackResult) {
 //       throw new AppError('Error processing paystack payment', 400);
 //     }
-
-//     console.log('paystackResult Log:', paystackResult);
 
 //     return paystackResult;
 //   } catch (error) {
@@ -857,7 +848,6 @@
 //     if (error instanceof AppError) {
 //       throw new AppError(error.message, error.statusCode);
 //     } else {
-//       console.log(error);
 //       throw new Error('Something happened.');
 //     }
 //   }
@@ -1172,8 +1162,7 @@
 
 //       // if (limit) {
 //       // pages = Math.ceil(count / limit);
-//       // console.log('Total count of transactions:', count);
-//       // console.log('Total pages calculated:', pages);
+//
 //       // if (page && page > pages) {
 //       //   throw new AppError('Page can no be found.', 404);
 //       // }
@@ -1185,9 +1174,7 @@
 //       // if (page !== undefined && limit !== undefined) {
 //       // const offset = (page - 1) * limit;
 //       // const offset = (page - 1) * (limit || 10);
-//       // console.log(`Page: ${page}, Limit: ${limit}, Offset: ${offset}`);
 //       // if (offset >= count) {
-//       //   console.log('offset is greater than count');
 //       //   return { paymentObj: [], totalCount: count, totalPages: pages };
 //       // }
 //       // pipeline.push(
@@ -1195,9 +1182,7 @@
 //       //   { $skip: offset },
 //       //   { $limit: limit }
 //       // );
-//       // console.log(`Page: ${page}, Limit: ${limit}, Offset: ${offset}`);
-//       // console.log(`Pipeline: ${JSON.stringify(pipeline, null, 2)}`);
-//       // }
+//      //       // }
 
 //       // project only the required fields
 //       pipeline.push({
@@ -1233,7 +1218,6 @@
 //       if (error instanceof AppError) {
 //         throw new AppError(error.message, error.statusCode);
 //       } else {
-//         console.log(error);
 //         throw new Error('Something happened');
 //       }
 //     }
@@ -1517,8 +1501,6 @@ const createSchoolFeePaymentDocumentForStudents = async (
       );
     }
 
-    // console.log('SERVICE activeSession:', activeSession);
-
     const activeTermCheck = activeSession.terms.find((t) => t.name === term);
 
     if (activeTermCheck?.is_active !== true) {
@@ -1528,23 +1510,17 @@ const createSchoolFeePaymentDocumentForStudents = async (
       );
     }
 
-    // console.log('SERVICE activeTermCheck:', activeTermCheck);
-
     const allStudents = await Student.find().session(session);
 
     if (!allStudents) {
       throw new AppError('No students found yet.', 404);
     }
 
-    // console.log('SERVICE allStudents:', allStudents);
-
     const allSchoolFees = await Fee.find().session(session);
 
     if (!allSchoolFees || allSchoolFees.length === 0) {
       throw new AppError('No school fees found yet.', 404);
     }
-
-    // console.log('SERVICE allSchoolFees:', allSchoolFees);
 
     const unenrolledStudents = allStudents.filter(
       (student) =>
@@ -1557,8 +1533,6 @@ const createSchoolFeePaymentDocumentForStudents = async (
         student.current_class?.class_id ||
         student.active_class_enrolment === true
     );
-
-    // console.log('SERVICE enrolledStudents:', enrolledStudents);
 
     /**
      * FROM ALL STUDENTS, SEPARATE THOSE THAT HAVE PAYMENT DOCUMENT FOR THE TERM FROM THOSE THAT DO NOT HAVE
@@ -1581,11 +1555,6 @@ const createSchoolFeePaymentDocumentForStudents = async (
           studentsWithoutPaymentDocument.push(s);
         }
       })
-    );
-
-    console.log(
-      'SERVICE studentsWithoutPaymentDocument:',
-      studentsWithoutPaymentDocument
     );
 
     if (
@@ -1665,7 +1634,6 @@ const createSchoolFeePaymentDocumentForStudents = async (
         (sum, fee) => sum + fee.amount,
         0
       );
-      console.log('SERVICE total_amount:', total_amount);
 
       bulkOperations.push({
         insertOne: {
@@ -1747,7 +1715,6 @@ const addingFeeToStudentPaymentDocument = async (
       (term) => term.is_active === true
     );
 
-    console.log('activeTerm:', activeTerm);
     if (!activeTerm) {
       throw new AppError(
         'There is no active term where the payment document can be updated.',
@@ -1936,10 +1903,6 @@ const fetchStudentOutstandingPaymentDoc = async (student_id: string) => {
         { session: { $ne: currentTerm?._id } },
         { term: { $ne: activeTerm?.name } },
       ],
-    });
-
-    outstandingPayments.map((p) => {
-      console.log('remaining_amount', p.remaining_amount);
     });
 
     return outstandingPayments;
@@ -2224,8 +2187,7 @@ const fetchAllPaymentSummaryFailedAndSuccessful =
 
       // if (limit) {
       // pages = Math.ceil(count / limit);
-      // console.log('Total count of transactions:', count);
-      // console.log('Total pages calculated:', pages);
+
       // if (page && page > pages) {
       //   throw new AppError('Page can no be found.', 404);
       // }
@@ -2237,9 +2199,7 @@ const fetchAllPaymentSummaryFailedAndSuccessful =
       // if (page !== undefined && limit !== undefined) {
       // const offset = (page - 1) * limit;
       // const offset = (page - 1) * (limit || 10);
-      // console.log(`Page: ${page}, Limit: ${limit}, Offset: ${offset}`);
       // if (offset >= count) {
-      //   console.log('offset is greater than count');
       //   return { paymentObj: [], totalCount: count, totalPages: pages };
       // }
       // pipeline.push(
@@ -2247,8 +2207,6 @@ const fetchAllPaymentSummaryFailedAndSuccessful =
       //   { $skip: offset },
       //   { $limit: limit }
       // );
-      // console.log(`Page: ${page}, Limit: ${limit}, Offset: ${offset}`);
-      // console.log(`Pipeline: ${JSON.stringify(pipeline, null, 2)}`);
       // }
 
       // project only the required fields
@@ -2285,7 +2243,6 @@ const fetchAllPaymentSummaryFailedAndSuccessful =
       if (error instanceof AppError) {
         throw new AppError(error.message, error.statusCode);
       } else {
-        console.log(error);
         throw new Error('Something happened');
       }
     }

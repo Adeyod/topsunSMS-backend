@@ -221,7 +221,6 @@
 //     if (error instanceof AppError) {
 //       throw new AppError(error.message, error.statusCode);
 //     } else {
-//       console.log(error);
 //       throw new Error('Something happened.');
 //     }
 //   }
@@ -388,8 +387,6 @@
 //   try {
 //     const { student_id, academic_session_id, term, userId, userRole } = payload;
 
-//     console.log('student_id', student_id);
-
 //     const student = await Student.findById({
 //       _id: student_id,
 //     });
@@ -441,7 +438,6 @@
 //     if (error instanceof AppError) {
 //       throw new AppError(error.message, error.statusCode);
 //     } else {
-//       console.log(error);
 //       throw new Error('Something happened.');
 //     }
 //   }
@@ -495,7 +491,6 @@
 //     if (error instanceof AppError) {
 //       throw new AppError(error.message, error.statusCode);
 //     } else {
-//       // console.log(error);
 //       throw new Error('Something happened.');
 //     }
 //   }
@@ -870,7 +865,6 @@
 //       })
 //     );
 
-//     console.log('allStudentsResult:', allStudentsResult);
 //     const updatedPositions = classPositionCalculation(allStudentsResult);
 
 //     await Promise.all(
@@ -905,7 +899,6 @@
 //     if (error instanceof AppError) {
 //       throw new AppError(error.message, error.statusCode);
 //     } else {
-//       console.log(error);
 //       throw new Error('Something happened');
 //     }
 //   }
@@ -998,7 +991,6 @@ const fetchResultSetting = async () => {
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
-      console.log(error);
       throw new Error('Something happened.');
     }
   }
@@ -1040,7 +1032,6 @@ const fetchLevelResultSetting = async (level: string) => {
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
-      console.log(error);
       throw new Error('Something happened.');
     }
   }
@@ -1163,10 +1154,6 @@ const recordManyStudentScores = async (payload: MultipleScoreParamType) => {
     const successfulRecords = results.filter((r) => r.status === 'fulfilled');
     const skippedRecords = results.filter((r) => r.status === 'skipped');
     const failedRecords = results.filter((r) => r.status === 'rejected');
-
-    console.log('successfulRecords:', successfulRecords);
-    console.log('skippedRecords:', skippedRecords);
-    console.log('failedRecords:', failedRecords);
 
     if (successfulRecords.length > 0) {
       const jobs = successfulRecords.map((record) => {
@@ -1321,7 +1308,6 @@ const recordManyStudentCumScores = async (
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
-      console.log(error);
       throw new Error('Something happened.');
     }
   }
@@ -1487,7 +1473,6 @@ const recordManyStudentExamScores = async (
 
       if (actualScoreObj.key === 'obj') {
         const objScore = await checkCBTScore('obj', result.student_id);
-        console.log('objScore:', objScore);
 
         if (objScore !== undefined && objScore !== scoreToRecord) {
           scoreToRecord = objScore;
@@ -1496,18 +1481,15 @@ const recordManyStudentExamScores = async (
 
       if (actualScoreObj.key === 'theory') {
         const theoryScore = await checkCBTScore('theory', result.student_id);
-        console.log('theoryScore:', theoryScore);
         if (theoryScore !== undefined && theoryScore !== scoreToRecord) {
           scoreToRecord = theoryScore;
         }
       }
 
       if (scoreToRecord === undefined) {
-        console.log('scoreToRecord:', scoreToRecord);
         scoreToRecord = result.score;
         continue;
       }
-      console.log('scoreToRecord:', scoreToRecord);
 
       const scoreObject = {
         score_name,
@@ -1515,7 +1497,6 @@ const recordManyStudentExamScores = async (
         key: actualScoreObj.key,
       };
 
-      console.log('scoreObject:', scoreObject);
       termResult.exam_object.push(scoreObject);
 
       termResult.scores.push(scoreObject);
@@ -1525,8 +1506,6 @@ const recordManyStudentExamScores = async (
       // Always mark successful and push to queue, even if partial (obj/theory only)
       successfulStudentIds.add(studentIdStr);
       successfulResultsMap.set(studentIdStr, scoreObject);
-      console.log('successfulStudentIds:', successfulStudentIds);
-      console.log('successfulResultsMap:', successfulResultsMap);
 
       const expectedKeys = exam_components.map((a) => a.key);
       const recordedKeys = termResult.exam_object.map((b) => b.key);
@@ -1534,13 +1513,6 @@ const recordManyStudentExamScores = async (
       const allKeysRecorded = expectedKeys.every((key) =>
         recordedKeys.includes(key)
       );
-
-      console.log(
-        'termResult.exam_object.length:',
-        termResult.exam_object.length
-      );
-      console.log('expected_length:', expected_length);
-      console.log('allKeysRecorded:', allKeysRecorded);
 
       if (
         termResult.exam_object.length === expected_length &&
@@ -1559,16 +1531,9 @@ const recordManyStudentExamScores = async (
           termResult.scores.map((s) => s.score_name.toLowerCase())
         );
 
-        console.log('recordedNames:', recordedNames);
-        console.log(
-          '!nonExamComponentNames.some((name) => !recordedNames.has(name)):',
-          !nonExamComponentNames.some((name) => !recordedNames.has(name))
-        );
-
         const hasAllComponents =
           !nonExamComponentNames.some((name) => !recordedNames.has(name)) &&
           recordedNames.has(exam_component_name.toLowerCase());
-        console.log('hasAllComponents:', hasAllComponents);
 
         if (hasAllComponents) {
           const examComponentNames = termResult.exam_object.map((b) =>
@@ -1610,25 +1575,8 @@ const recordManyStudentExamScores = async (
 
     const jobs = existingResults.map((studentRes) => {
       const termResult = studentRes.term_results.find((t) => t.term === term);
-      // console.log('termResult:', termResult);
 
       const studentIdStr = studentRes.student.toString();
-      console.log('studentIdStr:', studentIdStr);
-      console.log(
-        'successfulStudentIds.has(studentRes.student.toString()):',
-        successfulStudentIds.has(studentRes.student.toString())
-      );
-      console.log(
-        'successfulResultsMap.has(studentRes.student.toString()):',
-        successfulResultsMap.has(studentRes.student.toString())
-      );
-      console.log(
-        'termResult.scores.some:',
-        termResult?.scores.some(
-          (s) =>
-            s.score_name.toLowerCase() === actualScoreObj.name.toLowerCase()
-        )
-      );
 
       if (
         termResult &&
@@ -1667,10 +1615,7 @@ const recordManyStudentExamScores = async (
       return null;
     });
 
-    console.log('jobs:', jobs);
     const validJobs = jobs.filter((j) => j !== null);
-
-    console.log('validJobs:', validJobs);
 
     if (validJobs.length > 0) {
       await studentResultQueue.addBulk(validJobs as any);
@@ -1788,7 +1733,6 @@ const fetchAllScoresPerSubject = async (payload: ScorePayload) => {
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
-      console.log(error);
       throw new Error('Something happened.');
     }
   }
@@ -1958,8 +1902,6 @@ const fetchStudentTermResult = async (payload: StudentResultTermType) => {
   try {
     const { student_id, academic_session_id, term, userId, userRole } = payload;
 
-    console.log('student_id', student_id);
-
     const student = await Student.findById({
       _id: student_id,
     });
@@ -2011,7 +1953,6 @@ const fetchStudentTermResult = async (payload: StudentResultTermType) => {
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
-      console.log(error);
       throw new Error('Something happened.');
     }
   }
@@ -2065,7 +2006,6 @@ const fetchStudentSessionResults = async (
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
-      // console.log(error);
       throw new Error('Something happened.');
     }
   }
@@ -2188,8 +2128,6 @@ const fetchAllResultsOfAStudent = async (
       }));
     });
 
-    console.log('formattedStudentResults:', formattedStudentResults);
-
     return formattedStudentResults;
   } catch (error) {
     if (error instanceof AppError) {
@@ -2252,14 +2190,11 @@ const fetchStudentResultByResultId = async (
       term_result: studentResult.term_results[0],
     };
 
-    console.log('neededObj', neededObj);
-
     return neededObj;
   } catch (error) {
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
-      console.log(error);
       throw new Error('Something happened');
     }
   }
@@ -2422,8 +2357,6 @@ const studentsSubjectPositionInClass = async (
         s?.subjectObj?.cumulative_average === null ||
         s?.subjectObj?.cumulative_average === 0
     );
-
-    console.log('studentResults:', studentResults);
 
     if (nullCumulativeAvg.length > 0) {
       const studentFullName = nullCumulativeAvg.map(
@@ -2608,11 +2541,8 @@ const calculatePositionOfStudentsInClass = async (
       );
     }
 
-    // console.log('classEnrolment:', classEnrolment);
-
     const allStudentsResult = await Promise.all(
       classEnrolment.students.map(async (s) => {
-        console.log('s.student._id:', s.student._id);
         const result = (await Result.findOne({
           enrolment: classEnrolment._id,
           student: s.student._id,
@@ -2646,7 +2576,6 @@ const calculatePositionOfStudentsInClass = async (
       })
     );
 
-    console.log('allStudentsResult:', allStudentsResult);
     const updatedPositions = classPositionCalculation(allStudentsResult);
 
     await Promise.all(
@@ -2686,7 +2615,6 @@ const calculatePositionOfStudentsInClass = async (
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
-      console.log(error);
       throw new Error('Something happened');
     }
   } finally {

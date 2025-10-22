@@ -23,8 +23,6 @@ const getAStudentById = catchErrors(async (req, res) => {
 
   const { student_id } = req.params;
 
-  console.log('student_id:', student_id);
-
   if (!student_id) {
     throw new AppError('Student ID is required.', 404);
   }
@@ -88,20 +86,16 @@ const updateStudentDetails = catchErrors(async (req, res) => {
   const payload = home_address;
   const validateInput = addressValidation(home_address);
 
-  console.log('validateInput:', validateInput);
   if (!validateInput) {
     throw new AppError('Unable to validate input fields.', 400);
   }
 
   const { success, value } = validateInput;
 
-  console.log('value:', value);
-
   const parent_id =
     userRole === 'parent' ? req.user?.userId.toString() : undefined;
 
   if (userRole === 'parent' && !parent_id) {
-    console.error('Parent ID not found');
     throw new AppError('Parent ID not found.', 400);
   }
 
@@ -111,8 +105,6 @@ const updateStudentDetails = catchErrors(async (req, res) => {
     userRole,
     parent_id,
   };
-
-  console.log('controller file:', req.file);
 
   const result = await studentUpdateDetails(req, userObj, res);
   if (!result) {
@@ -157,16 +149,11 @@ const getAllStudents = catchErrors(async (req, res) => {
   const searchQuery =
     typeof req.query.searchParams === 'string' ? req.query.searchParams : '';
 
-  console.log('page:', page);
-  console.log('limit:', limit);
-  console.log('searchQuery:', searchQuery);
   const result = await fetchAllStudents(page, limit, searchQuery);
 
   if (!result) {
     throw new AppError('Unable to get students.', 404);
   }
-
-  console.log('result', result.studentObj);
 
   // const duration = Date.now() - start;
 

@@ -119,18 +119,11 @@ const optionalFeeProcessing = async (
 
     return Promise.all(
       Object.entries(levelClassMap).map(async ([level, classIds]) => {
-        console.log(`Processing Level: ${level}, Classes:`, classIds);
-
         const optionalFeeObj = {
           fee_name,
           amount,
           applicable_classes: classIds,
         };
-
-        console.log(
-          'Optional Fee Object before storing:',
-          JSON.stringify(optionalFeeObj, null, 2)
-        );
 
         const existingFee = await Fee.findOne({
           level,
@@ -182,13 +175,6 @@ const mandatoryFeeProcessing = async (payload: MandatoryFeeProcessingType) => {
           fee_name,
           amount,
         };
-
-        console.log('g', g);
-
-        console.log(
-          'Mandatory Fee Object before storing:',
-          JSON.stringify(mandatoryFeeObj, null, 2)
-        );
 
         const existingFee = await Fee.findOne({
           level: g.level,

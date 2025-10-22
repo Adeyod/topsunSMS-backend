@@ -73,7 +73,6 @@
 //     const result =
 //       payload.first_test_score + payload.second_test_score + payload.exam_score;
 //     let grade;
-//     console.log('result:', result);
 
 //     if (result >= 70) grade = 'A';
 //     else if (result >= 60) grade = 'B';
@@ -81,8 +80,6 @@
 //     else if (result >= 45) grade = 'D';
 //     else if (result >= 40) grade = 'E';
 //     else grade = 'F';
-
-//     console.log('grade:', grade);
 
 //     const resultObj = {
 //       grade: grade,
@@ -628,10 +625,6 @@ const extractSubdomain = (host: string): string | null => {
   if (!subdomainPart) return null;
 
   const segments = subdomainPart.split('.').filter(Boolean);
-
-  console.log('cleanedHost:', cleanedHost);
-  console.log('subdomainPart:', subdomainPart);
-  console.log('segments:', segments);
 
   if (segments.length === 0) return null;
 

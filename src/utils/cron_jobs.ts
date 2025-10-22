@@ -1,68 +1,68 @@
-import cron from 'node-cron';
-import CbtQuestion from '../models/cbt_question.model';
-import ClassExamTimetable from '../models/class_exam_timetable.model';
-import CbtExam from '../models/cbt_exam.model';
+// import cron from 'node-cron';
+// import CbtQuestion from '../models/cbt_question.model';
+// import ClassExamTimetable from '../models/class_exam_timetable.model';
+// import CbtExam from '../models/cbt_exam.model';
 
-const examStatusUpdatejob = () => {
-  cron.schedule('*/1 * * * *', async () => {
-    const now = new Date();
+// const examStatusUpdatejob = () => {
+//   cron.schedule('*/1 * * * *', async () => {
+//     const now = new Date();
 
-    const cbtExams = await CbtExam.find({
-      is_active: true,
-    });
+//     const cbtExams = await CbtExam.find({
+//       is_active: true,
+//     });
 
-    const cbtExamsIds = cbtExams.map((a) => a._id);
+//     const cbtExamsIds = cbtExams.map((a) => a._id);
 
-    const exams = await CbtQuestion.find({
-      exam_id: { $in: cbtExamsIds },
-      exam_subject_status: { $ne: 'ended' },
-    });
+//     const exams = await CbtQuestion.find({
+//       exam_id: { $in: cbtExamsIds },
+//       exam_subject_status: { $ne: 'ended' },
+//     });
 
-    for (const exam of exams) {
-      const exactTimetable = await ClassExamTimetable.findOne({
-        exam_id: exam.exam_id,
-        academic_session_id: exam.academic_session_id,
-        class_id: exam.class_id,
-        term: exam.term,
-      });
+//     for (const exam of exams) {
+//       const exactTimetable = await ClassExamTimetable.findOne({
+//         exam_id: exam.exam_id,
+//         academic_session_id: exam.academic_session_id,
+//         class_id: exam.class_id,
+//         term: exam.term,
+//       });
 
-      if (!exactTimetable) {
-        console.warn(
-          `[CRON]: No matching timetable found for exam ID: ${exam._id}`
-        );
-        continue;
-      }
+//       if (!exactTimetable) {
+//         console.warn(
+//           `[CRON]: No matching timetable found for exam ID: ${exam._id}`
+//         );
+//         continue;
+//       }
 
-      const subject = exactTimetable?.scheduled_subjects.find(
-        (s) => s.subject_id.toString() === exam.subject_id.toString()
-      );
+//       const subject = exactTimetable?.scheduled_subjects.find(
+//         (s) => s.subject_id.toString() === exam.subject_id.toString()
+//       );
 
-      if (now < exam.obj_start_time) {
-        exam.exam_subject_status = 'not_started';
-        exam.markModified('exam_subject_status');
-        if (subject && exactTimetable) {
-          subject.exam_subject_status = 'not_started';
-          exactTimetable.markModified('scheduled_subjects');
-        }
-      } else {
-        exam.exam_subject_status = 'ended';
-        exam.markModified('exam_subject_status');
-        if (subject && exactTimetable) {
-          subject.exam_subject_status = 'ended';
-          exactTimetable.markModified('scheduled_subjects');
-          console.log('CRON subject:', subject);
-        }
-      }
+//       if (now < exam.obj_start_time) {
+//         exam.exam_subject_status = 'not_started';
+//         exam.markModified('exam_subject_status');
+//         if (subject && exactTimetable) {
+//           subject.exam_subject_status = 'not_started';
+//           exactTimetable.markModified('scheduled_subjects');
+//         }
+//       } else {
+//         exam.exam_subject_status = 'ended';
+//         exam.markModified('exam_subject_status');
+//         if (subject && exactTimetable) {
+//           subject.exam_subject_status = 'ended';
+//           exactTimetable.markModified('scheduled_subjects');
+//           console.log('CRON subject:', subject);
+//         }
+//       }
 
-      exam.markModified('exam_subject_status');
-      await exam.save();
-      if (exactTimetable) {
-        await exactTimetable.save();
-      }
-    }
+//       exam.markModified('exam_subject_status');
+//       await exam.save();
+//       if (exactTimetable) {
+//         await exactTimetable.save();
+//       }
+//     }
 
-    console.log(`[CRON]: Status updated at ${now.toISOString()}`);
-  });
-};
+//     console.log(`[CRON]: Status updated at ${now.toISOString()}`);
+//   });
+// };
 
-export { examStatusUpdatejob };
+// export { examStatusUpdatejob };

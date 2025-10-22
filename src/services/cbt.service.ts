@@ -209,6 +209,31 @@ const fetchTermCbtAssessmentDocument = async (
   }
 };
 
+const termCbtAssessmentDocumentEnding = async (
+  exam_document_id: mongoose.Types.ObjectId
+) => {
+  try {
+    const examDocExist = await CbtExam.findByIdAndUpdate(
+      {
+        _id: exam_document_id,
+      },
+      {
+        is_active: false,
+      },
+      { new: true }
+    );
+
+    return examDocExist;
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw new AppError(`${error.message}`, 400);
+    } else {
+      console.error(error);
+      throw new Error('Something went wrong');
+    }
+  }
+};
+
 const fetchCbtAssessmentDocumentById = async (cbt_document_id: string) => {
   try {
     const cbtAssessmentDocExist = await CbtExam.findById(cbt_document_id);
@@ -518,13 +543,19 @@ const termClassCbtAssessmentTimetableCreation = async (
       term: term,
       level: classExist.level,
       assessment_type: assessment_type.toLowerCase(),
-      is_active: true,
+      // is_active: true,
     });
 
-    console.log('cbtExamExist:', cbtExamExist);
     if (!cbtExamExist) {
       throw new AppError(
         `Reach out to the school management to initialize processes before continuing.`,
+        400
+      );
+    }
+
+    if (cbtExamExist.is_active !== true) {
+      throw new AppError(
+        'Exam has been finalized by the school authority.',
         400
       );
     }
@@ -576,9 +607,6 @@ const termClassCbtAssessmentTimetableCreation = async (
       const currentTime = new Date();
       const entryStartTime = new Date(entry.start_time);
 
-      console.log('currentTime:', currentTime);
-      console.log('entryStartTime:', entryStartTime);
-
       const entryDateOnly = new Date(
         entryStartTime.getFullYear(),
         entryStartTime.getMonth(),
@@ -597,9 +625,6 @@ const termClassCbtAssessmentTimetableCreation = async (
           400
         );
       }
-
-      console.log('currentDateOnly:', currentDateOnly);
-      console.log('entryDateOnly:', entryDateOnly);
     }
 
     if (timetableExist) {
@@ -926,12 +951,19 @@ const objQestionSetting = async (
       term: term,
       level: classExist.level,
       assessment_type: assessment_type.toLowerCase(),
-      is_active: true,
+      // is_active: true,
     });
 
     if (!examDocExist) {
       throw new AppError(
         `Question submission has not being authorized by the school. Please reach out to the school authority.`,
+        400
+      );
+    }
+
+    if (examDocExist.is_active !== true) {
+      throw new AppError(
+        'Exam has been finalized by the school authority.',
         400
       );
     }
@@ -1253,8 +1285,6 @@ const studentCbtSubjectCbtAssessmentAuthorization = async (
     //   questionExist.obj_final_cutoff_time
     // ).getTime();
 
-    console.log('current_time:', current_time);
-
     if (current_time < start_time) {
       throw new AppError(
         `You cannot authorize the start of the exam before the scheduled time. Exam Start time: ${questionExist.obj_start_time}`,
@@ -1342,8 +1372,6 @@ const studentCbtSubjectCbtAssessmentAuthorization = async (
         },
       }
     );
-
-    console.log('savedTimetable:', savedTimetable);
 
     const ids = questionExist.allowed_students.map((id) => id);
 
@@ -1435,16 +1463,20 @@ const subjectCbtObjCbtAssessmentStarting = async (
       academic_session_id: academicSessionExist._id,
       term: term,
       level: classExist.level,
-      is_active: true,
+      // is_active: true,
     }).session(session);
 
     if (!examDocExist) {
       throw new AppError(`Exam has not being authorized to start.`, 403);
     }
 
-    console.log('examDocExist:', examDocExist._id);
-    console.log('term:', term);
-    console.log('subjectId:', subjectId);
+    if (examDocExist.is_active !== true) {
+      throw new AppError(
+        'Exam has been finalized by the school authority.',
+        400
+      );
+    }
+
     const exam = await CbtQuestion.findOne({
       academic_session_id: academic_session_id,
       term: term,
@@ -1452,7 +1484,6 @@ const subjectCbtObjCbtAssessmentStarting = async (
       subject_id: subjectId,
       class_id: classId,
     }).session(session);
-    console.log('exam:', exam);
 
     if (!exam) {
       throw new AppError(`${term} Exam question not found.`, 400);
@@ -1461,10 +1492,6 @@ const subjectCbtObjCbtAssessmentStarting = async (
     const studentAuthorized = exam.allowed_students.find(
       (a) => a.toString() === studentExist._id.toString()
     );
-
-    console.log('exam.allowed_students:', exam.allowed_students);
-    console.log('studentAuthorized:', studentAuthorized);
-    console.log('studentExist._id:', studentExist._id);
 
     if (!studentAuthorized) {
       throw new AppError(
@@ -1521,8 +1548,6 @@ const subjectCbtObjCbtAssessmentStarting = async (
     const studentStartTime = new Date();
     const examDurationInMs = findSubjectTimetable.duration * 1000;
     const end_time = new Date(current_time + examDurationInMs);
-    console.log('end_time:', end_time);
-    console.log('start_time:', start_time);
 
     if (current_time < start_time) {
       throw new AppError(
@@ -1574,8 +1599,6 @@ const subjectCbtObjCbtAssessmentStarting = async (
           selected_answer: null,
           correct_answer: q.correct_answer,
         }));
-
-      console.log('shuffledQuestions:', shuffledQuestions);
 
       result = new CbtResult({
         exam_id: examDocExist._id,
@@ -1646,8 +1669,6 @@ const subjectCbtObjCbtAssessmentStarting = async (
       sanitizedQuestions,
     };
 
-    console.log('exam starting returnObj:', returnObj);
-
     await actualExamTimeTable.save({ session });
     await session.commitTransaction();
     session.endSession();
@@ -1689,6 +1710,13 @@ const subjectCbtObjCbtAssessmentUpdate = async (
       throw new AppError(`Exam has not being authorized to start.`, 403);
     }
 
+    if (examDocExist.is_active !== true) {
+      throw new AppError(
+        'Exam has been finalized by the school authority.',
+        400
+      );
+    }
+
     let result = await CbtResult.findOne({
       _id: cbtResultId,
       exam_id: examDocExist._id,
@@ -1724,8 +1752,6 @@ const subjectCbtObjCbtAssessmentUpdate = async (
       );
     }
 
-    console.log('Exam CBT selected answer is being updated here');
-
     const questionMap = new Map(
       result.shuffled_obj_questions.map((q) => [q._id.toString(), q])
     );
@@ -1741,10 +1767,6 @@ const subjectCbtObjCbtAssessmentUpdate = async (
     await result.save();
 
     // const { shuffled_obj_questions, ...others } = result.toJSON();
-    console.log(
-      'what is being sent back after update is successful:'
-      // shuffled_obj_questions
-    );
 
     // const sanitizedQuestions = shuffled_obj_questions.map(
     //   ({ correct_answer, question_original_number, score, ...rest }) => rest
@@ -1795,6 +1817,13 @@ const subjectCbtObjCbtAssessmentRemainingTimeUpdate = async (
       throw new AppError(`Exam has not being authorized to start.`, 403);
     }
 
+    if (examDocExist.is_active !== true) {
+      throw new AppError(
+        'Exam has been finalized by the school authority.',
+        400
+      );
+    }
+
     let result = await CbtResult.findOne({
       _id: cbtResultId,
       exam_id: examDocExist._id,
@@ -1829,8 +1858,6 @@ const subjectCbtObjCbtAssessmentRemainingTimeUpdate = async (
         400
       );
     }
-
-    console.log('Exam CBT remaining time is being updated here');
 
     result.obj_time_left = remaining_time;
 
@@ -1887,12 +1914,9 @@ const subjectCbtObjCbtAssessmentRemainingTimeUpdate = async (
 //       throw new AppError(`Result does not exist.`, 404);
 //     }
 
-//     console.log('result.obj_status:', result.obj_status);
-
 //     const notStarted = result.obj_status === examStatusEnum[0];
 //     const isSubmitted = result.obj_status === examStatusEnum[2];
 //     if (notStarted || isSubmitted) {
-//       console.log('result.obj_status:', result.obj_status);
 //       throw new AppError(
 //         'This subject exam is not in-progress. It is either completed or ended. Here',
 //         400
@@ -2179,8 +2203,6 @@ const subjectCbtObjCbtAssessmentSubmission = async (
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    console.log('I am being called 1...');
-
     const { cbt_result_id, exam_id, result_doc, student_id, trigger_type } =
       payload;
 
@@ -2194,15 +2216,19 @@ const subjectCbtObjCbtAssessmentSubmission = async (
       throw new AppError('Student not found.', 404);
     }
 
-    console.log('student Email:', studentExist.email);
-    console.log('student Email:', studentExist._id);
-
     const examDocExist = await CbtExam.findById({
       _id: examId,
     }).session(session);
 
     if (!examDocExist) {
       throw new AppError(`Exam has not being authorized to start.`, 403);
+    }
+
+    if (examDocExist.is_active !== true) {
+      throw new AppError(
+        'Exam has been finalized by the school authority.',
+        400
+      );
     }
 
     let result = await CbtResult.findOne({
@@ -2219,13 +2245,11 @@ const subjectCbtObjCbtAssessmentSubmission = async (
     const isSubmitted = result.obj_status === examStatusEnum[2];
     // I WILL UNCOMMENT LATER
     if (notStarted || isSubmitted) {
-      console.log('result.obj_status:', result.obj_status);
       throw new AppError(
         'This subject exam is not in-progress. It is either completed or ended.',
         400
       );
     }
-    console.log('I am being called 2...');
 
     const current_time = Date.now();
     const start_time = new Date(result.obj_start_time).getTime();
@@ -2244,8 +2268,6 @@ const subjectCbtObjCbtAssessmentSubmission = async (
     if (current_time > finalSubmission) {
       throw new AppError(`Exam is over.`, 401);
     }
-
-    console.log('I am being called 3...');
 
     // START CHECKING TRIGGER TYPE HERE
     if (trigger_type === triggerTypeEnum[0]) {
@@ -2266,8 +2288,6 @@ const subjectCbtObjCbtAssessmentSubmission = async (
       result.obj_time_left = result.obj_time_left;
       result.obj_status = examStatusEnum[3];
     }
-
-    console.log('I am being called 4...');
 
     const questionMap = new Map(
       result.shuffled_obj_questions.map((q) => [q._id.toString(), q])
@@ -2296,8 +2316,6 @@ const subjectCbtObjCbtAssessmentSubmission = async (
       0
     );
 
-    console.log('I am being called 5...');
-
     const resultSettings = await ResultSetting.findOne({
       level: result.level,
     }).session(session);
@@ -2307,7 +2325,6 @@ const subjectCbtObjCbtAssessmentSubmission = async (
     }
 
     const exam_component_name = resultSettings?.exam_components.exam_name;
-    console.log('I am being called 6...');
 
     let objKeyName;
     let testName: string;
@@ -2345,7 +2362,6 @@ const subjectCbtObjCbtAssessmentSubmission = async (
     }
 
     const rawPercentage = (totalStudentScore / totalPossibleScore) * 100;
-    console.log('I am being called 7...');
 
     const maxObjectivePercent = objKeyName?.percentage; // we get this from the result settings of the school
     const convertedScore = totalPossibleScore
@@ -2359,7 +2375,6 @@ const subjectCbtObjCbtAssessmentSubmission = async (
 
     result.markModified('shuffled_obj_questions');
     await result.save({ session });
-    console.log('I am being called 8...');
 
     await session.commitTransaction();
     session.endSession();
@@ -2390,7 +2405,6 @@ const subjectCbtObjCbtAssessmentSubmission = async (
     };
 
     studentResultQueue.add(name, data, opts);
-    console.log('I am being called 9...');
 
     return result;
   } catch (error) {
@@ -2471,6 +2485,13 @@ const theoryQestionSetting = async (
     if (!examDocExist) {
       throw new AppError(
         `Question submission has not being authorized by the school. Please reach out to the school authority.`,
+        400
+      );
+    }
+
+    if (examDocExist.is_active !== true) {
+      throw new AppError(
+        'Exam has been finalized by the school authority.',
         400
       );
     }
@@ -2647,6 +2668,7 @@ export {
   termCbtAssessmentDocumentCreation,
   objQestionSetting,
   theoryQestionSetting,
+  termCbtAssessmentDocumentEnding,
   fetchTermCbtAssessmentDocument,
   fetchCbtAssessmentDocumentById,
   fetchAllClassCbtAssessmentTimetables,

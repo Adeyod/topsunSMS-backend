@@ -126,12 +126,9 @@ const getUserTokenDetails = async (
 const getUserRefreshTokenDetails = async (
   user_id: string | mongoose.Types.ObjectId
 ): Promise<RefreshTokenType> => {
-  console.log('user_id', typeof user_id);
-  console.log('user_id', user_id);
   const objectId = new mongoose.Types.ObjectId(user_id);
 
   const findToken = await RefreshToken.findOne({ user_id: objectId });
-  console.log('findToken', findToken);
 
   return findToken as RefreshTokenType;
 };

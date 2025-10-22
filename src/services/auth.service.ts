@@ -101,7 +101,6 @@ const registerNewUser = async (payload: UserDocument) => {
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
-      // console.log('error:', error);
       throw new Error('Something went wrong');
     }
   }
@@ -153,7 +152,6 @@ const userEmailVerification = async (token: string) => {
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
-      // console.log('error:', error);
       throw new Error('Something went wrong');
     }
   }
@@ -293,7 +291,6 @@ const userLogin = async (
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
-      // console.log('error:', error);
       throw new Error('Something went wrong');
     }
   }
@@ -339,7 +336,6 @@ const generateAnotherAccessToken = async (token: string) => {
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
-      // console.log('error:', error);
       throw new Error('Something went wrong');
     }
   }
@@ -401,7 +397,6 @@ const forgotPass = async (email: string): Promise<UserDocument> => {
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
-      // console.log('error:', error);
       throw new Error('Something went wrong');
     }
   }
@@ -416,8 +411,6 @@ const sendingEmailVerificationToken = async (
     if (!findUser) {
       throw new AppError('User does not exist', 404);
     }
-
-    console.log('USER DOCUMENT:', findUser);
 
     if (findUser.is_verified === true) {
       throw new AppError('User already verified', 400);
@@ -461,7 +454,6 @@ const sendingEmailVerificationToken = async (
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
-      // console.log('error:', error);
       throw new Error('Something went wrong');
     }
   }
@@ -526,7 +518,6 @@ const changeUserPassword = async (
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
-      // console.log('error:', error);
       throw new Error('Something went wrong');
     }
   }
@@ -535,8 +526,6 @@ const changeUserPassword = async (
 const loggingUserOut = async (payload: LogoutPayload) => {
   try {
     const decoded = jwt.decode(payload.access_token) as jwt.JwtPayload | null;
-
-    console.log('decoded:', decoded);
 
     // If decode failed (invalid or expired token), fallback
     if (!decoded || !decoded.exp) {
@@ -558,18 +547,13 @@ const loggingUserOut = async (payload: LogoutPayload) => {
       decodeRefreshToken.userId
     );
 
-    console.log('findToken:', findToken);
-
     if (findToken) {
       const compareToken = await bcrypt.compare(
         payload.refresh_token,
         findToken.token
       );
 
-      console.log('compareToken:', compareToken);
-
       if (compareToken) {
-        console.log('Refresh token matched. Removing it.');
         await RefreshToken.findByIdAndDelete({ _id: findToken._id });
       }
     } else {
@@ -588,7 +572,6 @@ const loggingUserOut = async (payload: LogoutPayload) => {
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
-      console.log('error:', error);
       throw new Error('Something went wrong');
     }
   }

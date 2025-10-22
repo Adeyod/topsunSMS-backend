@@ -1297,8 +1297,6 @@ const schoolCreationValidation = <T extends SchoolCreationValidationType>(
   const { error, value } = validationSchema.validate(payload);
 
   if (error) {
-    console.log('Joi Validation Error:', error);
-    console.log('Joi:', error.details[0].message);
     return { success: false, error: error.details[0].message };
   }
   return { success: true, value };

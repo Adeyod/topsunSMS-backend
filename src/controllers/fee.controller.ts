@@ -33,8 +33,6 @@
 //     throw new AppError('Unable to create school fees.', 400);
 //   }
 
-//   console.log('result:', result);
-
 //   return res.status(201).json({
 //     message: `${class_level} school fees created successfully`,
 //     success: true,

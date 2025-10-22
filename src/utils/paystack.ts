@@ -31,8 +31,6 @@ const createCustomerPaystackAccount = async (
     },
   });
   try {
-    console.log('secret:', secret);
-
     const response = await axios.post(
       'https://api.paystack.co/customer',
       paystackParam,
@@ -43,8 +41,6 @@ const createCustomerPaystackAccount = async (
         },
       }
     );
-
-    console.log('response:', response);
   } catch (error) {
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
@@ -73,13 +69,10 @@ const openDedicatedVirtualAccount = async (student_paystack_id: string) => {
         },
       }
     );
-
-    console.log('response:', response);
   } catch (error) {
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
-      console.log(error);
       throw new Error('Something went wrong');
     }
   }

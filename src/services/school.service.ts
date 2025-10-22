@@ -136,7 +136,6 @@ import CbtCutoff from '../models/cbt_cutoffs.model';
 //       { new: true }
 //     );
 
-//     console.log('updatedSchool:', updateSchool);
 //     return updateSchool;
 //   } catch (error) {
 //     if (error instanceof AppError) {
@@ -196,10 +195,7 @@ import CbtCutoff from '../models/cbt_cutoffs.model';
 //       });
 //     }
 
-//     console.log(
-//       'findSchool.principal_signature_per_term:',
-//       findSchool.principal_signature_per_term
-//     );
+//
 //     await findSchool.save();
 //     return findSchool;
 //   } catch (error) {
@@ -229,8 +225,6 @@ const classLevelsCreation = async (payload: ClassLevelCreationPayloadType) => {
     if (!newClassLevel) {
       throw new AppError('Unable to create class level for this school.', 400);
     }
-
-    console.log('newClassLevel:', newClassLevel);
 
     return newClassLevel;
   } catch (error) {
@@ -344,8 +338,6 @@ const resultSettingCreation = async (
       (a) => a.percentage === 0 || a.percentage === null
     );
 
-    console.log('emptyExamPercentage:', emptyExamPercentage);
-
     if (emptyExamPercentage) {
       throw new AppError(
         `Please provide percentage value for ${emptyExamPercentage.name}.`,
@@ -406,7 +398,6 @@ const resultSettingCreation = async (
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
-      console.log(error);
       throw new Error('Something happened.');
     }
   }

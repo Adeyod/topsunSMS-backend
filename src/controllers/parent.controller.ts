@@ -324,8 +324,6 @@ const getAllParents = catchErrors(async (req, res) => {
 
   // await saveLog(savelogPayload);
 
-  console.log('Parents:', result);
-
   return res.status(200).json({
     message: 'Parents fetched successfully',
     success: true,

@@ -88,7 +88,6 @@ const createResult = async (payload: ResultCreationType) => {
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
-      console.log(error);
       throw new Error('Something happened.');
     }
   }
@@ -185,8 +184,6 @@ const recordScore = async (
       class_id,
       // session,
     } = payload;
-
-    console.log(`I want to record for ${score_name} now`);
 
     const subjectId = Object(subject_id);
     const teacherId = Object(teacher_id);
@@ -311,8 +308,6 @@ const recordScore = async (
         subject_teacher: teacherId,
         term_results: [{ term, scores: [scoreObj] }],
       });
-
-      console.log('inside if studentSubjectResult:', studentSubjectResult);
     } else {
       let termResult = studentSubjectResult.term_results.find(
         (t) => t.term === term
@@ -340,10 +335,8 @@ const recordScore = async (
         if (!existingScore) {
           termResult.scores.push(scoreObj);
         }
-        console.log('Appended score to existing term:', term);
       }
       // studentSubjectResult.term_results.scores.push(scoreObj);
-      // console.log('inside else studentSubjectResult:', studentSubjectResult);
     }
 
     studentSubjectResult.markModified('term_results');
@@ -354,10 +347,6 @@ const recordScore = async (
     //   console.error('Error saving SubjectResult:', error);
     //   throw error;
     // }
-    console.log(
-      'after full recording studentSubjectResult:',
-      studentSubjectResult
-    );
 
     return studentSubjectResult as SubjectResultDocument;
   } catch (error) {
@@ -385,7 +374,6 @@ const recordCumScore = async (
       // session,
     } = payload;
 
-    console.log(`I want to record for last_term_cumulative now`);
     const studentExist = await Student.findById({
       _id: student_id,
     });
@@ -403,10 +391,7 @@ const recordCumScore = async (
       throw new AppError('Session not found or it is not active.', 404);
     }
 
-    console.log('sessionActive:', sessionActive.terms);
     const checkActiveTerm = sessionActive.terms.find((t) => t.name === term);
-
-    console.log('checkActiveTerm:', checkActiveTerm);
 
     if (checkActiveTerm?.is_active === false) {
       throw new AppError('Term is not active.', 400);
@@ -494,7 +479,6 @@ const recordCumScore = async (
     const gradingArray = resultSettings.grading_and_remark;
 
     const sortedGrades = gradingArray.sort((a, b) => b.value - a.value);
-    console.log('sortedGrades:', sortedGrades);
 
     let grade = 'F';
     let remark = 'Fail';
@@ -518,14 +502,11 @@ const recordCumScore = async (
 
     const updatedResult = await resultExist.save();
 
-    console.log('updatedResult:', updatedResult);
-
     return updatedResult as SubjectResultDocument;
   } catch (error) {
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
-      console.log(error);
       throw new Error('Something happened.');
     }
   }
@@ -544,10 +525,6 @@ const processStudentResultUpdate = async (payload: ResultJobData) => {
     score_name,
   } = payload;
   try {
-    console.log(
-      `Updating result for student: ${student_id}, subject: ${subject_id}, term: ${term}`
-    );
-
     const resultExist = await Result.findOne({
       enrolment: class_enrolment_id,
       student: student_id,
@@ -580,18 +557,13 @@ const processStudentResultUpdate = async (payload: ResultJobData) => {
     };
 
     if (!termExistInResultDoc) {
-      console.log('There is no term result yet:');
-
       termExistInResultDoc = {
         term,
         cumulative_score: 0,
         subject_results: [subjectObj],
         class_position: '',
       };
-      console.log(
-        'There is no term result yet:',
-        termExistInResultDoc.subject_results
-      );
+
       resultExist.term_results.push(termExistInResultDoc);
     } else {
       let subjectResult = termExistInResultDoc.subject_results.find(
@@ -599,8 +571,6 @@ const processStudentResultUpdate = async (payload: ResultJobData) => {
       );
 
       if (!subjectResult) {
-        console.log('There is no subject result yet:');
-
         subjectResult = {
           subject: Object(subject_id),
           subject_teacher: Object(teacher_id),
@@ -617,8 +587,6 @@ const processStudentResultUpdate = async (payload: ResultJobData) => {
           subjectResult,
         ];
       } else {
-        console.log('There is subject result:');
-
         let existingScore = subjectResult.scores.find(
           (s) => s.score_name === score_name
         );
@@ -643,9 +611,7 @@ const processStudentResultUpdate = async (payload: ResultJobData) => {
     resultExist.markModified('term_results.subject_results.scores');
 
     const updatedResult = await resultExist.save();
-    console.log(
-      `Completed Updating result for student: ${student_id}, subject: ${subject_id}, term: ${term}`
-    );
+
     return { student_id, updated: true };
   } catch (error) {
     console.error('Failed to process student result update:', error);
@@ -669,12 +635,6 @@ const processStudentExamResultUpdate = async (
     exam_component_name,
   } = payload;
   try {
-    console.log(
-      `Updating exam result for student: ${student_id}, subject: ${subject_id}, term: ${term}`
-    );
-
-    console.log('resultObj:', resultObj);
-
     const resultExist = await Result.findOne({
       enrolment: class_enrolment_id,
       student: student_id,
@@ -708,18 +668,13 @@ const processStudentExamResultUpdate = async (
     };
 
     if (!termExistInResultDoc) {
-      console.log('There is no term result yet:');
-
       termExistInResultDoc = {
         term,
         cumulative_score: 0,
         subject_results: [subjectObj],
         class_position: '',
       };
-      console.log(
-        'There is no term result yet:',
-        termExistInResultDoc.subject_results
-      );
+
       resultExist.term_results.push(termExistInResultDoc);
     } else {
       let subjectResult = termExistInResultDoc.subject_results.find(
@@ -727,8 +682,6 @@ const processStudentExamResultUpdate = async (
       );
 
       if (!subjectResult) {
-        console.log('There is no subject result yet:');
-
         subjectResult = {
           subject: Object(subject_id),
           subject_teacher: Object(teacher_id),
@@ -745,8 +698,6 @@ const processStudentExamResultUpdate = async (
           subjectResult,
         ];
       } else {
-        console.log('There is subject result:');
-
         let existingScore = subjectResult.scores.find(
           (s) => s.score_name === scoreObj.score_name
         );
@@ -798,9 +749,7 @@ const processStudentExamResultUpdate = async (
     resultExist.markModified('term_results.subject_results.scores');
 
     const updatedResult = await resultExist.save();
-    console.log(
-      `Completed Updating result for student: ${student_id}, subject: ${subject_id}, term: ${term}`
-    );
+
     return { student_id, updated: true };
   } catch (error) {
     console.error('Failed to process student result update:', error);
@@ -845,10 +794,6 @@ const processStudentSubjectPositionUpdate = async (
     }
 
     await sessionResult?.save();
-    console.log(
-      'actualSubject.subject_position:',
-      actualSubject?.subject_position
-    );
 
     // const obj = {
     //   studentId: student.student._id,
@@ -1039,19 +984,15 @@ const processCbtAssessmentResultSubmission = async (
           testObj?.score_name.trim().toLowerCase()
       );
 
-      console.log('hasRecordedExamScore:', hasRecordedExamScore);
-
       if (hasRecordedExamScore) {
         console.log(
           `Score for ${testObj.score_name} has been recorded for this student.`
         );
       } else {
         termResult?.scores.push(testObj);
-        console.log('termResult:', termResult);
       }
     } else {
       // do for exam
-      console.log('Iam doing for exam...');
 
       const exam_components = resultSettings?.exam_components.component;
 

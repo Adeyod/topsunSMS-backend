@@ -26,7 +26,7 @@ import parentRoute from './routes/parent.route';
 import schoolRoute from './routes/school.route';
 import subjectRoute from './routes/subject.route';
 import teacherRoute from './routes/teacher.route';
-import { examStatusUpdatejob } from './utils/cron_jobs';
+// import { examStatusUpdatejob } from './utils/cron_jobs';
 import { registerCbtHandlers } from './sockets/cbtSocketHandlers';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -112,7 +112,7 @@ app.get('/', (req, res) => {
   });
 });
 
-examStatusUpdatejob();
+// examStatusUpdatejob();
 const io = new Server(httpServer, {
   cors: {
     origin: allowedOrigins,

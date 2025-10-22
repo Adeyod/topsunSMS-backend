@@ -109,8 +109,6 @@ const createAClass = catchErrors(async (req, res) => {
     section,
   } = req.body;
 
-  console.log('req.body:', req.body);
-
   const payload = { name, description, level, section };
 
   const result = joiValidation(payload, 'create-class');

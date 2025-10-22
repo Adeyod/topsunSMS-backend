@@ -31,11 +31,6 @@
 //     //   name: { $in: optionalSubjectsLower },
 //     // });
 
-//     // console.log('compulsorySubjectsIds length', compulsorySubjectsIds.length);
-//     // console.log('compulsorySubjectsIds', compulsorySubjectsIds);
-//     // console.log('compare length', compulsory_subjects.length);
-//     // console.log('compare length', compulsory_subjects);
-
 //     const compulsorySubjectsNames = compulsorySubjectsIds.map((s) => s.name);
 
 //     const invalidSubjects = compulsory_subjects.filter(
@@ -174,20 +169,11 @@ const classCreation = async (
     //   name: { $in: optionalSubjectsLower },
     // });
 
-    console.log('compulsorySubjectsIds length', compulsorySubjectsIds.length);
-    // console.log('compulsorySubjectsIds', compulsorySubjectsIds);
-    console.log('compare length', compulsory_subjects.length);
-    // console.log('compare length', compulsory_subjects);
-
     const compulsorySubjectsNames = compulsorySubjectsIds.map((s) => s.name);
-
-    console.log('compulsorySubjectsNames:', compulsorySubjectsNames);
 
     const invalidSubjects = compulsory_subjects.filter(
       (subject) => !compulsorySubjectsNames.includes(subject.toLowerCase())
     );
-
-    console.log('invalidSubjects:', invalidSubjects);
 
     if (invalidSubjects?.length > 0) {
       throw new AppError(
@@ -226,8 +212,6 @@ const classCreation = async (
       compulsory_subjects: compulsorySubjectsIds,
       // optional_subjects: optionalSubjectsIds,
     }).save();
-
-    console.log('newClass:', newClass);
 
     return newClass as unknown as ClassDocument;
   } catch (error) {

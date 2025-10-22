@@ -69,7 +69,6 @@ const createNewTerm = catchErrors(async (req, res) => {
   const formattedName = name.toLowerCase().split(' ');
 
   const fName = formattedName[0] + '_' + formattedName[1];
-  console.log('fName: ', fName);
 
   const payload = {
     start_date,

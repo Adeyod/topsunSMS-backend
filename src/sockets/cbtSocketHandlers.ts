@@ -20,8 +20,6 @@ dotenv.config();
 
 const jwt_access_secret = process.env.JWT_ACCESS_SECRET;
 export const registerCbtHandlers = (io: Server, socket: Socket) => {
-  console.log(`CBT socket connected: ${socket.id}`);
-
   socket.on('start-exam', async (payload, callback) => {
     try {
       const { accessToken, term, subject_id, academic_session_id, class_id } =
@@ -122,7 +120,6 @@ export const registerCbtHandlers = (io: Server, socket: Socket) => {
 
   socket.on('submit-exam', async (payload, callback) => {
     try {
-      console.log('I am being called...');
       const { accessToken, cbt_result_id, exam_id, result_doc, trigger_type } =
         payload;
       if (!accessToken) {
@@ -158,8 +155,6 @@ export const registerCbtHandlers = (io: Server, socket: Socket) => {
       //     delay: 3000,
       //   },
       // };
-
-      console.log('payload:', data);
 
       const result = await subjectCbtObjCbtAssessmentSubmission(data);
       // const result = await studentResultQueue.add(name, data, opts);

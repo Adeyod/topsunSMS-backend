@@ -13,6 +13,7 @@ import {
   startSubjectCbtObjCbtAssessmentForAClass,
   setSubjectCbtObjQuestionsForAClass,
   createTermCbtAssessmentDocument,
+  endTermCbtAssessmentDocument,
   setSubjectCbtTheroyQuestionsForAClass,
   getAllCbtAssessmentDocument,
   endTakingASubjectInATimetableForATerm,
@@ -33,6 +34,13 @@ router.post(
   permission(['super_admin']),
   developerProtected,
   createTermCbtAssessmentDocument
+);
+
+router.put(
+  '/end-term-exam-document/:exam_document_id',
+  permission(['super_admin']),
+  developerProtected,
+  endTermCbtAssessmentDocument
 );
 
 router.get(

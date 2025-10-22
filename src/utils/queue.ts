@@ -32,8 +32,6 @@ const isDocker = process.env.DOCKER_ENV === 'true';
 
 const redisUrl = process.env.REDIS_URL;
 
-console.log('REDIS URL:', redisUrl);
-
 if (!redisUrl) {
   throw new Error('REDIS_URL is not defined...');
 }
@@ -48,8 +46,6 @@ const redisOptions: RedisOptions = {
   maxRetriesPerRequest: null,
 };
 
-console.log('REDIS URL:', redisUrl);
-console.log('Connecting to Redis using:', redisOptions);
 const connection = new Redis(redisOptions);
 
 const emailQueue = new Queue('emailQueue', { connection });

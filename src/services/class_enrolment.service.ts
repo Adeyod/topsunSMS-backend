@@ -85,14 +85,11 @@ const enrolStudentToClass = async (
     );
 
     const flattenedSelectedSubjects = subjects_to_offer_array.map((s) => s);
-    console.log('flattenedSelectedSubjects:', flattenedSelectedSubjects);
 
     const hasInvalidSubjects = flattenedSelectedSubjects.filter(
       (id) =>
         !flattenedSubjects.map((s) => s.toString()).includes(id.toString())
     );
-
-    console.log('hasInvalidSubjects:', hasInvalidSubjects);
 
     if (hasInvalidSubjects.length > 0) {
       throw new AppError(
@@ -129,7 +126,6 @@ const enrolStudentToClass = async (
     } else {
       actualClassEnrolment.students.push(studentObj);
       result = actualClassEnrolment;
-      console.log('result: ', result);
 
       await ClassEnrolment.updateOne(
         { _id: actualClassEnrolment._id },
@@ -140,7 +136,7 @@ const enrolStudentToClass = async (
         },
         { session }
       );
-      console.log('result 2: ', result);
+
       result = await ClassEnrolment.findById(actualClassEnrolment._id).session(
         session
       );
@@ -220,8 +216,6 @@ const enrolManyStudentsToClass = async (
       academic_session_id: academic_session_id,
     }).session(session);
 
-    // console.log('alreadyEnrolledStudents:', alreadyEnrolledStudents);
-
     if (alreadyEnrolledStudents.length > 0) {
       const enrolledStudentIds = alreadyEnrolledStudents.flatMap((enrolment) =>
         enrolment.students.map((student) => student.student.toString())
@@ -263,18 +257,12 @@ const enrolManyStudentsToClass = async (
       (subject) => new mongoose.Types.ObjectId(subject)
     );
 
-    // console.log(
-    //   'compulsorySubjects?.compulsory_subjects',
-    //   compulsorySubjects?.compulsory_subjects
-    // );
-
     const studentsToEnrol = student_ids?.map((student_id) => ({
       student: Object(student_id),
       term,
       subjects_offered: flattenedSubjects,
     }));
 
-    // console.log('studentsToEnrol', studentsToEnrol);
     if (!studentsToEnrol) {
       throw new AppError('Error mapping over student IDs', 400);
     }
@@ -299,14 +287,10 @@ const enrolManyStudentsToClass = async (
       const newEnrolment = studentsToEnrol.map((s) => {
         actualClassEnrolment.students.push(s);
       });
-      // console.log('newEnrolment', newEnrolment);
       result = actualClassEnrolment;
     }
 
-    // console.log(actualClassEnrolment instanceof mongoose.Document); // Should log "true"
-
     await result.save({ session });
-    console.log('result', result);
 
     const bulkUpdateOps = student_ids?.map((student_id) => ({
       updateOne: {
@@ -365,7 +349,6 @@ const fetchSingleEnrollment = async (
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
-      console.log(error);
       throw new Error('Something went wrong');
     }
   }
@@ -576,7 +559,6 @@ const fetchAllStudentsInAClassInActiveSession = async (
     }
 
     if (userRole === 'teacher') {
-      console.log('classExist:', classExist);
       if (classExist.class_teacher !== userId) {
         throw new AppError(
           `You are not the class teacher of ${classExist.name} and as such you are not allowed to view this resource.`,

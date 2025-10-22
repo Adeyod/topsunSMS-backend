@@ -29,7 +29,6 @@ const cloudinaryUploads = async (
       options,
       (error: any, result: UploadApiResponse | undefined) => {
         if (error) {
-          console.log('upload error', error);
           return reject(
             new Error(`Cloudinary upload error: ${error.message || error}`)
           );

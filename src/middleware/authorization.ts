@@ -27,7 +27,6 @@ const permission = (
 
       const userId = req.user.userId;
       const userRole = req.user.userRole;
-      console.log('userRole:', userRole);
 
       const model = roleModels[userRole];
 
@@ -64,8 +63,6 @@ const permission = (
 //       school: school_id,
 //       [`features.${featurePath}`]: true,
 //     });
-
-//     console.log('access:', access);
 
 //     if (!access) {
 //       throw new AppError('You do not have access to this resource.', 400);

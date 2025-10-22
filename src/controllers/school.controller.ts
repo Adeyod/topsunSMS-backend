@@ -31,8 +31,6 @@ const createClassLevels = catchErrors(async (req, res) => {
 
   const { success, value, error } = validateInput;
 
-  console.log('validateInput:', validateInput);
-
   if (success === false && error) {
     throw new AppError(error, 400);
   }
@@ -108,8 +106,6 @@ const createResultSetting = catchErrors(async (req, res) => {
 
 const createCutoffMinutes = catchErrors(async (req, res) => {
   const { first_cutoff_minutes, last_cutoff_minutes } = req.body;
-
-  console.log('req.body:', req.body);
 
   const input = {
     first_cutoff_minutes,

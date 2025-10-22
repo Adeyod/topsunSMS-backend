@@ -601,7 +601,6 @@
 //     if (error instanceof AppError) {
 //       throw new AppError(error.message, error.statusCode);
 //     } else {
-//       console.log(error);
 //       throw new Error('Something happened');
 //     }
 //   }
@@ -790,8 +789,6 @@ const fetchStudentById = async (
     await session.commitTransaction();
     session.endSession();
 
-    console.log('userObj:', userObj);
-
     return userObj as UserWithoutPassword;
   } catch (error) {
     await session.abortTransaction();
@@ -800,7 +797,6 @@ const fetchStudentById = async (
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
-      console.error(error);
       throw new Error('Something went wrong');
     }
   }
@@ -815,8 +811,6 @@ const studentUpdateDetails = async (
   session.startTransaction();
   try {
     const { home_address, student_id, parent_id, userRole } = payload;
-
-    console.log('PAYLOAD INSIDE SERVICE:', payload);
 
     const response = await Student.findById({
       _id: student_id,
@@ -842,9 +836,6 @@ const studentUpdateDetails = async (
         response.profile_image.public_url
       );
     }
-
-    console.log('STUDENT IMAGE INSIDE SERVICE SINGLE:', req.file);
-    console.log('STUDENT IMAGE INSIDE SERVICE ARRAY:', req.files);
 
     const imageUpload = await handleFileUpload(req, res);
 
@@ -933,8 +924,6 @@ const studentUpdateDetails = async (
 //       throw new AppError('Students not found.', 404);
 //     }
 
-//     console.log('i am here');
-
 //     const count = await query.clone().countDocuments();
 //     let pages = 0;
 
@@ -961,9 +950,6 @@ const studentUpdateDetails = async (
 //     const activeTerm = activeSession?.terms.find(
 //       (term) => term.is_active === true
 //     );
-
-//     console.log('activeSession:', activeSession);
-//     console.log('activeTerm:', activeTerm);
 
 //     const studentsPasswordRemoved2: StudentWithPaymentType[] =
 //       await Promise.all(
@@ -1041,8 +1027,6 @@ const fetchAllStudents = async (
 
     const findStudent = await query.sort({ createdAt: -1 });
 
-    console.log('findStudent:', findStudent);
-
     if (!findStudent || findStudent.length === 0) {
       throw new AppError('Students not found.', 404);
     }
@@ -1068,8 +1052,6 @@ const fetchAllStudents = async (
         } as StudentWithPaymentType;
       })
     );
-
-    console.log('studentsWithPayments:', studentsWithPayments);
 
     return {
       studentObj: studentsWithPayments,
@@ -1145,11 +1127,6 @@ const studentLinking = async (param: StudentLinkingType) => {
     }
 
     const studentObj = Object(student._id);
-
-    console.log(
-      'This can cause error studentObj. because i modified it.',
-      studentObj
-    );
 
     if (parent.children?.includes(studentObj)) {
       throw new AppError('This student is already linked to the parent', 400);
@@ -1267,8 +1244,6 @@ const newSessionStudentsSubscription = async (): Promise<
       .populate<{ parent_id: ParentObjType[] }>('parent_id') // Ensure correct type for populated data
       .lean();
 
-    console.log('students:', students[0]);
-
     if (!students) {
       throw new AppError('Students not found', 404);
     }
@@ -1276,8 +1251,6 @@ const newSessionStudentsSubscription = async (): Promise<
     const activeSession = await Session.findOne({
       is_active: true,
     });
-
-    console.log('activeSession:', activeSession);
 
     if (!activeSession) {
       throw new AppError('No active session found', 404);
@@ -1468,14 +1441,11 @@ const studentSessionSubscriptionUpdateByAdmin = async (
       return others;
     });
 
-    console.log('sanitizedStudents:', sanitizedStudents);
-
     return sanitizedStudents as Omit<UserDocument, 'password'>[];
   } catch (error) {
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
-      console.log(error);
       throw new Error('Something happened');
     }
   }
@@ -1509,7 +1479,6 @@ const fetchStudentsThatSubscribedToNewSession = async (level: string) => {
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
-      console.log(error);
       throw new Error('Something happened');
     }
   }
@@ -1612,8 +1581,6 @@ const fetchStudentsThatAreYetToSubscribedToNewSession = async (
     if (searchParams) {
       const regex = new RegExp(searchParams, 'i');
 
-      console.log('searchParams', searchParams);
-
       query = query.where({
         $or: [
           { first_name: { $regex: regex } },
@@ -1657,8 +1624,6 @@ const fetchStudentsThatAreYetToSubscribedToNewSession = async (
       );
     }
 
-    console.log('students:', students);
-
     const studentIds = students.flat().map((student) => {
       const { password, ...others } = student.toJSON();
       return others;
@@ -1673,7 +1638,6 @@ const fetchStudentsThatAreYetToSubscribedToNewSession = async (
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
-      console.log(error);
       throw new Error('Something happened');
     }
   }

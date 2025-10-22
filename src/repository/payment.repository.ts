@@ -42,7 +42,6 @@
 //     if (overduePayments.length > 0) {
 //       for (const payment of overduePayments) {
 //         if (remainingAmountToPay <= 0) break;
-//         console.log('this is the point here');
 
 //         const remaining_amount = payment.remaining_amount ?? 0;
 
@@ -73,7 +72,6 @@
 //         session: payload.session_id,
 //         term: payload.term,
 //       });
-//       console.log('currentTermPayment', currentTermPayment);
 
 //       if (!currentTermPayment) {
 //         throw new AppError('No payment record found for the current term', 404);
@@ -89,7 +87,6 @@
 //       if (!currentTermPayment.remaining_amount) {
 //         throw new AppError('Remaining amount field is null.', 400);
 //       }
-//       console.log('i get here');
 
 //       if (remainingAmountToPay > currentTermPayment.remaining_amount) {
 //         throw new AppError(
@@ -100,32 +97,23 @@
 
 //       // Pay for the current term with any remaining balance
 //       currentTermPayment.remaining_amount -= remainingAmountToPay;
-//       console.log(
-//         'currentTermPayment.remaining_amount',
-//         currentTermPayment.remaining_amount
-//       );
+//
 
 //       if (currentTermPayment.remaining_amount <= 0) {
 //         currentTermPayment.is_payment_complete = true;
-//         console.log(
-//           'currentTermPayment.is_payment_complete',
-//           currentTermPayment.is_payment_complete
-//         );
+//
 //         currentTermPayment.remaining_amount = 0;
 //       }
 
-//       console.log('currentTermPayment saving');
 //       await currentTermPayment.save();
 //     }
 
 //     // Save the updated student document
 //     await studentDoc.save();
-//     console.log('studentDoc saving');
 
 //     return { message: 'Payment successfully processed' };
 //   } catch (error) {
 //     if (error instanceof AppError) {
-//       console.log('AppError', error);
 //       throw new AppError(error.message, error.statusCode);
 //     } else {
 //       console.error(error);
@@ -262,22 +250,15 @@
 //       term: activeTerm?.name,
 //     });
 
-//     // console.log('response inside common paystack:', payload);
-//     // console.log('response inside common paystack:', response);
-
 //     if (!response) {
 //       throw new AppError('Payment document not found.', 404);
 //     }
 
 //     const studentPaymentDoc = response.waiting_for_confirmation.find((p) => {
-//       console.log('p.transaction_id:', p.transaction_id);
 //       return p.transaction_id === payload.reference;
 //     });
 
-//     console.log('studentPaymentDoc:', studentPaymentDoc);
-
 //     if (studentPaymentDoc) {
-//       console.log('Call back is running');
 //       // CALL THE FUNCTION THAT PROCESSES CASH PAYMENT
 //       if (
 //         !studentPaymentDoc ||
@@ -296,7 +277,6 @@
 //         teller_number: studentPaymentDoc?.transaction_id,
 //         payment_method: studentPaymentDoc?.payment_method,
 //       };
-//       // console.log('payload2:', payload2);
 
 //       const result = await calculateAndUpdateStudentPaymentDocuments(
 //         payload2,
@@ -312,8 +292,6 @@
 //         _id: studentPaymentDoc._id,
 //       };
 
-//       console.log('commonPaystackFunction Log:', receipt);
-
 //       const resultObj = {
 //         receipt,
 //         result,
@@ -326,12 +304,9 @@
 //        */
 //     } else {
 //       // THIS MEANS THAT WEBHOOK HAS DONE THE PROCESSING
-//       console.log('Webhook is running');
 //       const getFromPaymentSummary = response.payment_summary.find((p) => {
 //         p.transaction_id = payload.reference;
 //       });
-
-//       console.log('getFromPaymentSummary:', getFromPaymentSummary);
 
 //       return getFromPaymentSummary;
 //     }
@@ -396,7 +371,6 @@ const optionalFeeAdditionToPaymentDocuments = async (
     }
   }
 
-  console.log('optionalFeeAdditionToPaymentDocuments payment repo:', students);
   return students;
 };
 
@@ -424,7 +398,6 @@ const mandatoryFeeAdditionToPaymentDocuments = async (
     }
   }
 
-  console.log('mandatoryFeeAdditionToPaymentDocuments payment repo:', students);
   // return students
 };
 
@@ -463,8 +436,6 @@ const addFeeToStudentPaymentDoc = async (
     //   _id: receivingAccount,
     // });
 
-    // console.log('accountExist:', accountExist);
-
     // if (!accountExist) {
     //   throw new AppError('Account number not found.', 404);
     // }
@@ -479,7 +450,6 @@ const addFeeToStudentPaymentDoc = async (
     paymentDocExist.remaining_amount += feeObj.amount;
 
     await paymentDocExist.save({ session });
-    console.log('addFeeToStudentPaymentDoc', paymentDocExist);
     return paymentDocExist;
   } catch (error) {
     if (error instanceof AppError) {
@@ -516,8 +486,6 @@ const calculateAndUpdateStudentPaymentDocuments = async (
     // Find the student document
     const studentDoc = await Student.findById({ _id: payload.student_id });
 
-    console.log('payment_type', payment_type);
-
     if (!studentDoc) {
       throw new AppError('Student not found.', 404);
     }
@@ -538,8 +506,6 @@ const calculateAndUpdateStudentPaymentDocuments = async (
       ],
     });
 
-    console.log('overduePayments:', overduePayments);
-
     // Sort overdue payments by session and term
     overduePayments.sort((a, b) => {
       // Sort by session first
@@ -549,16 +515,6 @@ const calculateAndUpdateStudentPaymentDocuments = async (
       // Then sort by term order
       return termOrder.indexOf(a.term) - termOrder.indexOf(b.term);
     });
-
-    // Log sorted overdue payments for debugging
-    console.log(
-      'Sorted overdue payments:',
-      overduePayments.map((p) => ({
-        session: p.session,
-        term: p.term,
-        remaining_amount: p.remaining_amount,
-      }))
-    );
 
     let remainingAmountToPay = payload.amount_paying;
 
@@ -624,7 +580,6 @@ const calculateAndUpdateStudentPaymentDocuments = async (
 
       // Save current term payment
       await currentTermPayment.save();
-      console.log('currentTermPayment:', currentTermPayment);
 
       return currentTermPayment;
     }
@@ -698,10 +653,6 @@ const calculateAndUpdateStudentPaymentDocuments = async (
 
           await currentTermPayment.save();
         }
-        // Log payment updates
-        console.log(
-          `Processed term: ${payment.term}, Remaining amount: ${payment.remaining_amount}`
-        );
       }
     }
 
@@ -774,10 +725,6 @@ const calculateAndUpdateStudentPaymentDocuments = async (
       // Save current term payment
       await currentTermPayment.save();
       lastProcessedPayment = currentTermPayment;
-
-      console.log(
-        `Processed current term: ${currentTermPayment.term}, Remaining amount: ${currentTermPayment.remaining_amount}`
-      );
     }
 
     // Save the updated student document

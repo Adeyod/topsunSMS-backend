@@ -44,10 +44,6 @@
 //       );
 //     }
 
-//     console.log(
-//       'Outstanding payment recorded for students affected successfully.'
-//     );
-
 //     return {
 //       message: 'Outstanding payments updated successfully',
 //     };
@@ -97,7 +93,6 @@
 //         }).save();
 //       } else {
 //         // this means that the student has finished SSS 3
-//         console.log(`No next class found for level ${result.class.level + 1}`);
 //       }
 //     }
 //   } catch (error) {
@@ -196,11 +191,6 @@ const calculateOutStandingPerTerm = async (
       term: term,
       remaining_amount: { $ne: 0 },
     }).session(session);
-
-    console.log(
-      'studentsWithOutstandingPayments:',
-      studentsWithOutstandingPayments
-    );
 
     if (
       !studentsWithOutstandingPayments ||

@@ -29,8 +29,6 @@
 //     //   arms.includes(section.section)
 //     // );
 
-//     // console.log('filterArms:', filterArms);
-
 //     const feeData = {
 //       level: class_level,
 //       school_fees: amount,
@@ -275,17 +273,12 @@ const schoolFeesCreation = async (
   try {
     // const receivingAccount = new mongoose.Types.ObjectId(receiving_acc_id);
 
-    // console.log('fee_array:', fee_array);
-    // console.log('receivingAccount:', receivingAccount);
-
     // const schoolAccountExist = await SchoolAccount.findOne(
     //   {
     //     'accounts._id': receivingAccount,
     //   },
     //   { 'accounts.$': 1 }
     // ).session(session);
-
-    // console.log('schoolAccountExist:', schoolAccountExist);
 
     // if (!schoolAccountExist) {
     //   throw new AppError(
@@ -319,8 +312,6 @@ const schoolFeesCreation = async (
     //   (a) => a._id.toString() === receivingAccount.toString()
     // );
 
-    // // console.log('matchingAccountObj:', matchingAccountObj);
-
     // if (!matchingAccountObj) {
     //   throw new AppError(
     //     'This account is not part of the accounts that the school has with us.',
@@ -344,8 +335,6 @@ const schoolFeesCreation = async (
       );
     }
 
-    // console.log('activeSession:', activeSession);
-
     const activeTerm = activeSession.terms.find(
       (term) => term.is_active === true
     );
@@ -354,8 +343,6 @@ const schoolFeesCreation = async (
 
     const terms = activeSession.terms.map((t) => t.name);
 
-    console.log('terms:', terms);
-
     if (terms.length === 0) {
       term = 'first_term';
     } else if (terms.length === 1 && terms.includes('first_term')) {
@@ -363,16 +350,12 @@ const schoolFeesCreation = async (
     } else {
       term = 'third_term';
     }
-    console.log('term:', term);
-
-    console.log('activeTerm:', activeTerm);
 
     const paymentDocExist = await Payment.findOne({
       session: activeSession._id,
       term: term,
     }).session(session);
 
-    // console.log('paymentDocExist:', paymentDocExist);
     if (activeTerm) {
       throw new AppError(
         'Fee documents can only be created when a term has ended.',
@@ -403,8 +386,6 @@ const schoolFeesCreation = async (
 
     const getFeeDocuments = await existSchoolFees();
 
-    // console.log('getFeeDocuments:', getFeeDocuments);
-
     if (getFeeDocuments.length > 0) {
       throw new AppError(
         'School fees has already been created for this term.',
@@ -419,7 +400,6 @@ const schoolFeesCreation = async (
       session
     );
 
-    // console.log('feeCreated:', feeCreated);
     await session.commitTransaction();
     session.endSession();
 
@@ -533,8 +513,6 @@ const optionalFeesCreation = async (
 
     const activeTerm = academicSession.terms.find((a) => a.is_active === true);
 
-    console.log('activeTerm:', activeTerm);
-
     const duplicateClasses = new Set();
     const uniqueObj = new Set();
 
@@ -545,9 +523,6 @@ const optionalFeesCreation = async (
         uniqueObj.add(c);
       }
     });
-
-    console.log('duplicateClasses:', duplicateClasses);
-    console.log('uniqueObj:', uniqueObj);
 
     if (duplicateClasses.size > 0) {
       throw new AppError(
@@ -578,7 +553,6 @@ const optionalFeesCreation = async (
     }
 
     const cLevels = await schoolClassLevels(schoolClasses.schoolClasses);
-    console.log('cLevels:', cLevels);
 
     const gLevels = await getLevelFeeDoc(
       cLevels,
@@ -586,7 +560,6 @@ const optionalFeesCreation = async (
       academicSession._id,
       session
     );
-    console.log('gLevels:', gLevels);
 
     if (gLevels.length !== cLevels.length) {
       throw new AppError(
@@ -596,8 +569,6 @@ const optionalFeesCreation = async (
     }
 
     const uniqueClasses = await fetchClassLevels(applicable_classes, session);
-
-    console.log('uniqueClasses:', uniqueClasses);
 
     const payload2: OptionalFeeProcessingType = {
       uniqueClasses,
@@ -615,7 +586,6 @@ const optionalFeesCreation = async (
     // fees_breakdown AND ALSO ADD IT TO THEIR total_amount FOR THE
     // TERM. IF IT IS ALREADY ADDED, THEN I WONT ADD IT AGAIN TO
     // AVOID DUPLICATE.
-    console.log('updatedFee:', updatedFee);
 
     if (updatedFee.length === 0) {
       throw new AppError(
@@ -675,7 +645,6 @@ const optionalFeesAddition = async (
     }
 
     const cLevels = await schoolClassLevels(schoolClasses.schoolClasses);
-    console.log('cLevels:', cLevels);
 
     const gLevels = await getLevelFeeDoc(
       cLevels,
@@ -683,7 +652,6 @@ const optionalFeesAddition = async (
       academicSession._id,
       session
     );
-    console.log('gLevels:', gLevels);
 
     if (gLevels.length !== cLevels.length) {
       throw new AppError(
@@ -697,8 +665,6 @@ const optionalFeesAddition = async (
       term: activeTerm.name,
     });
 
-    console.log('termPaymentDocExist:', termPaymentDocExist);
-
     if (termPaymentDocExist.length === 0) {
       throw new AppError(
         'Please create payment document for students before proceeding.',
@@ -707,8 +673,6 @@ const optionalFeesAddition = async (
     }
 
     const uniqueClasses = await fetchClassLevels(applicable_classes, session);
-
-    console.log('uniqueClasses:', uniqueClasses);
 
     const payload2: OptionalFeeProcessingType = {
       uniqueClasses,
@@ -726,7 +690,6 @@ const optionalFeesAddition = async (
     // fees_breakdown AND ALSO ADD IT TO THEIR total_amount FOR THE
     // TERM. IF IT IS ALREADY ADDED, THEN I WONT ADD IT AGAIN TO
     // AVOID DUPLICATE.
-    console.log('updatedFee:', updatedFee);
 
     if (updatedFee.length === 0) {
       throw new AppError(
@@ -755,8 +718,6 @@ const optionalFeesAddition = async (
     const addFeeToPaymentDocs = await optionalFeeAdditionToPaymentDocuments(
       paymentPayload
     );
-
-    console.log('fee service optional fees addition:', addFeeToPaymentDocs);
 
     await session.commitTransaction();
     session.endSession();
@@ -812,7 +773,6 @@ const mandatoryFeesCreation = async (
 
     // Get all the levels in the school
     const cLevels = await schoolClassLevels(schoolClasses.schoolClasses);
-    console.log('cLevels:', cLevels);
 
     // Get fee document for all the class levels in the school
     const gLevels = await getLevelFeeDoc(
@@ -821,7 +781,6 @@ const mandatoryFeesCreation = async (
       academicSession._id,
       session
     );
-    console.log('gLevels:', gLevels);
 
     if (gLevels.length !== cLevels.length) {
       throw new AppError(
@@ -834,8 +793,6 @@ const mandatoryFeesCreation = async (
       session: academicSession._id,
       term: term,
     });
-
-    console.log('termPaymentDocExist:', termPaymentDocExist);
 
     if (termPaymentDocExist.length > 0) {
       throw new AppError(
@@ -852,13 +809,6 @@ const mandatoryFeesCreation = async (
     //         amount,
     //       };
 
-    //       console.log('g', g);
-
-    //       console.log(
-    //         'Mandatory Fee Object before storing:',
-    //         JSON.stringify(mandatoryFeeObj, null, 2)
-    //       );
-
     //       const existingFee = await Fee.findOne({
     //         school,
     //         level: g.level,
@@ -867,7 +817,6 @@ const mandatoryFeesCreation = async (
     //       });
 
     //       if (!existingFee) {
-    //         console.log(`No fee document found for level: ${g}`);
     //         return null;
     //       }
 
@@ -876,7 +825,6 @@ const mandatoryFeesCreation = async (
     //       );
 
     //       if (feeExists) {
-    //         console.log(`Fee '${fee_name}' already exists for level: ${g}`);
     //         return null;
     //       }
 
@@ -909,7 +857,6 @@ const mandatoryFeesCreation = async (
     // fees_breakdown AND ALSO ADD IT TO THEIR total_amount FOR THE
     // TERM. IF IT IS ALREADY ADDED, THEN I WONT ADD IT AGAIN TO
     // AVOID DUPLICATE.
-    console.log('updatedFee:', updatedFee);
 
     if (updatedFee.length === 0) {
       throw new AppError(
@@ -970,7 +917,6 @@ const mandatoryFeesAddition = async (
 
     // Get all the levels in the school
     const cLevels = await schoolClassLevels(schoolClasses.schoolClasses);
-    console.log('cLevels:', cLevels);
 
     // Get fee document for all the class levels in the school
     const gLevels = await getLevelFeeDoc(
@@ -979,7 +925,6 @@ const mandatoryFeesAddition = async (
       academicSession._id,
       session
     );
-    console.log('gLevels:', gLevels);
 
     if (gLevels.length !== cLevels.length) {
       throw new AppError(
@@ -1004,7 +949,6 @@ const mandatoryFeesAddition = async (
     // fees_breakdown AND ALSO ADD IT TO THEIR total_amount FOR THE
     // TERM. IF IT IS ALREADY ADDED, THEN I WONT ADD IT AGAIN TO
     // AVOID DUPLICATE.
-    console.log('updatedFee:', updatedFee);
 
     if (updatedFee.length === 0) {
       throw new AppError(
@@ -1026,8 +970,6 @@ const mandatoryFeesAddition = async (
     const addFeeToPaymentDocs = await mandatoryFeeAdditionToPaymentDocuments(
       paymentPayload
     );
-
-    console.log('fee service mandatory fees addition:', addFeeToPaymentDocs);
 
     await session.commitTransaction();
     session.endSession();
@@ -1064,8 +1006,6 @@ const fetchSchoolFees = async (
     if (searchParams) {
       const regex = new RegExp(searchParams, 'i');
 
-      console.log('searchParams:', searchParams);
-
       query = query.where({
         $or: [
           { term: { $regex: regex } },
@@ -1088,7 +1028,6 @@ const fetchSchoolFees = async (
     if (session && term) {
       query = query.where({ academic_session_id: Object(session), term: term });
     } else if (session) {
-      console.log('session:', session);
       query = query.where({ academic_session_id: Object(session) });
     } else if (term) {
       query = query.where({ term: term });
@@ -1136,8 +1075,6 @@ const fetchSchoolFees = async (
       return obj;
     });
 
-    console.log('formattedSchoolFees:', formattedSchoolFees);
-
     const feeDocs = response as SchoolFeesDocument[];
 
     return {
@@ -1149,7 +1086,6 @@ const fetchSchoolFees = async (
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
-      console.log('error:', error);
       throw new Error('Something went wrong');
     }
   }
@@ -1171,8 +1107,6 @@ const fetchAllMandatoryFees = async (
 
     if (searchParams) {
       const regex = new RegExp(searchParams, 'i');
-
-      console.log('searchParams:', searchParams);
 
       query = query.where({
         $or: [
@@ -1196,7 +1130,6 @@ const fetchAllMandatoryFees = async (
     if (session && term) {
       query = query.where({ academic_session_id: Object(session), term: term });
     } else if (session) {
-      console.log('session:', session);
       query = query.where({ academic_session_id: Object(session) });
     } else if (term) {
       query = query.where({ term: term });
@@ -1239,8 +1172,6 @@ const fetchAllMandatoryFees = async (
         ? Math.ceil(totalCount / limit)
         : Math.ceil(totalCount / 10);
 
-    console.log('totalPages:', totalPages);
-
     if (page && limit) {
       if (page > totalPages) {
         throw new AppError('Page can not be found.', 404);
@@ -1251,8 +1182,6 @@ const fetchAllMandatoryFees = async (
         offset,
         offset + limit
       );
-
-      console.log('paginatedFees:', paginatedFees);
 
       return {
         feesArray: paginatedFees,
@@ -1266,8 +1195,6 @@ const fetchAllMandatoryFees = async (
 
       const offset = (page - 1) * 10;
       const paginatedFees = formattedMandatoryFees.slice(offset, offset + 10);
-
-      console.log('paginatedFees:', paginatedFees);
 
       return {
         feesArray: paginatedFees,
@@ -1285,7 +1212,6 @@ const fetchAllMandatoryFees = async (
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
-      console.log('error:', error);
       throw new Error('Something went wrong');
     }
   }
@@ -1330,7 +1256,6 @@ const fetchAllOptionalFees = async (
     if (session && term) {
       query = query.where({ academic_session_id: Object(session), term: term });
     } else if (session) {
-      console.log('session:', session);
       query = query.where({ academic_session_id: Object(session) });
     } else if (term) {
       query = query.where({ term: term });
@@ -1367,16 +1292,12 @@ const fetchAllOptionalFees = async (
       })
       .flat();
 
-    console.log('formattedOptionalFees:', formattedOptionalFees);
-
     const totalCount = formattedOptionalFees.length;
 
     const totalPages =
       page !== undefined && limit !== undefined
         ? Math.ceil(totalCount / limit)
         : Math.ceil(totalCount / 10);
-
-    console.log('totalPages:', totalPages);
 
     if (page && limit) {
       if (page > totalPages) {
@@ -1385,8 +1306,6 @@ const fetchAllOptionalFees = async (
 
       const offset = (page - 1) * limit;
       const paginatedFees = formattedOptionalFees.slice(offset, offset + limit);
-
-      console.log('paginatedFees:', paginatedFees);
 
       return {
         feesArray: paginatedFees,
@@ -1400,8 +1319,6 @@ const fetchAllOptionalFees = async (
 
       const offset = (page - 1) * 10;
       const paginatedFees = formattedOptionalFees.slice(offset, offset + 10);
-
-      console.log('paginatedFees:', paginatedFees);
 
       return {
         feesArray: paginatedFees,
@@ -1419,7 +1336,6 @@ const fetchAllOptionalFees = async (
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
-      console.log('error:', error);
       throw new Error('Something went wrong');
     }
   }

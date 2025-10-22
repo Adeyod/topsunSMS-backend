@@ -73,8 +73,6 @@ const assignTeacherToSubject = catchErrors(async (req, res) => {
 
   const { subject, class_id, teacher_id } = req.body;
 
-  console.log('req.body:', req.body);
-
   if (!subject || !class_id || !teacher_id) {
     throw new AppError('Subject, class id and teacher id are required', 400);
   }
@@ -121,7 +119,6 @@ const getATeacherById = catchErrors(async (req, res) => {
   // const start = Date.now();
 
   const { teacher_id } = req.params;
-  console.log('req.params:', req.params);
   if (!teacher_id) {
     throw new AppError('Please provide teacher id.', 400);
   }
@@ -131,7 +128,6 @@ const getATeacherById = catchErrors(async (req, res) => {
   if (!info) {
     throw new AppError('Unable to get teacher details', 400);
   }
-  console.log('info:', info);
 
   // const duration = Date.now() - start;
 
@@ -260,10 +256,6 @@ const getAllTeachers = catchErrors(async (req, res) => {
 
 const teacherOnboardingById = catchErrors(async (req, res) => {
   // const start = Date.now();
-
-  console.log('I am being called');
-  console.log(req.params);
-  console.log(req.body);
 
   const { teacher_id } = req.params;
   const { subject_ids } = req.body;
@@ -444,8 +436,6 @@ const getStudentsInClassOfferingTeacherSubject = catchErrors(
       userRole: userRole === 'teacher' ? userRole : undefined,
       userId: userRole === 'teacher' ? userId : undefined,
     };
-
-    // console.log('payload:', payload);
 
     const result = await fetchStudentsInClassOfferingTeacherSubject(payload);
 
@@ -675,9 +665,6 @@ const getStudentsInClassThatTeacherManages = catchErrors(async (req, res) => {
   // const start = Date.now();
 
   const { class_id, teacher_id, academic_session_id } = req.params;
-  console.log('class_id:', class_id);
-  console.log('teacher_id:', teacher_id);
-  console.log('academic_session_id:', academic_session_id);
 
   const page = req.query.page ? Number(req.query.page) : 1;
   const limit = req.query.limit ? Number(req.query.limit) : 10;

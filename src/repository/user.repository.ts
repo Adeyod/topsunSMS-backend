@@ -222,7 +222,6 @@ const findAndVerifyUser = async (payload: VerifyUserType) => {
     }
 
     const idValue = payload.user_id;
-    console.log('idValue:', idValue);
 
     if (!idValue) {
       throw new Error(`Missing ID for role: ${payload.role}`);

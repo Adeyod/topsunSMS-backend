@@ -78,8 +78,6 @@ const getASubjectById = catchErrors(async (req, res) => {
 
   const userRole = req.user?.userRole;
 
-  console.log('subject_id:', subject_id);
-
   const payload = {
     subject_id,
   };
@@ -165,8 +163,6 @@ const getAllClassSubjectsByClassId = catchErrors(async (req, res) => {
 const getAllSubjects = catchErrors(async (req, res) => {
   // const start = Date.now();
   const userRole = req.user?.userRole;
-
-  console.log('fetching subjects');
 
   const info = await fetchingAllSubjects();
 

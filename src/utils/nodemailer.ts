@@ -113,8 +113,6 @@ const sendStudentSessionNotification = async ({
       html: sessionSubscriptionContent,
     });
 
-    console.log(`mail successfully sent to ${email}`);
-
     return info;
   } catch (error) {
     console.error(error);

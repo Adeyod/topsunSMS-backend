@@ -16,6 +16,7 @@ import {
   fetchAllClassCbtAssessmentTimetables,
   fetchAllCbtAssessmentDocument,
   endSubjectInATimetable,
+  termCbtAssessmentDocumentEnding,
   termClassCbtAssessmentTimetableToChangeSubjectDateUpdating,
 } from '../services/cbt.service';
 import { AppError } from '../utils/app.error';
@@ -39,11 +40,28 @@ const getCbtAssessmentDocumentById = catchErrors(async (req, res) => {
     throw new AppError('Unable to fetch exam document.', 400);
   }
 
-  return res.status(201).json({
+  return res.status(200).json({
     message: 'Cbt assessment document fetched successfully.',
-    status: 201,
+    status: 200,
     success: true,
     exam_document: result,
+  });
+});
+
+const endTermCbtAssessmentDocument = catchErrors(async (req, res) => {
+  const { exam_document_id } = req.params;
+
+  const examId = Object(exam_document_id);
+  const result = await termCbtAssessmentDocumentEnding(examId);
+
+  if (!result) {
+    throw new AppError('Unable to end exam document.', 400);
+  }
+
+  return res.status(200).json({
+    message: 'Term Cbt assessment ended successfully.',
+    status: 200,
+    success: true,
   });
 });
 
@@ -53,10 +71,6 @@ const getAllCbtAssessmentDocument = catchErrors(async (req, res) => {
 
   const searchQuery =
     typeof req.query.searchParams === 'string' ? req.query.searchParams : '';
-
-  console.log('page:', page);
-  console.log('limit:', limit);
-  console.log('searchQuery:', searchQuery);
 
   const result = await fetchAllCbtAssessmentDocument(page, limit, searchQuery);
 
@@ -118,7 +132,6 @@ const createTermCbtAssessmentDocument = catchErrors(async (req, res) => {
 });
 
 // const createTermCbtAssessmentDocument = catchErrors(async (req, res) => {
-//   console.log('req.body:', req.body);
 //   const { academic_session_id, term } = req.params;
 //   const {
 //     assessment_type,
@@ -264,17 +277,12 @@ const getTermClassCbtAssessmentTimetables = catchErrors(async (req, res) => {
 
 const getAllClassCbtAssessmentTimetables = catchErrors(async (req, res) => {
   const { class_id } = req.params;
-  console.log('class_id:', class_id);
 
   const page = req.query.page ? Number(req.query.page) : undefined;
   const limit = req.query.limit ? Number(req.query.limit) : undefined;
 
   const searchQuery =
     typeof req.query.searchParams === 'string' ? req.query.searchParams : '';
-
-  console.log('page:', page);
-  console.log('limit:', limit);
-  console.log('searchQuery:', searchQuery);
 
   const requiredFields = {
     class_id,
@@ -482,7 +490,6 @@ const endTakingASubjectInATimetableForATerm = catchErrors(async (req, res) => {
 });
 
 const setSubjectCbtObjQuestionsForAClass = catchErrors(async (req, res) => {
-  console.log('req.body:', req.body);
   const { academic_session_id, class_id } = req.params;
   const { questions_array, term, subject_id, assessment_type } = req.body;
 
@@ -616,8 +623,6 @@ const classTeacherAuthorizeStudentsToWriteSubjectCbt = catchErrors(
 
 const startSubjectCbtObjCbtAssessmentForAClass = catchErrors(
   async (req, res) => {
-    console.log('Student want to start CBT...');
-    console.log(req.params);
     const { term, subject_id, academic_session_id, class_id } = req.params;
 
     const student_id = req.user?.userId;
@@ -776,9 +781,6 @@ const submitSubjectCbtObjCbtAssessmentForAClass = catchErrors(
     const { cbt_result_id, exam_id } = req.params;
     const { result_doc, trigger_type } = req.body;
 
-    console.log('trigger type:', trigger_type);
-    console.log('req.body:', req.body);
-
     const student_id = req.user?.userId;
 
     if (!student_id) {
@@ -909,4 +911,5 @@ export {
   createTermCbtAssessmentDocument,
   setSubjectCbtTheroyQuestionsForAClass,
   getAllCbtAssessmentDocument,
+  endTermCbtAssessmentDocument,
 };

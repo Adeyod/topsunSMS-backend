@@ -315,8 +315,6 @@ const subjectCreation = async (payload: SubjectCreationType) => {
       name: payload.name.toLowerCase().trim(),
     });
 
-    console.log('existingSubject:', existingSubject);
-
     if (existingSubject) {
       throw new AppError('Subject with this name already exists', 400);
     }

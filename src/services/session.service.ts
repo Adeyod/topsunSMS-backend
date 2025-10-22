@@ -134,12 +134,6 @@
 //       throw new AppError('Failed to create the new term.', 400);
 //     }
 
-//     console.log('response', response);
-//     console.log('start_date', start_date);
-//     console.log('end_date', end_date);
-//     console.log('DATE start_date', new Date(start_date));
-//     console.log('DATE end_date', new Date(end_date));
-
 //     await response.save({ session });
 
 //     await session.commitTransaction();
@@ -369,7 +363,6 @@
 //     session: response as SessionDocument,
 //     term_name: activeTerm.name,
 //   };
-//   console.log('responseObject', responseObject);
 
 //   return responseObject;
 // };
@@ -485,8 +478,6 @@
 
 //     // NOTIFICATION MAIL AND IN-APP NOTIFICATION CAN BE SENT TO STUDENT AND PARENTS HERE
 
-//     console.log('responseObject', responseObject);
-
 //     await session.commitTransaction();
 //     session.endSession();
 
@@ -507,8 +498,6 @@
 //     const activeSession = await Session.findOne({
 //       is_active: true,
 //     });
-
-//     console.log('activeSession', activeSession);
 
 //     if (!activeSession) {
 //       throw new AppError('There is no active session at the moment.', 404);
@@ -549,13 +538,12 @@ import Student from '../models/students.model';
 import ClassEnrolment from '../models/classes_enrolment.model';
 import { calculateOutStandingPerTerm } from '../repository/student.repository';
 import Fee from '../models/fees.model';
+import CbtExam from '../models/cbt_exam.model';
 
 const createSession = async (): Promise<SessionDocument> => {
   const checkSession = await Session.findOne().sort({
     createdAt: -1,
   });
-
-  console.log("checkSession:", checkSession)
 
   let academic_session;
 
@@ -594,8 +582,6 @@ const createSession = async (): Promise<SessionDocument> => {
     academic_session: academic_session,
     is_active: true,
   }).save();
-
-  console.log('response:', response);
 
   return response;
 };
@@ -640,8 +626,6 @@ const creatingNewTerm = async (
     //   academic_session_id: response._id,
     //   term: name,
     // });
-
-    // console.log('feeDocExist:', feeDocExist);
 
     // if (!feeDocExist) {
     //   throw new AppError(
@@ -691,12 +675,6 @@ const creatingNewTerm = async (
       throw new AppError('Failed to create the new term.', 400);
     }
 
-    console.log('response', response);
-    console.log('start_date', start_date);
-    console.log('end_date', end_date);
-    console.log('DATE start_date', new Date(start_date));
-    console.log('DATE end_date', new Date(end_date));
-
     await response.save({ session });
 
     await session.commitTransaction();
@@ -731,8 +709,6 @@ const termEndingInSessionUsingTermId = async (
       is_active: true,
     }).session(session);
 
-    console.log('response 1:', response);
-
     if (!response) {
       throw new AppError('Session can not be found', 404);
     }
@@ -740,8 +716,6 @@ const termEndingInSessionUsingTermId = async (
     const activeTerm = response.terms.find(
       (term) => term._id?.toString() === term_id
     );
-
-    console.log('activeTerm:', activeTerm);
 
     if (!activeTerm) {
       throw new AppError('This term is not active or has already ended.', 400);
@@ -768,11 +742,18 @@ const termEndingInSessionUsingTermId = async (
       { new: true, session }
     );
 
-    console.log('updating session:', response);
-
     if (!response) {
       throw new AppError('Unable to end term', 400);
     }
+
+    await CbtExam.updateMany(
+      {
+        academic_session_id: session_id,
+        term: term_id,
+      },
+      { $set: { is_active: false } },
+      { session }
+    );
 
     if (activeTerm.name === 'third_term') {
       response = await Session.findOneAndUpdate(
@@ -833,8 +814,6 @@ const termEndingInSessionUsingTermId = async (
 
     // NOTIFICATION MAIL AND IN-APP NOTIFICATION CAN BE SENT TO STUDENT AND PARENTS HERE
 
-    console.log('responseObject', responseObject);
-
     await session.commitTransaction();
     session.endSession();
 
@@ -857,8 +836,6 @@ const fetchSessionBySessionId = async (
     _id: session_id,
   });
 
-  console.log('response:', response);
-
   if (!response) {
     throw new AppError('Session can not be found', 404);
   }
@@ -871,8 +848,6 @@ const fetchActiveSession = async (): Promise<SessionDocument> => {
     const activeSession = await Session.findOne({
       is_active: true,
     });
-
-    console.log('activeSession', activeSession);
 
     if (!activeSession) {
       throw new AppError('There is no active session at the moment.', 404);
@@ -1088,7 +1063,6 @@ const termDeletionInSessionUsingTermId = async (
       session: response as SessionDocument,
       term_name: activeTerm.name,
     };
-    console.log('responseObject', responseObject);
 
     return responseObject;
   } catch (error) {

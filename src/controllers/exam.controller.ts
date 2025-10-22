@@ -12,7 +12,6 @@
 //   const validateResponse = await joiValidation(payload, 'login');
 
 //   const loginResponse = await userLogin(validateResponse.value);
-//   console.log(loginResponse);
 
 //   if (!loginResponse) {
 //     throw new AppError('Unable to login user.', 400);

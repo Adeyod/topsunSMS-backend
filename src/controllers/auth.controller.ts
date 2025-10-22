@@ -20,7 +20,6 @@ import {
 } from '../utils/validation';
 
 const registerUser = catchErrors(async (req, res) => {
-  console.log('I am being called', req.body);
   const {
     // COMMON TO ALL
     first_name,
@@ -380,10 +379,6 @@ const logoutUser = catchErrors(async (req, res) => {
   const { refresh_token } = req.body;
   const access_token = req.headers.authorization?.split(' ')[1];
   const user_id = req.user?.userId;
-
-  console.log('refresh_token:', refresh_token);
-  console.log('access_token:', access_token);
-  console.log('user_id:', user_id);
 
   if (!refresh_token) {
     throw new AppError('Refresh Token is required to proceed.', 400);

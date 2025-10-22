@@ -28,7 +28,6 @@ export class JwtError extends Error {
     super(message);
     this.statusCode = statusCode;
     this.expiredAt = expiredAt;
-    console.log('jwt expired:', expiredAt);
     Object.setPrototypeOf(this, JwtError.prototype);
     this.name = 'JwtError';
   }

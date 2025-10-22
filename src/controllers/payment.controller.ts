@@ -184,8 +184,6 @@
 //     );
 //   }
 
-//   console.log('payload body', req.body);
-//   console.log('payload params', req.params);
 //   const payload = {
 //     student_id,
 //     session_id,
@@ -198,8 +196,6 @@
 
 //   const { success, value } = validateInput;
 
-//   console.log('validateInput', validateInput);
-
 //   const paymentInput = {
 //     student_id: value.student_id,
 //     session_id: value.session_id,
@@ -209,7 +205,6 @@
 //   };
 
 //   const result = await studentCardFeePayment(paymentInput);
-//   console.log('result', result);
 
 //   if (!result) {
 //     throw new AppError('Unable to process payment request.', 400);
@@ -339,8 +334,6 @@
 
 //   const result = await paystackCallBackService(payload);
 
-//   console.log('controller Log:', result);
-
 //   if (!result) {
 //     throw new AppError('Unable to process paystack payment.', 400);
 //   }
@@ -355,8 +348,6 @@
 
 // const getPaystackWebHook = catchErrors(async (req, res) => {
 //   const paystackResponse = await processPaystackWebHook(req, res);
-
-//   // console.log('webhook controller paystackResponse', paystackResponse);
 
 //   return res.json({
 //     message: 'Payment processed successfully',
