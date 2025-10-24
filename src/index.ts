@@ -46,7 +46,8 @@ const allowedOrigins: string[] = [
   process.env.FRONTEND_URL || '',
   'http://localhost:3000',
   'http://localhost:5173',
-  'https://topsun.vercel.app',
+  // 'https://topsun.vercel.app',
+  'https://topsun-dev.vercel.app',
 ];
 
 const corsOptions: CorsOptions = {

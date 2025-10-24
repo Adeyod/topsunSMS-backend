@@ -17,6 +17,7 @@ import {
   setSubjectCbtTheroyQuestionsForAClass,
   getAllCbtAssessmentDocument,
   endTakingASubjectInATimetableForATerm,
+  endAllActiveTermCbtAssessmentDocumentsInATerm,
 } from '../controllers/cbt.controller';
 // import requireFeatureAccess from '../middleware/featureAccess';
 import { permission } from '../middleware/authorization';
@@ -41,6 +42,13 @@ router.put(
   permission(['super_admin']),
   developerProtected,
   endTermCbtAssessmentDocument
+);
+
+router.put(
+  '/end-all-active-term-exam-documents',
+  permission(['super_admin']),
+  developerProtected,
+  endAllActiveTermCbtAssessmentDocumentsInATerm
 );
 
 router.get(

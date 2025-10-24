@@ -17,6 +17,7 @@ import {
   fetchAllCbtAssessmentDocument,
   endSubjectInATimetable,
   termCbtAssessmentDocumentEnding,
+  allActiveTermCbtAssessmentDocumentsInATermEnding,
   termClassCbtAssessmentTimetableToChangeSubjectDateUpdating,
 } from '../services/cbt.service';
 import { AppError } from '../utils/app.error';
@@ -64,6 +65,33 @@ const endTermCbtAssessmentDocument = catchErrors(async (req, res) => {
     success: true,
   });
 });
+
+const endAllActiveTermCbtAssessmentDocumentsInATerm = catchErrors(
+  async (req, res) => {
+    const { term, academic_session_id } = req.body;
+
+    const session = Object(academic_session_id);
+
+    const payload = {
+      session,
+      term,
+    };
+    const result = await allActiveTermCbtAssessmentDocumentsInATermEnding(
+      session,
+      term
+    );
+
+    if (!result) {
+      throw new AppError('Unable to end term exam documents.', 400);
+    }
+
+    return res.status(200).json({
+      message: 'All Term Cbt assessments ended successfully.',
+      status: 200,
+      success: true,
+    });
+  }
+);
 
 const getAllCbtAssessmentDocument = catchErrors(async (req, res) => {
   const page = req.query.page ? Number(req.query.page) : undefined;
@@ -911,5 +939,6 @@ export {
   createTermCbtAssessmentDocument,
   setSubjectCbtTheroyQuestionsForAClass,
   getAllCbtAssessmentDocument,
+  endAllActiveTermCbtAssessmentDocumentsInATerm,
   endTermCbtAssessmentDocument,
 };

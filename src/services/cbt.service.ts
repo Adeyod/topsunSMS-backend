@@ -234,6 +234,48 @@ const termCbtAssessmentDocumentEnding = async (
   }
 };
 
+const allActiveTermCbtAssessmentDocumentsInATermEnding = async (
+  session: mongoose.Types.ObjectId,
+  term: string
+) => {
+  try {
+    const activeSession = await Session.findById({
+      _id: session,
+    });
+
+    if (!activeSession) {
+      throw new AppError('Session not found.', 404);
+    }
+
+    const actualTerm = activeSession.terms.find(
+      (a) => a.name.toLowerCase() === term.toLowerCase()
+    );
+
+    if (!actualTerm) {
+      throw new AppError('Term does not exist.', 404);
+    }
+
+    const examDocuments = await CbtExam.updateMany(
+      {
+        academic_session_id: activeSession._id,
+        term: actualTerm.name,
+      },
+      {
+        $set: { is_active: false },
+      }
+    );
+
+    return examDocuments;
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw new AppError(`${error.message}`, 400);
+    } else {
+      console.error(error);
+      throw new Error('Something went wrong');
+    }
+  }
+};
+
 const fetchCbtAssessmentDocumentById = async (cbt_document_id: string) => {
   try {
     const cbtAssessmentDocExist = await CbtExam.findById(cbt_document_id);
@@ -2672,6 +2714,7 @@ export {
   termClassCbtAssessmentTimetableCreation,
   subjectCbtObjCbtAssessmentStarting,
   termCbtAssessmentDocumentCreation,
+  allActiveTermCbtAssessmentDocumentsInATermEnding,
   objQestionSetting,
   theoryQestionSetting,
   termCbtAssessmentDocumentEnding,
