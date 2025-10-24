@@ -381,9 +381,11 @@ const fetchTermClassCbtAssessmentTimetable = async (
       })
     );
 
-    console.log('formattedTimeTable:', formattedTimeTable);
+    timetableExists.scheduled_subjects = formattedTimeTable;
 
-    return formattedTimeTable;
+    console.log('timetableExists:', timetableExists);
+
+    return timetableExists;
   } catch (error) {
     if (error instanceof AppError) {
       throw new AppError(`${error.message}`, 400);
