@@ -267,9 +267,9 @@ const getTermClassCbtAssessmentTimetables = catchErrors(async (req, res) => {
     );
   }
 
-  return res.status(201).json({
+  return res.status(200).json({
     message: `Cbt assessment timetable fetched successfully.`,
-    status: 201,
+    status: 200,
     success: true,
     timetable: result,
   });
@@ -313,9 +313,9 @@ const getAllClassCbtAssessmentTimetables = catchErrors(async (req, res) => {
     );
   }
 
-  return res.status(201).json({
+  return res.status(200).json({
     message: `Cbt assessment timetable fetched successfully.`,
-    status: 201,
+    status: 200,
     success: true,
     timetable: result,
   });

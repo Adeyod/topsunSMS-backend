@@ -363,7 +363,9 @@ const fetchTermClassCbtAssessmentTimetable = async (
       academic_session_id: academicSessionExist._id,
       term: term,
       is_active: true,
-    }).populate('scheduled_subjects.subject_id');
+    })
+      .populate('scheduled_subjects.subject_id')
+      .lean();
 
     if (!timetableExists) {
       throw new AppError(
@@ -378,6 +380,8 @@ const fetchTermClassCbtAssessmentTimetable = async (
         timetable_id: timetableExists._id,
       })
     );
+
+    console.log('formattedTimeTable:', formattedTimeTable);
 
     return formattedTimeTable;
   } catch (error) {
