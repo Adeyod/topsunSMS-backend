@@ -2406,6 +2406,14 @@ const subjectCbtObjCbtAssessmentSubmission = async (
       exam_component_name.trim().toLowerCase()
     );
 
+    // examDocExist.assessment_type.trim().toLowerCase(): cbt obj
+    // exam_component_name.trim().toLowerCase(): exam
+
+    console.log(
+      'resultSettings?.exam_components.component:',
+      resultSettings?.exam_components.component
+    );
+
     if (
       examDocExist.assessment_type.trim().toLowerCase() !==
       exam_component_name.trim().toLowerCase()
@@ -2425,6 +2433,7 @@ const subjectCbtObjCbtAssessmentSubmission = async (
       testName = objKeyName?.name;
     } else {
       // do for exam
+      console.log('I want to run for exam...');
       const exam_components = resultSettings?.exam_components.component;
       console.log('exam_components:', exam_components);
 
