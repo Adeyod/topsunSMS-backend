@@ -942,10 +942,20 @@ const processCbtAssessmentResultSubmission = async (
     let examObj: ExamScoreType | null = null;
     let testObj: ScoreType | null = null;
 
+    const cbtObj = resultSettings?.exam_components.component.find(
+      (a) => a.key === 'obj'
+    );
+
+    console.log('cbtObj:', cbtObj);
+
     if (
       examDocExist.assessment_type.trim().toLowerCase() !==
-      exam_component_name.trim().toLowerCase()
+        exam_component_name.trim().toLowerCase() &&
+      examDocExist.assessment_type.trim().toLowerCase() !==
+        cbtObj?.name.trim().toLowerCase()
     ) {
+      console.log('i want to do for test...');
+
       // do for test
       objKeyName = resultSettings.components?.find(
         (k) =>
@@ -993,6 +1003,7 @@ const processCbtAssessmentResultSubmission = async (
       }
     } else {
       // do for exam
+      console.log('I want to run for exam...');
 
       const exam_components = resultSettings?.exam_components.component;
 
