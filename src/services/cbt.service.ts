@@ -2428,6 +2428,7 @@ const subjectCbtObjCbtAssessmentSubmission = async (
       examDocExist.assessment_type.trim().toLowerCase() !==
       exam_component_name.trim().toLowerCase()
     ) {
+      console.log('i want to do for test...');
       // do for test
       objKeyName = resultSettings.components?.find(
         (k) =>
