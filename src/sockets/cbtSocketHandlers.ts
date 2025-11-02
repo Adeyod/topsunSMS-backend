@@ -120,6 +120,8 @@ export const registerCbtHandlers = (io: Server, socket: Socket) => {
 
   socket.on('submit-exam', async (payload, callback) => {
     try {
+      console.log('I am being called to submit from websocket...');
+
       const { accessToken, cbt_result_id, exam_id, result_doc, trigger_type } =
         payload;
       if (!accessToken) {
@@ -155,6 +157,8 @@ export const registerCbtHandlers = (io: Server, socket: Socket) => {
       //     delay: 3000,
       //   },
       // };
+
+      console.log('payload:', data);
 
       const result = await subjectCbtObjCbtAssessmentSubmission(data);
       // const result = await studentResultQueue.add(name, data, opts);

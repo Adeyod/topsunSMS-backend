@@ -96,11 +96,11 @@ const registerUser = catchErrors(async (req, res) => {
   payload = {
     first_name: first_name.trim().toLowerCase(),
     last_name: last_name.trim().toLowerCase(),
-    gender,
+    gender: gender.trim(),
     email: email.trim(),
-    password,
-    confirm_password,
-    phone,
+    password: password.trim(),
+    confirm_password: confirm_password.trim(),
+    phone: phone.trim(),
   };
 
   const mainValidation = joiValidation(payload, 'register');
@@ -250,7 +250,7 @@ const loginUser = catchErrors(async (req, res) => {
     email: email.trim(),
     password: password.trim(),
   };
-  const validateResponse = await joiValidation(payload, 'login');
+  const validateResponse = joiValidation(payload, 'login');
 
   const loginResponse = await userLogin(validateResponse.value);
 
@@ -296,7 +296,7 @@ const requestAccessToken = catchErrors(async (req, res) => {
 const resendEmailVerificationLink = catchErrors(async (req, res) => {
   const { email } = req.body;
 
-  const validateInput = joiValidation(email, 'forgot-password');
+  const validateInput = joiValidation(email.trim(), 'forgot-password');
 
   if (!validateInput) {
     throw new AppError('Unable to validate email.', 400);
@@ -304,7 +304,7 @@ const resendEmailVerificationLink = catchErrors(async (req, res) => {
 
   const { success, value } = validateInput;
 
-  const response = await sendingEmailVerificationToken(email);
+  const response = await sendingEmailVerificationToken(email.trim());
 
   if (!response) {
     throw new AppError('Unable to send verification token.', 400);
@@ -321,7 +321,7 @@ const resendEmailVerificationLink = catchErrors(async (req, res) => {
 const forgotPassword = catchErrors(async (req, res) => {
   const { email } = req.body;
 
-  const validateInput = joiValidation(email, 'forgot-password');
+  const validateInput = joiValidation(email.trim(), 'forgot-password');
 
   if (!validateInput) {
     throw new AppError('Unable to validate email.', 400);
@@ -329,7 +329,7 @@ const forgotPassword = catchErrors(async (req, res) => {
 
   const { success, value } = validateInput;
 
-  const forgotPasswordResponse = await forgotPass(email);
+  const forgotPasswordResponse = await forgotPass(email.trim());
 
   if (!forgotPasswordResponse) {
     throw new AppError('Unable to verify account', 400);

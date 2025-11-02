@@ -146,6 +146,13 @@ const classCreation = async (
       section,
     } = payload;
 
+    if (!/^[A-Za-z0-9]+$/.test(section)) {
+      throw new AppError(
+        'Section can only contain letters or numbers with no spaces or special characters.',
+        400
+      );
+    }
+
     const existingClass = await Class.findOne({
       name: name,
     });

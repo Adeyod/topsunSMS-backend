@@ -297,7 +297,9 @@ const resultSettingCreation = async (
 
       if (nameSet.has(itemName.trim().toLowerCase())) {
         throw new AppError(
-          `Duplicate name detected: ${itemName}. Each name must be unique.`,
+          `Duplicate name detected: ${itemName
+            .trim()
+            .toLowerCase()}. Each name must be unique.`,
           400
         );
       }
@@ -365,6 +367,12 @@ const resultSettingCreation = async (
     }
 
     const { component, exam_name } = exam_components;
+
+    const examNames = component.map((c) => c.name.trim().toLowerCase());
+    const examNameSet = new Set(examNames);
+    if (examNames.length !== examNameSet.size) {
+      throw new AppError(`Exam component names can not be the same.`, 400);
+    }
     const formattedExamComponents = {
       exam_name: exam_name.trim().toLowerCase(),
       component: component.map((comp) => ({

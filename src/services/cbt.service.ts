@@ -1628,6 +1628,13 @@ const subjectCbtObjCbtAssessmentStarting = async (
       throw new AppError('Exam already submitted.', 400);
     }
 
+    if (result) {
+      const final_cutoff = new Date(result?.obj_final_cutoff_time).getTime();
+      if (current_time > final_cutoff) {
+        throw new AppError('Your exam time has ended.', 400);
+      }
+    }
+
     if (!result) {
       const expectedQuestionPerStudent =
         examDocExist.number_of_questions_per_student;
@@ -2251,6 +2258,7 @@ const subjectCbtObjCbtAssessmentSubmission = async (
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
+    console.log('I am being called 1...');
     const { cbt_result_id, exam_id, result_doc, student_id, trigger_type } =
       payload;
 
@@ -2263,6 +2271,9 @@ const subjectCbtObjCbtAssessmentSubmission = async (
     if (!studentExist) {
       throw new AppError('Student not found.', 404);
     }
+
+    console.log('student Email:', studentExist.email);
+    console.log('student Email:', studentExist._id);
 
     const examDocExist = await CbtExam.findById({
       _id: examId,
@@ -2299,6 +2310,8 @@ const subjectCbtObjCbtAssessmentSubmission = async (
       );
     }
 
+    console.log('I am being called 2...');
+
     const current_time = Date.now();
     const start_time = new Date(result.obj_start_time).getTime();
     const end_time = new Date(result.obj_final_cutoff_time).getTime();
@@ -2311,6 +2324,8 @@ const subjectCbtObjCbtAssessmentSubmission = async (
         401
       );
     }
+
+    console.log('I am being called 3...');
 
     // I WILL UNCOMMENT LATER
     if (current_time > finalSubmission) {
@@ -2336,6 +2351,8 @@ const subjectCbtObjCbtAssessmentSubmission = async (
       result.obj_time_left = result.obj_time_left;
       result.obj_status = examStatusEnum[3];
     }
+
+    console.log('I am being called 4...');
 
     const questionMap = new Map(
       result.shuffled_obj_questions.map((q) => [q._id.toString(), q])
@@ -2364,6 +2381,8 @@ const subjectCbtObjCbtAssessmentSubmission = async (
       0
     );
 
+    console.log('I am being called 5...');
+
     const resultSettings = await ResultSetting.findOne({
       level: result.level,
     }).session(session);
@@ -2373,6 +2392,7 @@ const subjectCbtObjCbtAssessmentSubmission = async (
     }
 
     const exam_component_name = resultSettings?.exam_components.exam_name;
+    console.log('I am being called 6...');
 
     let objKeyName;
     let testName: string;
@@ -2410,6 +2430,7 @@ const subjectCbtObjCbtAssessmentSubmission = async (
     }
 
     const rawPercentage = (totalStudentScore / totalPossibleScore) * 100;
+    console.log('I am being called 7...');
 
     const maxObjectivePercent = objKeyName?.percentage; // we get this from the result settings of the school
     const convertedScore = totalPossibleScore
@@ -2423,6 +2444,7 @@ const subjectCbtObjCbtAssessmentSubmission = async (
 
     result.markModified('shuffled_obj_questions');
     await result.save({ session });
+    console.log('I am being called 8...');
 
     await session.commitTransaction();
     session.endSession();
