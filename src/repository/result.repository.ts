@@ -891,6 +891,11 @@ const processCbtAssessmentResultSubmission = async (
     }
 
     const exam_component_name = resultSettings?.exam_components.exam_name;
+    const cbtObj = resultSettings?.exam_components.component.find(
+      (a) => a.key === 'obj'
+    );
+
+    console.log('cbtObj:', cbtObj);
 
     // first fetch the cbtResult
     let studentSubjectResult = await SubjectResult.findOne({
@@ -942,11 +947,11 @@ const processCbtAssessmentResultSubmission = async (
     let examObj: ExamScoreType | null = null;
     let testObj: ScoreType | null = null;
 
-    const cbtObj = resultSettings?.exam_components.component.find(
-      (a) => a.key === 'obj'
-    );
+    // const cbtObj = resultSettings?.exam_components.component.find(
+    //   (a) => a.key === 'obj'
+    // );
 
-    console.log('cbtObj:', cbtObj);
+    // console.log('cbtObj:', cbtObj);
 
     if (
       examDocExist.assessment_type.trim().toLowerCase() !==
@@ -1059,7 +1064,11 @@ const processCbtAssessmentResultSubmission = async (
       academic_session_id: payload.session,
     }).session(session);
 
+    console.log('I can find main result:', mainResult);
+
     if (!mainResult) {
+      console.log('No main result but created it:', mainResult);
+
       mainResult = new Result({
         student: payload.student_id,
         enrolment: payload.enrolment,
@@ -1067,11 +1076,14 @@ const processCbtAssessmentResultSubmission = async (
         academic_session_id: payload.session,
         term_results: [],
       });
+      console.log('No main result but created it:', mainResult);
     }
 
     let termExistInResultDoc = mainResult?.term_results.find(
       (t) => t.term === payload.term
     );
+
+    console.log('I can find term result:', termExistInResultDoc);
 
     if (!termExistInResultDoc) {
       termExistInResultDoc = {
@@ -1080,6 +1092,7 @@ const processCbtAssessmentResultSubmission = async (
         subject_results: [subjectObj],
         class_position: '',
       };
+      console.log('No term result but i created it:', termExistInResultDoc);
 
       mainResult?.term_results.push(termExistInResultDoc);
       // mainResult?.markModified('term_results');
@@ -1088,11 +1101,22 @@ const processCbtAssessmentResultSubmission = async (
         (s) => s.subject.toString() === payload.subject_id.toString()
       );
 
+      console.log('Getting mainSubjectResult:', mainSubjectResult);
+
       if (!mainSubjectResult) {
         termExistInResultDoc?.subject_results?.push(subjectObj);
+        console.log(
+          'Not find but created it mainSubjectResult:',
+          mainSubjectResult
+        );
         // mainResult?.markModified('term_results');
       } else {
-        if (examDocExist.assessment_type !== exam_component_name) {
+        if (
+          examDocExist.assessment_type.trim().toLowerCase() !==
+            exam_component_name.trim().toLowerCase() &&
+          examDocExist.assessment_type.trim().toLowerCase() !==
+            cbtObj?.name.trim().toLowerCase()
+        ) {
           if (testObj) {
             const hasTest = mainSubjectResult.scores.find(
               (s) =>
