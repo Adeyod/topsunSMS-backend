@@ -2392,11 +2392,15 @@ const subjectCbtObjCbtAssessmentSubmission = async (
     }
 
     const exam_component_name = resultSettings?.exam_components.exam_name;
+    const cbtObj = resultSettings?.exam_components.component.find(
+      (a) => a.key === 'obj'
+    );
     console.log('I am being called 6...');
 
     let objKeyName;
     let testName: string;
 
+    console.log('cbtObj:', cbtObj);
     console.log(
       'examDocExist.assessment_type.trim().toLowerCase():',
       examDocExist.assessment_type.trim().toLowerCase()
@@ -2426,7 +2430,9 @@ const subjectCbtObjCbtAssessmentSubmission = async (
 
     if (
       examDocExist.assessment_type.trim().toLowerCase() !==
-      exam_component_name.trim().toLowerCase()
+        exam_component_name.trim().toLowerCase() &&
+      examDocExist.assessment_type.trim().toLowerCase() !==
+        cbtObj?.name.trim().toLowerCase()
     ) {
       console.log('i want to do for test...');
       // do for test
