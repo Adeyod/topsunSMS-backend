@@ -2413,6 +2413,16 @@ const subjectCbtObjCbtAssessmentSubmission = async (
       'resultSettings?.exam_components.component:',
       resultSettings?.exam_components.component
     );
+    console.log(
+      'checking condition:',
+      examDocExist.assessment_type.trim().toLowerCase() !==
+        exam_component_name.trim().toLowerCase()
+    );
+
+    //     resultSettings?.exam_components.component: [
+    //   { key: 'obj', name: 'cbt obj', percentage: 20 },
+    //   { key: 'theory', name: 'theory', percentage: 40 }
+    // ]
 
     if (
       examDocExist.assessment_type.trim().toLowerCase() !==
