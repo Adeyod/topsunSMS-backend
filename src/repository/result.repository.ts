@@ -1117,6 +1117,7 @@ const processCbtAssessmentResultSubmission = async (
           examDocExist.assessment_type.trim().toLowerCase() !==
             cbtObj?.name.trim().toLowerCase()
         ) {
+          console.log('I am running for testObj...');
           if (testObj) {
             const hasTest = mainSubjectResult.scores.find(
               (s) =>
@@ -1128,6 +1129,7 @@ const processCbtAssessmentResultSubmission = async (
             }
           }
         } else {
+          console.log('I am running for examObj...');
           if (examObj) {
             const hasExam = mainSubjectResult.exam_object.find(
               (s) =>
@@ -1150,6 +1152,7 @@ const processCbtAssessmentResultSubmission = async (
     }
 
     if (mainResult) {
+      console.log('mainResult when found at the bottom', mainResult);
       await mainResult.save({ session });
     }
 
