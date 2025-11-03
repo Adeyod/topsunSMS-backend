@@ -182,7 +182,6 @@ const recordScore = async (
       score_name,
       class_enrolment_id,
       class_id,
-      // session,
     } = payload;
 
     const subjectId = Object(subject_id);
@@ -195,7 +194,6 @@ const recordScore = async (
     const studentExist = await Student.findById({
       _id: studentId,
     });
-    // .session(session);
 
     if (!studentExist) {
       throw new AppError('Student not found.', 404);
@@ -205,7 +203,6 @@ const recordScore = async (
       _id: sessionId,
       is_active: true,
     });
-    // .session(session);
 
     if (!sessionActive) {
       throw new AppError('Session not found or it is not active.', 404);
@@ -220,7 +217,6 @@ const recordScore = async (
     const classExist = await Class.findById({
       _id: classId,
     });
-    // .session(session);
 
     if (!classExist) {
       throw new AppError('Class not found.', 404);
@@ -229,20 +225,23 @@ const recordScore = async (
     const resultSettings = await ResultSetting.findOne({
       level: classExist.level,
     });
-    // .session(session);
 
     if (!resultSettings) {
       throw new AppError('Result setting not found for this level.', 404);
     }
 
+    console.log('resultSettings:', resultSettings);
+
     const validComponent = resultSettings.components.find(
       (comp) => comp.name === score_name
     );
+    console.log('validComponent:', validComponent);
 
     if (!validComponent) {
       throw new AppError(`Invalid score type: ${score_name}.`, 400);
     }
 
+    console.log('validComponent.percentage:', validComponent.percentage);
     if (score > validComponent.percentage) {
       throw new AppError(
         `${validComponent.name} score can not be greater than ${validComponent.percentage}.`,
@@ -266,7 +265,6 @@ const recordScore = async (
     const classEnrolmentExist = await ClassEnrolment.findById({
       _id: classEnrolmentId,
     });
-    // .session(session);
 
     if (!classEnrolmentExist) {
       throw new AppError('Class enrolment not found.', 404);
@@ -294,9 +292,7 @@ const recordScore = async (
       class: class_id,
       session: sessionId,
       subject: subjectId,
-      // subject_teacher: teacherId,
     });
-    // .session(session);
 
     if (!studentSubjectResult) {
       studentSubjectResult = new SubjectResult({
@@ -332,21 +328,18 @@ const recordScore = async (
           (s) => s.score_name === score_name
         );
 
-        if (!existingScore) {
-          termResult.scores.push(scoreObj);
+        if (existingScore) {
+          throw new AppError(
+            `${score_name} score has already been recorded for this student`,
+            409
+          );
         }
+        termResult.scores.push(scoreObj);
       }
-      // studentSubjectResult.term_results.scores.push(scoreObj);
     }
 
     studentSubjectResult.markModified('term_results');
     await studentSubjectResult.save();
-    // try {
-    //   await studentSubjectResult.save({ session });
-    // } catch (error) {
-    //   console.error('Error saving SubjectResult:', error);
-    //   throw error;
-    // }
 
     return studentSubjectResult as SubjectResultDocument;
   } catch (error) {

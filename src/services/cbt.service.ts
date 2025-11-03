@@ -2272,9 +2272,6 @@ const subjectCbtObjCbtAssessmentSubmission = async (
       throw new AppError('Student not found.', 404);
     }
 
-    console.log('student Email:', studentExist.email);
-    console.log('student Email:', studentExist._id);
-
     const examDocExist = await CbtExam.findById({
       _id: examId,
     }).session(session);
