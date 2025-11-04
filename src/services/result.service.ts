@@ -2388,6 +2388,26 @@ const studentsSubjectPositionInClass = async (
             //     ],
             //   }
             // ).session(session);
+            await SubjectResult.updateOne(
+              {
+                enrolment: classEnrolment._id,
+                student: student.studentId,
+                class: classExist._id,
+                session: activeSession._id,
+                subject: subject_id,
+                'term_results.term': activeTerm.name,
+              },
+              {
+                $set: {
+                  'term_results.$[elem].subject_position':
+                    student.subjectObj.subject_position,
+                },
+              },
+              {
+                arrayFilters: [{ 'elem.term': activeTerm.name }],
+              }
+            ).session(session);
+
             // await SubjectResult.updateOne(
             //   {
             //     enrolment: classEnrolment._id,
@@ -2398,30 +2418,11 @@ const studentsSubjectPositionInClass = async (
             //   },
             //   {
             //     $set: {
-            //       'term_results.$[elem].subject_position':
+            //       'term_results.$.subject_position':
             //         student.subjectObj.subject_position,
             //     },
-            //   },
-            //   {
-            //     arrayFilters: [{ 'elem.term': activeTerm.name }],
             //   }
             // ).session(session);
-
-            await SubjectResult.updateOne(
-              {
-                enrolment: classEnrolment._id,
-                student: student.studentId,
-                class: classExist._id,
-                session: activeSession._id,
-                'term_results.term': activeTerm.name,
-              },
-              {
-                $set: {
-                  'term_results.$.subject_position':
-                    student.subjectObj.subject_position,
-                },
-              }
-            ).session(session);
 
             const studentReturn = {
               student_id: student.studentId as string,
