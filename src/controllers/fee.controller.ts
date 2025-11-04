@@ -277,7 +277,7 @@ import {
 const createSchoolFees = catchErrors(async (req, res) => {
   // const start = Date.now();
 
-  const { fee_array, receiving_acc_id } = req.body;
+  const { fee_array } = req.body;
 
   if (fee_array.length === 0) {
     throw new AppError('Class levels, and amounts must be provided.', 400);
@@ -291,12 +291,12 @@ const createSchoolFees = catchErrors(async (req, res) => {
     throw new AppError('Please provide school fees for only 6 levels.', 400);
   }
 
-  if (!receiving_acc_id) {
-    throw new AppError(
-      'Please choose an account number that the fee is going to be paid into.',
-      400
-    );
-  }
+  // if (!receiving_acc_id) {
+  //   throw new AppError(
+  //     'Please choose an account number that the fee is going to be paid into.',
+  //     400
+  //   );
+  // }
 
   for (const fee of fee_array) {
     const validationResult = schoolFeesValidation(fee.amount);
@@ -305,7 +305,7 @@ const createSchoolFees = catchErrors(async (req, res) => {
     }
   }
 
-  const result = await schoolFeesCreation(fee_array, receiving_acc_id);
+  const result = await schoolFeesCreation(fee_array);
 
   if (!result) {
     throw new AppError('Unable to create school fees.', 400);

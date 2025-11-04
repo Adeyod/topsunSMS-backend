@@ -34,8 +34,8 @@ const getLevelFeeDoc = async (
 const createFeeDoc = async (
   fee_array: FeePayloadType[],
   term: string,
-  activeSession: mongoose.Types.ObjectId,
-  session: mongoose.ClientSession
+  activeSession: mongoose.Types.ObjectId
+  // session: mongoose.ClientSession
 ) => {
   return await Promise.all(
     fee_array.map(async (fee) => {
@@ -51,7 +51,7 @@ const createFeeDoc = async (
       };
       const response = new Fee(feeData);
 
-      const savedResponse = await response.save({ session });
+      const savedResponse = await response.save();
       const plainObject = savedResponse.toJSON();
       return plainObject;
     })

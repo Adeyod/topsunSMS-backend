@@ -265,11 +265,11 @@ import { maxSchoolAccountNumbers } from '../utils/code';
 
 // this is for creating school fees
 const schoolFeesCreation = async (
-  fee_array: FeePayloadType[],
-  receiving_acc_id: string
+  fee_array: FeePayloadType[]
+  // receiving_acc_id: string
 ): Promise<SchoolFeesDocument[]> => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
+  // const session = await mongoose.startSession();
+  // session.startTransaction();
   try {
     // const receivingAccount = new mongoose.Types.ObjectId(receiving_acc_id);
 
@@ -326,7 +326,8 @@ const schoolFeesCreation = async (
 
     const activeSession = await Session.findOne({
       is_active: true,
-    }).session(session);
+    });
+    // .session(session);
 
     if (!activeSession) {
       throw new AppError(
@@ -354,7 +355,8 @@ const schoolFeesCreation = async (
     const paymentDocExist = await Payment.findOne({
       session: activeSession._id,
       term: term,
-    }).session(session);
+    });
+    // .session(session);
 
     if (activeTerm) {
       throw new AppError(
@@ -377,7 +379,7 @@ const schoolFeesCreation = async (
             level: fee.class_level,
             academic_session_id: activeSession._id,
             term: term,
-          }).session(session);
+          });
         })
       );
 
@@ -393,20 +395,13 @@ const schoolFeesCreation = async (
       );
     }
 
-    const feeCreated = await createFeeDoc(
-      fee_array,
-      term,
-      activeSession._id,
-      session
-    );
+    const feeCreated = await createFeeDoc(fee_array, term, activeSession._id);
 
-    await session.commitTransaction();
-    session.endSession();
+    // await session.commitTransaction();
+    // session.endSession();
 
     return feeCreated as unknown as SchoolFeesDocument[];
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
     if (error instanceof AppError) {
       throw new AppError(`${error.message}`, error.statusCode);
     } else {
