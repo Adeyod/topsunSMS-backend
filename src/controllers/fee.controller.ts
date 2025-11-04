@@ -481,14 +481,7 @@ const getASchoolFeeByLevelAndTerm = catchErrors(async (req, res) => {
 const createOptionalFees = catchErrors(async (req, res) => {
   // const start = Date.now();
 
-  const { fee_name, applicable_classes, amount, receiving_acc_id } = req.body;
-
-  if (!receiving_acc_id) {
-    throw new AppError(
-      'Please choose an account number that the fee is going to be paid into.',
-      400
-    );
-  }
+  const { fee_name, applicable_classes, amount } = req.body;
 
   const requiredFields = {
     fee_name,
@@ -518,7 +511,6 @@ const createOptionalFees = catchErrors(async (req, res) => {
     fee_name: value.fee_name,
     applicable_classes,
     amount: value.amount,
-    receiving_acc_id,
   };
 
   const result = await optionalFeesCreation(payload);
@@ -559,14 +551,7 @@ const createOptionalFees = catchErrors(async (req, res) => {
 const createMandatoryFees = catchErrors(async (req, res) => {
   // const start = Date.now();
 
-  const { fee_name, amount, receiving_acc_id } = req.body;
-
-  if (!receiving_acc_id) {
-    throw new AppError(
-      'Please choose an account number that the fee is going to be paid into.',
-      400
-    );
-  }
+  const { fee_name, amount } = req.body;
 
   const requiredFields = {
     fee_name,
@@ -594,7 +579,6 @@ const createMandatoryFees = catchErrors(async (req, res) => {
   const payload = {
     fee_name: value.fee_name,
     amount: value.amount,
-    receiving_acc_id,
   };
 
   const result = await mandatoryFeesCreation(payload);
@@ -635,14 +619,7 @@ const createMandatoryFees = catchErrors(async (req, res) => {
 const addMandatoryFeeDuringTerm = catchErrors(async (req, res) => {
   // const start = Date.now();
 
-  const { fee_name, amount, term, receiving_acc_id } = req.body;
-
-  if (!receiving_acc_id) {
-    throw new AppError(
-      'Please choose an account number that the fee is going to be paid into.',
-      400
-    );
-  }
+  const { fee_name, amount, term } = req.body;
 
   const requiredFields = {
     fee_name,
@@ -672,7 +649,6 @@ const addMandatoryFeeDuringTerm = catchErrors(async (req, res) => {
     fee_name: value.fee_name,
     amount: value.amount,
     term,
-    receiving_acc_id,
   };
 
   const result = await mandatoryFeesAddition(payload);
@@ -713,15 +689,7 @@ const addMandatoryFeeDuringTerm = catchErrors(async (req, res) => {
 const addOptionalFeeDuringTerm = catchErrors(async (req, res) => {
   // const start = Date.now();
 
-  const { fee_name, applicable_classes, amount, receiving_acc_id, term } =
-    req.body;
-
-  if (!receiving_acc_id) {
-    throw new AppError(
-      'Please choose an account number that the fee is going to be paid into.',
-      400
-    );
-  }
+  const { fee_name, applicable_classes, amount, term } = req.body;
 
   const requiredFields = {
     fee_name,
@@ -752,7 +720,6 @@ const addOptionalFeeDuringTerm = catchErrors(async (req, res) => {
     fee_name: value.fee_name,
     applicable_classes,
     amount: value.amount,
-    receiving_acc_id,
     term,
   };
 
