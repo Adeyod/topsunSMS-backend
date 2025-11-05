@@ -2763,26 +2763,57 @@ type TransactionDocument = {
   channel: 'webhook' | 'manual' | 'fee_payment' | 'transfer';
 };
 
+type AssignmentCreationPayloadType = {
+  subject_id: mongoose.Types.ObjectId;
+  class_id: mongoose.Types.ObjectId;
+  title: string;
+  due_date: Date;
+  user: mongoose.Types.ObjectId;
+  questions_array: QuestionObject[];
+};
+
+type QuestionObject = {
+  question_number: number;
+  question_text: string;
+  attachments: {
+    url: string;
+    public_url: string;
+  }[];
+};
+
 type AssignmentDocument = Document & {
   title: string;
-  description: string;
-  dueDate: Date;
+  questions: QuestionObject[];
+  submission_type: 'file' | 'text' | 'mixed';
+  status: 'open' | 'closed';
+  due_date: Date;
   subject: string;
   class: mongoose.Types.ObjectId;
+  subject_id: mongoose.Types.ObjectId;
   class_enrolment: mongoose.Types.ObjectId;
   teacher_id: mongoose.Types.ObjectId;
   attachments?: string[]; // file URLs (optional)
 };
 
+type AnswerSubmissionType = {
+  question_number: number;
+  text_response: string;
+  attachments: {
+    url: string;
+    public_url: string;
+  }[];
+  mark: number;
+};
 type SubmissionDocument = Document & {
   assignment_id: mongoose.Types.ObjectId;
   student_id: mongoose.Types.ObjectId;
+  answers: AnswerSubmissionType[];
   text_response?: string;
   attachments?: string[];
   submittedAt?: Date;
   graded?: boolean;
-  score?: number;
-  feedback?: string;
+  total_score?: number;
+  remark?: string;
 };
 
 type StudentFeePaymentType = {
@@ -2829,7 +2860,8 @@ type EndSubjectInATimetableType = {
   subject_id: mongoose.Types.ObjectId;
 };
 
-export {
+export {AssignmentCreationPayloadType,
+  AnswerSubmissionType,
   EndSubjectInATimetableType,
   ChangeSubjectStartTimeType,
   NewDateTimetable,

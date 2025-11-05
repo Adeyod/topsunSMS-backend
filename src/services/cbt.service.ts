@@ -2258,7 +2258,6 @@ const subjectCbtObjCbtAssessmentSubmission = async (
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    console.log('I am being called 1...');
     const { cbt_result_id, exam_id, result_doc, student_id, trigger_type } =
       payload;
 
@@ -2307,8 +2306,6 @@ const subjectCbtObjCbtAssessmentSubmission = async (
       );
     }
 
-    console.log('I am being called 2...');
-
     const current_time = Date.now();
     const start_time = new Date(result.obj_start_time).getTime();
     const end_time = new Date(result.obj_final_cutoff_time).getTime();
@@ -2321,8 +2318,6 @@ const subjectCbtObjCbtAssessmentSubmission = async (
         401
       );
     }
-
-    console.log('I am being called 3...');
 
     // I WILL UNCOMMENT LATER
     if (current_time > finalSubmission) {
@@ -2348,8 +2343,6 @@ const subjectCbtObjCbtAssessmentSubmission = async (
       result.obj_time_left = result.obj_time_left;
       result.obj_status = examStatusEnum[3];
     }
-
-    console.log('I am being called 4...');
 
     const questionMap = new Map(
       result.shuffled_obj_questions.map((q) => [q._id.toString(), q])
@@ -2378,8 +2371,6 @@ const subjectCbtObjCbtAssessmentSubmission = async (
       0
     );
 
-    console.log('I am being called 5...');
-
     const resultSettings = await ResultSetting.findOne({
       level: result.level,
     }).session(session);
@@ -2392,38 +2383,9 @@ const subjectCbtObjCbtAssessmentSubmission = async (
     const cbtObj = resultSettings?.exam_components.component.find(
       (a) => a.key === 'obj'
     );
-    console.log('I am being called 6...');
 
     let objKeyName;
     let testName: string;
-
-    console.log('cbtObj:', cbtObj);
-    console.log(
-      'examDocExist.assessment_type.trim().toLowerCase():',
-      examDocExist.assessment_type.trim().toLowerCase()
-    );
-    console.log(
-      'exam_component_name.trim().toLowerCase():',
-      exam_component_name.trim().toLowerCase()
-    );
-
-    // examDocExist.assessment_type.trim().toLowerCase(): cbt obj
-    // exam_component_name.trim().toLowerCase(): exam
-
-    console.log(
-      'resultSettings?.exam_components.component:',
-      resultSettings?.exam_components.component
-    );
-    console.log(
-      'checking condition:',
-      examDocExist.assessment_type.trim().toLowerCase() !==
-        exam_component_name.trim().toLowerCase()
-    );
-
-    //     resultSettings?.exam_components.component: [
-    //   { key: 'obj', name: 'cbt obj', percentage: 20 },
-    //   { key: 'theory', name: 'theory', percentage: 40 }
-    // ]
 
     if (
       examDocExist.assessment_type.trim().toLowerCase() !==
@@ -2447,16 +2409,11 @@ const subjectCbtObjCbtAssessmentSubmission = async (
       testName = objKeyName?.name;
     } else {
       // do for exam
-      console.log('I want to run for exam...');
       const exam_components = resultSettings?.exam_components.component;
-      console.log('exam_components:', exam_components);
 
       objKeyName = exam_components?.find(
         (k) => k.key.trim().toLowerCase() === examKeyEnum[0]
       );
-      console.log('objKeyName:', objKeyName);
-      console.log('objKeyName?.percentage:', objKeyName?.percentage);
-      console.log('objKeyName?.name:', objKeyName?.name);
 
       if (!objKeyName?.percentage || !objKeyName?.name) {
         throw new AppError(
@@ -2467,19 +2424,11 @@ const subjectCbtObjCbtAssessmentSubmission = async (
     }
 
     const rawPercentage = (totalStudentScore / totalPossibleScore) * 100;
-    console.log('rawPercentage:', rawPercentage);
-    console.log('totalStudentScore:', totalStudentScore);
-    console.log('totalPossibleScore:', totalPossibleScore);
-
-    console.log('I am being called 7...');
 
     const maxObjectivePercent = objKeyName?.percentage; // we get this from the result settings of the school
     const convertedScore = totalPossibleScore
       ? (rawPercentage / 100) * maxObjectivePercent
       : 0;
-
-    console.log('maxObjectivePercent:', maxObjectivePercent);
-    console.log('convertedScore:', convertedScore);
 
     result.objective_total_score = totalStudentScore;
     result.obj_submitted_at = new Date();
@@ -2487,11 +2436,7 @@ const subjectCbtObjCbtAssessmentSubmission = async (
     result.obj_trigger_type = trigger_type;
 
     result.markModified('shuffled_obj_questions');
-    console.log('result:', result);
     await result.save({ session });
-    console.log('result:', result);
-
-    console.log('I am being called 8...');
 
     await session.commitTransaction();
     session.endSession();
