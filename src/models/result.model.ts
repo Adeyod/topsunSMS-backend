@@ -35,6 +35,8 @@ const resultSchema = new mongoose.Schema<ResultDocument>(
             total_score: { type: Number },
             last_term_cumulative: { type: Number },
             cumulative_average: { type: Number },
+            class_highest_mark: { type: Number, default: null },
+            class_lowest_mark: { type: Number, default: null },
             exam_object: [
               {
                 key: { type: String, trim: true },

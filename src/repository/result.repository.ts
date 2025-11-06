@@ -313,6 +313,8 @@ const recordScore = async (
         studentSubjectResult.term_results.push({
           term: term,
           total_score: 0,
+          class_highest_mark: 0,
+          class_lowest_mark: 0,
           last_term_cumulative: 0,
           cumulative_average: 0,
           // cumulative_score: 0,
@@ -543,6 +545,8 @@ const processStudentResultUpdate = async (payload: ResultJobData) => {
       subject_teacher: Object(teacher_id),
       total_score: 0,
       cumulative_average: 0,
+      class_lowest_mark: 0,
+      class_highest_mark: 0,
       last_term_cumulative: 0,
       scores: [scoreObj],
       exam_object: [],
@@ -570,6 +574,8 @@ const processStudentResultUpdate = async (payload: ResultJobData) => {
           total_score: 0,
           cumulative_average: 0,
           last_term_cumulative: 0,
+          class_lowest_mark: 0,
+          class_highest_mark: 0,
           scores: [scoreObj],
           exam_object: [],
           subject_position: '',
@@ -655,6 +661,8 @@ const processStudentExamResultUpdate = async (
       total_score: 0,
       cumulative_average: 0,
       last_term_cumulative: 0,
+      class_lowest_mark: 0,
+      class_highest_mark: 0,
       scores: [scoreObj],
       exam_object: [scoreObj],
       subject_position: '',
@@ -681,6 +689,8 @@ const processStudentExamResultUpdate = async (
           total_score: 0,
           cumulative_average: 0,
           last_term_cumulative: 0,
+          class_lowest_mark: 0,
+          class_highest_mark: 0,
           scores: [scoreObj],
           exam_object: [scoreObj],
           subject_position: '',
@@ -761,6 +771,8 @@ const processStudentSubjectPositionUpdate = async (
     class_enrolment_id,
     session_id,
     subject_position,
+    class_highest_mark,
+    class_lowest_mark,
   } = payload;
 
   const student = Object(student_id);
@@ -784,6 +796,16 @@ const processStudentSubjectPositionUpdate = async (
 
     if (actualSubject) {
       actualSubject.subject_position = subject_position;
+      actualSubject.class_highest_mark = class_highest_mark;
+      actualSubject.class_lowest_mark = class_lowest_mark;
+      console.log(
+        'actualSubject.class_highest_mark:',
+        actualSubject.class_highest_mark
+      );
+      console.log(
+        'actualSubject.class_lowest_mark:',
+        actualSubject.class_lowest_mark
+      );
     }
 
     await sessionResult?.save();
@@ -921,6 +943,8 @@ const processCbtAssessmentResultSubmission = async (
         scores: [],
         exam_object: [],
         total_score: 0,
+        class_highest_mark: 0,
+        class_lowest_mark: 0,
         cumulative_average: 0,
         last_term_cumulative: 0,
         subject_position: '',
@@ -981,6 +1005,8 @@ const processCbtAssessmentResultSubmission = async (
         total_score: 0,
         cumulative_average: 0,
         last_term_cumulative: 0,
+        class_lowest_mark: 0,
+        class_highest_mark: 0,
         scores: [testObj],
         exam_object: [],
         subject_position: '',
@@ -1028,6 +1054,8 @@ const processCbtAssessmentResultSubmission = async (
         total_score: 0,
         cumulative_average: 0,
         last_term_cumulative: 0,
+        class_lowest_mark: 0,
+        class_highest_mark: 0,
         scores: [examObj],
         exam_object: [examObj],
         subject_position: '',

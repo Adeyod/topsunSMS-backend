@@ -44,6 +44,8 @@ const subjectResultSchema = new Schema<SubjectResultDocument>(
         ],
         grade: { type: String },
         remark: { type: String },
+        class_highest_mark: { type: Number, default: null },
+        class_lowest_mark: { type: Number, default: null },
         subject_position: { type: String },
       },
     ],

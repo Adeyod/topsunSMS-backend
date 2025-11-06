@@ -961,6 +961,7 @@ import Student from '../models/students.model';
 import {
   assignPositions,
   classPositionCalculation,
+  getMinMax,
   schoolSubscriptionPlan,
 } from '../utils/functions';
 import { examKeyEnum, subscriptionEnum } from '../constants/enum';
@@ -2362,6 +2363,18 @@ const studentsSubjectPositionInClass = async (
       );
     } else {
       const ranking = assignPositions(studentResults);
+
+      const cums = studentResults
+        .map((a) => a.cumulative_score)
+        .filter((score): score is number => typeof score === 'number');
+
+      const minMax = getMinMax(cums);
+
+      const highestScore = minMax.highest;
+      const lowestScore = minMax.lowest;
+
+      console.log('highestScore:', highestScore);
+      console.log('lowestScore:', lowestScore);
       const studentReturns: SubjectPositionJobData[] = [];
       await Promise.all(
         ranking.map(async (student) => {
@@ -2397,10 +2410,13 @@ const studentsSubjectPositionInClass = async (
                 subject: subject_id,
                 'term_results.term': activeTerm.name,
               },
+
               {
                 $set: {
                   'term_results.$[elem].subject_position':
                     student.subjectObj.subject_position,
+                  'term_results.$[elem].class_highest_mark': highestScore,
+                  'term_results.$[elem].class_lowest_mark': lowestScore,
                 },
               },
               {
@@ -2431,6 +2447,8 @@ const studentsSubjectPositionInClass = async (
               class_id: classExist._id,
               class_enrolment_id: classEnrolment._id,
               session_id: classEnrolment.academic_session_id,
+              class_highest_mark: highestScore,
+              class_lowest_mark: lowestScore,
               subject_position: student.subjectObj.subject_position as string,
             };
 
@@ -2451,6 +2469,8 @@ const studentsSubjectPositionInClass = async (
               class_enrolment_id: studentRes.class_enrolment_id,
               session_id: studentRes.session_id,
               subject_position: studentRes.subject_position,
+              class_highest_mark: studentRes.class_highest_mark,
+              class_lowest_mark: studentRes.class_lowest_mark,
             },
             opts: {
               attempts: 5,

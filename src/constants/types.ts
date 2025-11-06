@@ -1375,11 +1375,11 @@ type SubjectResult = {
   subject_position: string;
   cumulative_average: number;
   last_term_cumulative: number;
+  class_highest_mark: number;
+  class_lowest_mark: number;
 };
 
 type TermResult = {
-  // school: mongoose.Types.ObjectId;
-  // _id: mongoose.Types.ObjectId;
   term: string;
   cumulative_score: number;
   class_position: string;
@@ -1387,7 +1387,6 @@ type TermResult = {
 };
 
 type ResultDocument = {
-  // school: mongoose.Types.ObjectId;
   _id: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -1417,12 +1416,13 @@ type SubjectTermResult = {
   total_score: number;
   last_term_cumulative: number;
   cumulative_average: number;
+  class_highest_mark: number;
+  class_lowest_mark: number;
   exam_object: ExamScoreType[];
   scores: ScoreType[];
   subject_position: string;
   grade?: string;
   remark?: string;
-  // cumulative_score: number;
   class_position: string;
 };
 
@@ -2673,6 +2673,8 @@ type SubjectPositionAndCumCommon = {
 
 type SubjectPositionJobData = SubjectPositionAndCumCommon & {
   subject_position: string;
+  class_highest_mark: number;
+  class_lowest_mark: number;
 };
 
 type SubjectCumScoreJobData = SubjectPositionAndCumCommon & {
@@ -2860,7 +2862,8 @@ type EndSubjectInATimetableType = {
   subject_id: mongoose.Types.ObjectId;
 };
 
-export {AssignmentCreationPayloadType,
+export {
+  AssignmentCreationPayloadType,
   AnswerSubmissionType,
   EndSubjectInATimetableType,
   ChangeSubjectStartTimeType,

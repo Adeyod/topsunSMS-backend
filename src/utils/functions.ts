@@ -602,6 +602,16 @@ const classPositionCalculation = (
   return students;
 };
 
+function getMinMax(nums: number[]) {
+  if (!Array.isArray(nums) || nums.length === 0) {
+    throw new AppError('Please provide a non-empty array of numbers.', 400);
+  }
+
+  const min = Math.min(...nums);
+  const max = Math.max(...nums);
+  return { lowest: min, highest: max };
+}
+
 const extractSubdomain = (host: string): string | null => {
   if (!host) {
     return null;
@@ -695,6 +705,7 @@ const normalizeAmount = (amount: string | number) => {
 };
 
 export {
+  getMinMax,
   normalizeAmount,
   canonicalize,
   mySchoolName,
