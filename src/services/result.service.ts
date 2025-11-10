@@ -1154,9 +1154,10 @@ const recordManyStudentScores = async (payload: MultipleScoreParamType) => {
     const failedRecords = results.filter((r) => r.status === 'rejected');
 
     if (successfulRecords.length > 0) {
-      const jobs = successfulRecords.map((record) => {
+      const jobs = results.map((record) => {
         const r = record as {
-          status: 'fulfilled';
+          // status: 'fulfilled';
+          status: 'fulfilled' | 'skipped' | 'rejected';
           student_id: string;
           score: number;
           score_name: string;
@@ -1171,6 +1172,7 @@ const recordManyStudentScores = async (payload: MultipleScoreParamType) => {
             subject_id: subject_id,
             class_enrolment_id: class_enrolment_id,
             class_id: class_id,
+            status: r.status,
             student_id: r.student_id,
             score: r.score,
             score_name: r.score_name,
