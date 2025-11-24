@@ -531,14 +531,13 @@ import {
   SessionDocument,
   TermCreationType,
   TermDocument,
+  VacationAndResumptionServicePayload,
 } from '../constants/types';
-import Session from '../models/session.model';
-import { AppError } from '../utils/app.error';
-import Student from '../models/students.model';
-import ClassEnrolment from '../models/classes_enrolment.model';
-import { calculateOutStandingPerTerm } from '../repository/student.repository';
-import Fee from '../models/fees.model';
 import CbtExam from '../models/cbt_exam.model';
+import ClassEnrolment from '../models/classes_enrolment.model';
+import Session from '../models/session.model';
+import Student from '../models/students.model';
+import { AppError } from '../utils/app.error';
 
 const createSession = async (): Promise<SessionDocument> => {
   const checkSession = await Session.findOne().sort({
@@ -722,6 +721,11 @@ const termEndingInSessionUsingTermId = async (
     }
 
     const currentTime = Date.now();
+    const endDate = new Date(activeTerm?.end_date).getTime();
+    const fourteenDays = 14 * 24 * 60 * 60 * 1000;
+
+    const allowedStartDate = endDate - fourteenDays;
+
     if (activeTerm.is_active === false) {
       throw new AppError(
         'This term is not active or has already been ended.',
@@ -729,11 +733,15 @@ const termEndingInSessionUsingTermId = async (
       );
     }
 
-    if (currentTime < new Date(activeTerm?.end_date).getTime()) {
+    if (!activeTerm.date_of_resumption || !activeTerm.date_of_vacation) {
       throw new AppError(
-        'Term can only be ended after the last day of the term.',
+        'Please give us the vacation date and new term resumption date before ending the term.',
         400
       );
+    }
+
+    if (currentTime < allowedStartDate) {
+      throw new AppError('It is not window period for term ending.', 400);
     }
 
     response = await Session.findOneAndUpdate(
@@ -1074,14 +1082,62 @@ const termDeletionInSessionUsingTermId = async (
   }
 };
 
+const termVacationAndNewTermResumptionDates = async (
+  payload: VacationAndResumptionServicePayload
+) => {
+  try {
+    const { date_of_resumption, date_of_vacation, term_id, session_id } =
+      payload;
+
+    const session = Object(session_id);
+    const term = Object(term_id);
+
+    const sessionExist = await Session.findById({
+      _id: session,
+    });
+
+    if (!sessionExist) {
+      throw new AppError('Session not found.', 404);
+    }
+
+    if (sessionExist.is_active !== true) {
+      throw new AppError('This session is no more active.', 400);
+    }
+
+    const actualTerm = sessionExist.terms.find(
+      (a) => a._id?.toString() === term.toString()
+    );
+
+    if (!actualTerm) {
+      throw new AppError('The term does not exist.', 404);
+    }
+
+    if (actualTerm.is_active !== true) {
+      throw new AppError('This term is not active.', 400);
+    }
+
+    actualTerm.date_of_resumption = new Date(date_of_resumption);
+    actualTerm.date_of_vacation = new Date(date_of_vacation);
+    await sessionExist.save();
+    return actualTerm;
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw new AppError(error.message, error.statusCode);
+    } else {
+      throw new Error('Something happened');
+    }
+  }
+};
+
 export {
-  termDeletionInSessionUsingTermId,
-  sessionDeletionUsingSessionId,
-  sessionEndingBySessionId,
-  fetchAllSessions,
-  fetchActiveSession,
-  fetchSessionBySessionId,
   createSession,
   creatingNewTerm,
+  fetchActiveSession,
+  fetchAllSessions,
+  fetchSessionBySessionId,
+  sessionDeletionUsingSessionId,
+  sessionEndingBySessionId,
+  termDeletionInSessionUsingTermId,
   termEndingInSessionUsingTermId,
+  termVacationAndNewTermResumptionDates,
 };

@@ -919,55 +919,52 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////
 import mongoose from 'mongoose';
 import {
+  AllStudentResultsPayloadType,
+  ClassResultsType,
+  EffectiveAreasPayloadType,
+  ExamScoreType,
+  MultipleExamScoreParamType,
+  MultipleLastCumParamType,
+  MultipleScoreParamType,
   // ResultSettingComponentType,
   // GradingAndRemarkType,
   ScoreParamType,
-  ResultDocument,
-  MultipleScoreParamType,
   ScorePayload,
-  StudentPopulatedType,
+  SessionDocument,
   SingleStudentScorePayload,
-  SubjectPopulatedType,
-  StudentResultTermType,
-  StudentResultSessionType,
-  AllStudentResultsPayloadType,
-  ClassResultsType,
-  MultipleLastCumParamType,
-  StudentSubjectPositionType,
-  UserDocument,
   StudentClassPayloadType,
+  StudentPopulatedType,
   StudentResultPopulatedType,
+  StudentResultSessionType,
+  StudentResultTermType,
+  StudentSubjectPositionType,
+  SubjectPopulatedType,
+  SubjectPositionJobData,
+  SubjectResultDocument,
   SubjectResultType,
   TermResult,
-  SchoolType,
-  SessionDocument,
-  MultipleExamScoreParamType,
-  SubjectResultDocument,
-  ExamScoreType,
-  SubjectPositionJobData,
+  UserDocument,
 } from '../constants/types';
+import CbtResult from '../models/cbt_result.model';
 import Class from '../models/class.model';
 import ClassEnrolment from '../models/classes_enrolment.model';
 import Result from '../models/result.model';
 import ResultSetting from '../models/result_setting.model';
-import Subject from '../models/subject.model';
-import Teacher from '../models/teachers.model';
-import { recordScore, recordCumScore } from '../repository/result.repository';
-import { AppError } from '../utils/app.error';
-import { getAStudentById } from '../repository/student.repository';
 import Session from '../models/session.model';
-import { getTeacherById } from '../repository/teacher.repository';
 import Student from '../models/students.model';
+import Subject from '../models/subject.model';
+import { SubjectResult } from '../models/subject_result.model';
+import Teacher from '../models/teachers.model';
+import { recordCumScore, recordScore } from '../repository/result.repository';
+import { getAStudentById } from '../repository/student.repository';
+import { getTeacherById } from '../repository/teacher.repository';
+import { AppError } from '../utils/app.error';
 import {
   assignPositions,
   classPositionCalculation,
   getMinMax,
-  schoolSubscriptionPlan,
 } from '../utils/functions';
-import { examKeyEnum, subscriptionEnum } from '../constants/enum';
 import { studentResultQueue } from '../utils/queue';
-import { SubjectResult } from '../models/subject_result.model';
-import CbtResult from '../models/cbt_result.model';
 
 // MAKE PROVISION FOR CUMMULATIVE. THEN IF FIRST TERM,
 // CUMMULATIVE SPACE SHOULD TAKE TOTAL AND WHEN IT IS SECOND TERM,
@@ -1118,13 +1115,12 @@ const recordManyStudentScores = async (payload: MultipleScoreParamType) => {
           const currentTermResult = result.term_results.find(
             (t) => t.term === term
           );
-          const lastScore = currentTermResult?.scores.at(-1);
           return {
             status: 'fulfilled',
             student_id: student.student_id,
             result,
-            score: lastScore?.score,
-            score_name: lastScore?.score_name,
+            score: student.score,
+            score_name: score_name,
           };
         })
         .catch((err) => {
@@ -1137,12 +1133,16 @@ const recordManyStudentScores = async (payload: MultipleScoreParamType) => {
               status: 'skipped',
               student_id: student.student_id,
               reason: err.message,
+              score_name: score_name,
+              score: student.score,
             };
           }
           return {
             status: 'rejected',
             student_id: student.student_id,
             reason: err.message || 'Unknown error',
+            score_name: score_name,
+            score: student.score,
           };
         })
     );
@@ -1153,7 +1153,7 @@ const recordManyStudentScores = async (payload: MultipleScoreParamType) => {
     const skippedRecords = results.filter((r) => r.status === 'skipped');
     const failedRecords = results.filter((r) => r.status === 'rejected');
 
-    if (successfulRecords.length > 0) {
+    if (results.length > 0) {
       const jobs = results.map((record) => {
         const r = record as {
           // status: 'fulfilled';
@@ -2195,6 +2195,92 @@ const fetchStudentResultByResultId = async (
   }
 };
 
+const studentEffectiveAreasForActiveTermRecording = async (
+  payload: EffectiveAreasPayloadType
+) => {
+  try {
+    const {
+      student_id,
+      result_id,
+      punctuality,
+      neatness,
+      politeness,
+      honesty,
+      relationshipWithOthers,
+      leadership,
+      emotionalStability,
+      health,
+      attitudeToSchoolWork,
+      attentiveness,
+      perseverance,
+    } = payload;
+
+    const student = Object(student_id);
+    const result = Object(result_id);
+
+    const studentResult = await Result.findOne(
+      {
+        student: student,
+        'term_results._id': result,
+      },
+      {
+        term_results: { $elemMatch: { _id: result } },
+      }
+    );
+
+    if (!studentResult || !studentResult.term_results.length) {
+      throw new AppError('Specific term result not found.', 404);
+    }
+
+    const termResult = studentResult.term_results.find(
+      (a) => a._id?.toString() === result.toString()
+    );
+
+    const sessionExist = await Session.findById({
+      _id: studentResult.academic_session_id,
+    });
+
+    if (!sessionExist) {
+      throw new AppError('Academic Session not found.', 404);
+    }
+
+    const getTerm = sessionExist.terms.find((t) => t.name === termResult?.term);
+
+    if (getTerm?.is_active !== true) {
+      throw new AppError(
+        'You can only perform this operation for the result of an active term.',
+        400
+      );
+    }
+
+    if (!termResult) {
+      throw new AppError('No result found for this term.', 404);
+    }
+
+    termResult.punctuality = punctuality;
+    termResult.neatness = neatness;
+    termResult.politeness = politeness;
+    termResult.honesty = honesty;
+    termResult.relationshipWithOthers = relationshipWithOthers;
+    termResult.leadership = leadership;
+    termResult.emotionalStability = emotionalStability;
+    termResult.health = health;
+    termResult.attitudeToSchoolWork = attitudeToSchoolWork;
+    termResult.attentiveness = attentiveness;
+    termResult.perseverance = perseverance;
+
+    await studentResult.save();
+
+    return studentResult;
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw new AppError(error.message, error.statusCode);
+    } else {
+      throw new Error('Something happened');
+    }
+  }
+};
+
 const studentsSubjectPositionInClass = async (
   payload: StudentSubjectPositionType
 ) => {
@@ -2654,20 +2740,21 @@ const calculatePositionOfStudentsInClass = async (
 };
 
 export {
-  fetchLevelResultSetting,
   calculatePositionOfStudentsInClass,
-  studentsSubjectPositionInClass,
-  recordManyStudentCumScores,
   fetchAllResultsOfAStudent,
-  fetchStudentResultByResultId,
-  fetchResultSetting,
-  fetchAllStudentResultsInClassForActiveTermByClassId,
-  fetchStudentSessionResults,
-  fetchStudentTermResult,
   fetchAllScoresPerSubject,
-  recordManyStudentScores,
+  fetchAllStudentResultsInClassForActiveTermByClassId,
+  fetchLevelResultSetting,
+  fetchResultSetting,
+  fetchStudentResultByResultId,
+  fetchStudentSessionResults,
+  fetchStudentSubjectResultInAClass,
+  fetchStudentTermResult,
+  recordManyStudentCumScores,
   recordManyStudentExamScores,
+  recordManyStudentScores,
   // resultSettingCreation,
   recordStudentScore,
-  fetchStudentSubjectResultInAClass,
+  studentEffectiveAreasForActiveTermRecording,
+  studentsSubjectPositionInClass,
 };

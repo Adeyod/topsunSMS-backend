@@ -1,37 +1,33 @@
 import mongoose from 'mongoose';
+import { examKeyEnum } from '../constants/enum';
 import {
+  CbtAssessmentEndedType,
+  CbtAssessmentJobData,
+  CbtAssessmentResultType,
+  CumScoreParamType,
+  ExamScoreType,
   MultipleResultCreationType,
   ResultCreationType,
-  ResultDocument,
-  ScoreParamType,
-  ScoreRecordingParamType,
-  TermResult,
-  CumScoreParamType,
   ResultJobData,
-  CbtAssessmentJobData,
-  SubjectPositionJobData,
+  ScoreRecordingParamType,
+  ScoreType,
   SubjectCumScoreJobData,
+  SubjectPositionJobData,
   SubjectResultDocument,
   SubjectTermResult,
-  CbtAssessmentEndedType,
-  ExamScoreType,
-  ScoreType,
-  CbtAssessmentResultType,
+  TermResult,
 } from '../constants/types';
+import CbtExam from '../models/cbt_exam.model';
 import Class from '../models/class.model';
+import ClassExamTimetable from '../models/class_exam_timetable.model';
 import ClassEnrolment from '../models/classes_enrolment.model';
 import Result from '../models/result.model';
 import ResultSetting from '../models/result_setting.model';
 import Session from '../models/session.model';
 import Student from '../models/students.model';
-import { AppError } from '../utils/app.error';
-import { calculateSubjectSumAndGrade } from '../utils/functions';
 import { SubjectResult } from '../models/subject_result.model';
 import { subjectCbtObjCbtAssessmentSubmission } from '../services/cbt.service';
-import ClassExamTimetable from '../models/class_exam_timetable.model';
-import CbtResult from '../models/cbt_result.model';
-import CbtExam from '../models/cbt_exam.model';
-import { examKeyEnum } from '../constants/enum';
+import { AppError } from '../utils/app.error';
 
 const createResult = async (payload: ResultCreationType) => {
   try {
@@ -589,6 +585,7 @@ const processStudentResultUpdate = async (payload: ResultJobData) => {
         let existingScore = subjectResult.scores.find(
           (s) => s.score_name === score_name
         );
+        console.log('existingScore:', existingScore);
 
         if (existingScore) {
           console.log(
@@ -598,9 +595,9 @@ const processStudentResultUpdate = async (payload: ResultJobData) => {
           //   `${score_name} score has already been recorded and can not be changed.`,
           //   403
           // );
+        } else {
+          subjectResult.scores.push(scoreObj);
         }
-
-        subjectResult.scores.push(scoreObj);
       }
     }
 
@@ -615,7 +612,7 @@ const processStudentResultUpdate = async (payload: ResultJobData) => {
   } catch (error) {
     console.error('Failed to process student result update:', error);
     throw error;
-  }
+  } // 68ee6b138d28802fc7a0304a
 };
 
 const processStudentExamResultUpdate = async (
@@ -1231,6 +1228,8 @@ const processCbtAssessmentResultSubmission = async (
 };
 
 export {
+  createResult,
+  createResultsForStudents,
   processCbtAssessmentResultSubmission,
   processCbtAssessmentSubmission,
   processStudentExamResultUpdate,
@@ -1239,6 +1238,4 @@ export {
   processSubjectCumScoreUpdate,
   recordCumScore,
   recordScore,
-  createResult,
-  createResultsForStudents,
 };

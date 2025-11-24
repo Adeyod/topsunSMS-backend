@@ -1,22 +1,23 @@
 import express from 'express';
-import { verifyAccessToken } from '../middleware/jwtAuth';
-import { permission } from '../middleware/authorization';
 import {
   assignTeacherToClass,
   assignTeacherToSubject,
-  getATeacherById,
-  getTeachersBySubjectId,
-  getAllTeachers,
-  teacherOnboardingById,
   changeClassTeacher,
   changeSubjectTeacherInAClass,
-  getStudentsInClassOfferingTeacherSubject,
+  deleteTeacher,
   getAllClassesTeacherTeachesByTeacherId,
-  getStudentsOfferingTeacherSubjectUsingClassId,
   getAllStudentsInClassByClassId,
-  getStudentsInClassThatTeacherManages,
+  getAllTeachers,
+  getATeacherById,
   getClassTeacherManagesByTeacherId,
+  getStudentsInClassOfferingTeacherSubject,
+  getStudentsInClassThatTeacherManages,
+  getStudentsOfferingTeacherSubjectUsingClassId,
+  getTeachersBySubjectId,
+  teacherOnboardingById,
 } from '../controllers/teacher.controller';
+import { permission } from '../middleware/authorization';
+import { verifyAccessToken } from '../middleware/jwtAuth';
 
 const router = express.Router();
 
@@ -55,6 +56,12 @@ router.get(
   '/get-a-teacher-by-id/:teacher_id',
   permission(['admin', 'super_admin']),
   getATeacherById
+);
+
+router.delete(
+  '/delete-teacher/:teacher_id',
+  permission(['admin', 'super_admin']),
+  deleteTeacher
 );
 
 router.get(

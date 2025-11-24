@@ -1,11 +1,11 @@
-import mongoose, { Model } from 'mongoose';
+import bcrypt from 'bcryptjs';
+import { Model } from 'mongoose';
 import { UserDocument, VerifyUserType } from '../constants/types';
 import Admin from '../models/admin.model';
 import Parent from '../models/parents.model';
 import Student from '../models/students.model';
 import SuperAdmin from '../models/super_admin.model';
 import Teacher from '../models/teachers.model';
-import bcrypt from 'bcryptjs';
 // import { generateAdmissionNumber } from '../utils/functions';
 // import Subject from '../models/subject.model';
 
@@ -38,7 +38,7 @@ const findUserByEmail = async (email: string): Promise<UserDocument | null> => {
     ];
 
     const queries = userCollections.map(({ model, field }) =>
-      model.findOne({ [field]: email }).exec()
+      model.findOne({ [field]: email.trim().toLowerCase() }).exec()
     );
 
     const results = await Promise.all(queries);
@@ -120,11 +120,11 @@ const createNewUserDoc = async (payload: UserDocument) => {
     const hashedPassword = await bcrypt.hash(payload.password, 10);
 
     const commonFields = {
-      first_name: payload.first_name,
-      last_name: payload.last_name,
-      middle_name: payload.middle_name || '',
+      first_name: payload.first_name.trim().toLowerCase(),
+      last_name: payload.last_name.trim().toLowerCase(),
+      middle_name: payload.middle_name?.trim().toLowerCase() || '',
       gender: payload.gender.toLowerCase(),
-      email: payload.email,
+      email: payload.email.trim().toLowerCase(),
       password: hashedPassword,
       // dob: payload.dob,
       role: payload.role,
@@ -262,9 +262,9 @@ const findSameAdmissionNumber = async (admission_number: string) => {
 };
 
 export {
+  createNewUserDoc,
+  findAndVerifyUser,
   findSameAdmissionNumber,
   findUserByEmail,
   findUserById,
-  createNewUserDoc,
-  findAndVerifyUser,
 };

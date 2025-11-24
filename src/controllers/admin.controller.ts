@@ -1,10 +1,11 @@
-import { AppError } from '../utils/app.error';
-import catchErrors from '../utils/tryCatch';
 import {
+  adminDeletion,
   fetchAdminByAdminId,
   fetchAllAdmins,
   fetchMySchoolSummary,
 } from '../services/admin.service';
+import { AppError } from '../utils/app.error';
+import catchErrors from '../utils/tryCatch';
 // import mongoose from 'mongoose';
 // import { saveLog } from '../logs/log.service';
 
@@ -129,4 +130,20 @@ const getMySchoolSummary = catchErrors(async (req, res) => {
   });
 });
 
-export { getMySchoolSummary, getAllAdmins, getAdminByAdminId };
+const deleteAdmin = catchErrors(async (req, res) => {
+  const { admin_id } = req.params;
+
+  const result = await adminDeletion(admin_id);
+
+  if (!result) {
+    throw new AppError('Unable to delete admin.', 400);
+  }
+
+  res.status(200).json({
+    message: 'Admin deleted successfully.',
+    success: true,
+    status: 200,
+  });
+});
+
+export { deleteAdmin, getAdminByAdminId, getAllAdmins, getMySchoolSummary };

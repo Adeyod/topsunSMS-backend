@@ -582,36 +582,37 @@
 
 ////////////////////////////////////////////////////
 
-import Joi, { any, boolean, extend, object } from 'joi';
+import Joi from 'joi';
 import {
+  AdmissionValidationType,
+  AssessmentDocumentType,
+  BankApprovalType,
+  BankPaymentType,
+  BusFeeValidationType,
+  CashPaymentType,
+  CbtAssessmentInputFieldsType,
+  CbtCutoffPayload,
+  ClassLevelArrayType,
   ComparePassType,
+  ContactUsType,
+  CreateClassType,
   CreateSubjectType,
+  EffectiveAreasValidationType,
   ExcludeParentAndStudent,
   LinkStudentType,
+  NegotiatedFeesType,
+  NewDateTimetable,
+  ObjQuestionType,
   ParentType,
   PayloadForLoginInput,
-  TeacherValidationType,
   SchoolBusValidationType,
-  TermDocument,
-  User,
-  BankPaymentType,
-  AddressValidationType,
-  CashPaymentType,
-  BankApprovalType,
-  StudentValidationType,
   SchoolCreationValidationType,
-  AdmissionValidationType,
-  CreateClassType,
-  NegotiatedFeesType,
-  BusFeeValidationType,
-  ContactUsType,
-  ClassLevelArrayType,
-  ObjQuestionType,
-  CbtAssessmentInputFieldsType,
+  StudentValidationType,
+  TeacherValidationType,
+  TermDocument,
   TimetableArrayType,
-  CbtCutoffPayload,
-  AssessmentDocumentType,
-  NewDateTimetable,
+  User,
+  VacationAndResumptionDatesPayload,
 } from '../constants/types';
 import { JoiError } from './app.error';
 
@@ -1496,6 +1497,90 @@ const singleTimetableSchema = Joi.object({
   duration: Joi.number().required(),
 });
 
+const allowedGrades = ['A', 'B', 'C', 'D', 'E', 'F'];
+
+const joiValidateEffectiveAreasSchema = (
+  payload: EffectiveAreasValidationType
+): {
+  success: boolean;
+  value?: any;
+  error?: string;
+} => {
+  const validationSchema = Joi.object({
+    punctuality: Joi.string()
+      .valid(...allowedGrades)
+      .required(),
+    neatness: Joi.string()
+      .valid(...allowedGrades)
+      .required(),
+    politeness: Joi.string()
+      .valid(...allowedGrades)
+      .required(),
+    honesty: Joi.string()
+      .valid(...allowedGrades)
+      .required(),
+    relationshipWithOthers: Joi.string()
+      .valid(...allowedGrades)
+      .required(),
+    leadership: Joi.string()
+      .valid(...allowedGrades)
+      .required(),
+    emotionalStability: Joi.string()
+      .valid(...allowedGrades)
+      .required(),
+    health: Joi.string()
+      .valid(...allowedGrades)
+      .required(),
+    attitudeToSchoolWork: Joi.string()
+      .valid(...allowedGrades)
+      .required(),
+    attentiveness: Joi.string()
+      .valid(...allowedGrades)
+      .required(),
+    perseverance: Joi.string()
+      .valid(...allowedGrades)
+      .required(),
+  });
+
+  const { error, value } = validationSchema.validate(payload);
+  if (error) {
+    return { success: false, error: error.details[0].message };
+  }
+  return { success: true, value };
+};
+
+const joiValidateVacationAndResumptionDatesSchema = (
+  payload: VacationAndResumptionDatesPayload
+): {
+  success: boolean;
+  value?: any;
+  error?: string;
+} => {
+  const validationSchema = Joi.object({
+    date_of_vacation: Joi.date().required().min('now').messages({
+      'date.min': 'Date of vacation cannot be in the past.',
+    }),
+    date_of_resumption: Joi.date().required().min('now').messages({
+      'date.min': 'Date of resumption cannot be in the past.',
+    }),
+  }).custom((obj, helper) => {
+    const { date_of_resumption, date_of_vacation } = obj;
+    if (date_of_vacation >= date_of_resumption) {
+      return helper.message({
+        message: 'Date of vacation must come before date of resumption.',
+      });
+    }
+    return obj;
+  });
+
+  const { error, value } = validationSchema.validate(payload);
+  if (error) {
+    return { success: false, error: error.details[0].message };
+  }
+
+  return { success: true, value };
+};
+
 const joiValidateTimetableArray = (
   payload: TimetableArrayType[]
 ): {
@@ -1546,32 +1631,34 @@ const joiValidateCutoffs = (
 };
 
 export {
-  joiValidateNewDateTimetable,
-  joiValidateAssessmentDocumentArray,
-  joiValidateCutoffs,
-  joiValidateTimetableArray,
-  joiValidateQuestionArray,
-  joiValidateExamInputFields,
-  joiValidateClassLevelArray,
-  joiAccountArrayValidation,
-  joiPriorityOrderValidation,
-  joiBusFeeValidation,
-  negotiatedFeesValidation,
-  optionalFeesValidation,
+  addressValidation,
   admissionValidation,
-  schoolCreationValidation,
+  bankApprovalValidation,
   bankPaymentValidation,
   cashPaymentValidation,
-  addressValidation,
-  schoolFeesValidation,
-  schoolBusValidation,
-  teacherValidation,
-  sessionValidation,
+  joiAccountArrayValidation,
+  joiBusFeeValidation,
+  joiPriorityOrderValidation,
+  joiValidateAssessmentDocumentArray,
+  joiValidateClassLevelArray,
+  joiValidateContactUs,
+  joiValidateCutoffs,
+  joiValidateEffectiveAreasSchema,
+  joiValidateExamInputFields,
+  joiValidateNewDateTimetable,
+  joiValidateQuestionArray,
+  joiValidateTimetableArray,
+  joiValidateVacationAndResumptionDatesSchema,
   joiValidation,
-  staffValidation,
+  negotiatedFeesValidation,
+  optionalFeesValidation,
   parentValidation,
+  schoolBusValidation,
+  schoolCreationValidation,
+  schoolFeesValidation,
+  sessionValidation,
+  staffValidation,
   studentValidation,
   superAdminValidation,
-  bankApprovalValidation,
-  joiValidateContactUs,
+  teacherValidation,
 };

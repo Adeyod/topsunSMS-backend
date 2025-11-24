@@ -1,20 +1,22 @@
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import {
   ChangePasswordType,
   LoginResponseType,
+  LogoutPayload,
   PayloadForLoginInput,
   UserDocument,
   VerificationType,
-  VerifyUserType,
-  LogoutPayload,
-  GenerateBankReferenceType,
 } from '../constants/types';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 
-import Admin from '../models/admin.model';
-import Parent from '../models/parents.model';
-import Student from '../models/students.model';
-import Teacher from '../models/teachers.model';
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  jwtDecodeRefreshToken,
+} from '../middleware/jwtAuth';
+import BlackListedToken from '../models/black_listed.model';
+import { RefreshToken } from '../models/refresh_token.model';
+import Session from '../models/session.model';
 import {
   generateAndStoreVerificationToken,
   getUserRefreshTokenDetails,
@@ -29,24 +31,8 @@ import {
   findUserById,
 } from '../repository/user.repository';
 import { AppError } from '../utils/app.error';
-import { sendEmailVerification } from '../utils/nodemailer';
-import { object } from 'joi';
-import {
-  capitalizeFirstLetter,
-  mySchoolDomain,
-  mySchoolName,
-} from '../utils/functions';
+import { capitalizeFirstLetter } from '../utils/functions';
 import { emailQueue } from '../utils/queue';
-import {
-  generateAccessToken,
-  generateRefreshToken,
-  jwtDecodeRefreshToken,
-} from '../middleware/jwtAuth';
-import { RefreshToken } from '../models/refresh_token.model';
-import Payment from '../models/payment.model';
-import Session from '../models/session.model';
-import BlackListedToken from '../models/black_listed.model';
-import mongoose from 'mongoose';
 
 const registerNewUser = async (payload: UserDocument) => {
   try {
@@ -253,6 +239,10 @@ const userLogin = async (
           400
         );
       }
+    }
+
+    if (userExist.redundant === true) {
+      throw new AppError('User not found...', 404);
     }
 
     // generate jwt token here to be sent to the frontend for authorization
@@ -578,14 +568,14 @@ const loggingUserOut = async (payload: LogoutPayload) => {
 };
 
 export {
-  loggingUserOut,
-  sendingEmailVerificationToken,
   changeUserPassword,
   forgotPass,
+  generateAnotherAccessToken,
+  loggingUserOut,
   registerNewUser,
+  sendingEmailVerificationToken,
   userEmailVerification,
   userLogin,
-  generateAnotherAccessToken,
 };
 
 // meetgeek ottaai

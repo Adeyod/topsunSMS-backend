@@ -1,4 +1,3 @@
-import mongoose from 'mongoose';
 import {
   createSession,
   creatingNewTerm,
@@ -9,10 +8,14 @@ import {
   sessionEndingBySessionId,
   termDeletionInSessionUsingTermId,
   termEndingInSessionUsingTermId,
+  termVacationAndNewTermResumptionDates,
 } from '../services/session.service';
 import { AppError, JoiError } from '../utils/app.error';
 import catchErrors from '../utils/tryCatch';
-import { sessionValidation } from '../utils/validation';
+import {
+  joiValidateVacationAndResumptionDatesSchema,
+  sessionValidation,
+} from '../utils/validation';
 // import { saveLog } from '../logs/log.service';
 
 const createNewSession = catchErrors(async (req, res) => {
@@ -428,14 +431,59 @@ const deleteTermById = catchErrors(async (req, res) => {
   });
 });
 
+const addingTermVacationAndNewTermResumptionDates = catchErrors(
+  async (req, res) => {
+    const { session_id, term_id } = req.params;
+    const { date_of_vacation, date_of_resumption } = req.body;
+
+    if (!session_id || !term_id) {
+      throw new AppError('Session ID and Term ID are required.', 400);
+    }
+
+    const inputPayload = { date_of_vacation, date_of_resumption };
+
+    const validateInput =
+      joiValidateVacationAndResumptionDatesSchema(inputPayload);
+
+    if (validateInput.error) {
+      throw new AppError(validateInput.error, 400);
+    }
+
+    const { value } = validateInput;
+
+    const payload = {
+      date_of_resumption: value.date_of_resumption,
+      date_of_vacation: value.date_of_vacation,
+      term_id,
+      session_id,
+    };
+
+    const result = await termVacationAndNewTermResumptionDates(payload);
+
+    if (!result) {
+      throw new AppError(
+        'Unable to add vacation and new term resumption dates.',
+        400
+      );
+    }
+
+    return res.status(200).json({
+      message: 'Vacation and new term resumption dates added successfully.',
+      success: true,
+      status: 200,
+    });
+  }
+);
+
 export {
+  addingTermVacationAndNewTermResumptionDates,
   createNewSession,
   createNewTerm,
-  endATermInASessionByTermId,
-  getASessionBySessionId,
-  getActiveSession,
-  getAllSessions,
   deleteSessionById,
   deleteTermById,
   endASessionBySessionId,
+  endATermInASessionByTermId,
+  getActiveSession,
+  getAllSessions,
+  getASessionBySessionId,
 };

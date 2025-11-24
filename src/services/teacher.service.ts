@@ -1240,15 +1240,14 @@ import {
   UserWithoutPassword,
 } from '../constants/types';
 import Class from '../models/class.model';
+import ClassEnrolment from '../models/classes_enrolment.model';
+import Session from '../models/session.model';
+import Subject from '../models/subject.model';
+import { SubjectResult } from '../models/subject_result.model';
+import TeacherAssignment from '../models/teacher_assignment.model';
 import Teacher from '../models/teachers.model';
 import { AppError } from '../utils/app.error';
 import { capitalizeFirstLetter, genderFunction } from '../utils/functions';
-import Subject from '../models/subject.model';
-import Session from '../models/session.model';
-import TeacherAssignment from '../models/teacher_assignment.model';
-import ClassEnrolment from '../models/classes_enrolment.model';
-import Result from '../models/result.model';
-import { SubjectResult } from '../models/subject_result.model';
 
 const classTeacherAssignedEndpoint = async (
   payload: TeacherToSubjectType
@@ -2640,19 +2639,41 @@ const fetchClassTeacherManagesByTeacherId = async (
   }
 };
 
+const teacherDeletion = async (teacher_id: string) => {
+  try {
+    const teacherId = Object(teacher_id);
+    const teacher = await Teacher.findById(teacherId);
+
+    if (!teacher) {
+      throw new AppError('teacher not found.', 404);
+    }
+
+    teacher.redundant = true;
+    await teacher.save();
+    return teacher;
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw new AppError(error.message, error.statusCode);
+    } else {
+      throw new Error('Something happened');
+    }
+  }
+};
+
 export {
-  fetchClassTeacherManagesByTeacherId,
-  fetchStudentsInClassThatTeacherManages,
-  fetchAllStudentsInClassByClassId,
-  fetchStudentsOfferingTeacherSubjectUsingClassId,
-  fetchAllClassesTeacherTeachesByTeacherId,
-  fetchStudentsInClassOfferingTeacherSubject,
+  assigningTeacherToSubject,
   changingTeacherToSubject,
+  classTeacherAssignedEndpoint,
   classTeacherChange,
-  onboardTeacher,
+  fetchAllClassesTeacherTeachesByTeacherId,
+  fetchAllStudentsInClassByClassId,
   fetchAllTeachers,
+  fetchClassTeacherManagesByTeacherId,
+  fetchStudentsInClassOfferingTeacherSubject,
+  fetchStudentsInClassThatTeacherManages,
+  fetchStudentsOfferingTeacherSubjectUsingClassId,
   fetchTeachersBySubjectId,
   getTeacherDetailsById,
-  classTeacherAssignedEndpoint,
-  assigningTeacherToSubject,
+  onboardTeacher,
+  teacherDeletion,
 };

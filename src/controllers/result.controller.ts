@@ -531,28 +531,28 @@
 // };
 
 /////////////////////////////////////////////////////////
-import mongoose from 'mongoose';
 import {
+  calculatePositionOfStudentsInClass,
+  // resultSettingCreation,
+  fetchAllResultsOfAStudent,
   fetchAllScoresPerSubject,
   fetchAllStudentResultsInClassForActiveTermByClassId,
+  fetchLevelResultSetting,
   fetchResultSetting,
+  fetchStudentResultByResultId,
   fetchStudentSessionResults,
   fetchStudentSubjectResultInAClass,
   fetchStudentTermResult,
+  recordManyStudentCumScores,
+  recordManyStudentExamScores,
   recordManyStudentScores,
   recordStudentScore,
-  // resultSettingCreation,
-  fetchAllResultsOfAStudent,
-  fetchStudentResultByResultId,
-  recordManyStudentCumScores,
+  studentEffectiveAreasForActiveTermRecording,
   studentsSubjectPositionInClass,
-  calculatePositionOfStudentsInClass,
-  recordManyStudentExamScores,
-  fetchLevelResultSetting,
 } from '../services/result.service';
 import { AppError } from '../utils/app.error';
-import { validateGradingArray } from '../utils/functions';
 import catchErrors from '../utils/tryCatch';
+import { joiValidateEffectiveAreasSchema } from '../utils/validation';
 // import { saveLog } from '../logs/log.service';
 
 // const createResultSettingInASchool = catchErrors(async (req, res) => {
@@ -1415,6 +1415,128 @@ const getStudentResultByResultId = catchErrors(async (req, res) => {
   });
 });
 
+const recordStudentEffectiveAreasForActiveTerm = catchErrors(
+  async (req, res) => {
+    // const start = Date.now();
+
+    const { student_id, result_id } = req.params;
+    const {
+      punctuality,
+      neatness,
+      politeness,
+      honesty,
+      relationshipWithOthers,
+      leadership,
+      emotionalStability,
+      health,
+      attitudeToSchoolWork,
+      attentiveness,
+      perseverance,
+    } = req.body;
+
+    const requiredFields = {
+      punctuality,
+      neatness,
+      politeness,
+      honesty,
+      relationshipWithOthers,
+      leadership,
+      emotionalStability,
+      health,
+      attitudeToSchoolWork,
+      attentiveness,
+      perseverance,
+    };
+
+    const missingField = Object.entries(requiredFields).find(
+      ([key, value]) => !value
+    );
+
+    if (missingField) {
+      throw new AppError(
+        `Please provide ${missingField[0].replace('_', ' ')} to proceed.`,
+        400
+      );
+    }
+
+    if (!result_id) {
+      throw new AppError('Result ID is required.', 400);
+    }
+
+    if (!student_id) {
+      throw new AppError('Student ID is required.', 400);
+    }
+
+    const input = {
+      punctuality: punctuality.trim().toLowerCase(),
+      neatness: neatness.trim().toLowerCase(),
+      politeness: politeness.trim().toLowerCase(),
+      honesty: honesty.trim().toLowerCase(),
+      relationshipWithOthers: relationshipWithOthers.trim().toLowerCase(),
+      leadership: leadership.trim().toLowerCase(),
+      emotionalStability: emotionalStability.trim().toLowerCase(),
+      health: health.trim().toLowerCase(),
+      attitudeToSchoolWork: attitudeToSchoolWork.trim().toLowerCase(),
+      attentiveness: attentiveness.trim().toLowerCase(),
+      perseverance: perseverance.trim().toLowerCase(),
+    };
+
+    const validateInput = joiValidateEffectiveAreasSchema(input);
+
+    if (validateInput.error) {
+      throw new AppError(validateInput.error, 400);
+    }
+
+    const { value } = validateInput;
+
+    const payload = {
+      student_id,
+      result_id,
+      punctuality: value.punctuality,
+      neatness: value.neatness,
+      politeness: value.politeness,
+      honesty: value.honesty,
+      relationshipWithOthers: value.relationshipWithOthers,
+      leadership: value.leadership,
+      emotionalStability: value.emotionalStability,
+      health: value.health,
+      attitudeToSchoolWork: value.attitudeToSchoolWork,
+      attentiveness: value.attentiveness,
+      perseverance: value.perseverance,
+    };
+
+    const result = await studentEffectiveAreasForActiveTermRecording(payload);
+
+    // const duration = Date.now() - start;
+
+    // const savelogPayload = {
+    //   level: 'info',
+    //   message: 'Student result fetched successfully.',
+    //   service: 'klazik schools',
+    //   method: req.method,
+    //   route: req.originalUrl,
+    //   status_code: 200,
+    //   user_id: req.user?.userId,
+    //   user_role: req.user?.userRole,
+    //   ip: req.ip || 'unknown',
+    //   duration_ms: duration,
+    //   stack: undefined,
+    //   school_id: req.user?.school_id
+    //     ? new mongoose.Types.ObjectId(req.user.school_id)
+    //     : undefined,
+    // };
+
+    // await saveLog(savelogPayload);
+
+    return res.status(200).json({
+      message: 'Student result updated successfully.',
+      success: true,
+      status: 200,
+      result,
+    });
+  }
+);
+
 const recordAllStudentsLastTermCumPerTerm = catchErrors(async (req, res) => {
   // const start = Date.now();
 
@@ -1709,22 +1831,23 @@ const getLevelResultSetting = catchErrors(async (req, res) => {
 });
 
 export {
-  getLevelResultSetting,
-  getResultSettings,
-  recordStudentScorePerTerm,
-  recordAllStudentsScoresPerTerm,
+  calculateStudentsClassPosition,
+  getAllResultsOfAStudent,
+  getAllStudentResultsInClassForActiveTermByClassId,
   getAllSubjectResultOfStudentsInClass,
+  getLevelResultSetting,
+  getResultSetting,
+  getResultSettings,
+  getStudentResultByResultId,
+  getStudentSessionResults,
   getStudentSubjectResultInAClass,
   getStudentTermResult,
-  getStudentSessionResults,
-  getAllStudentResultsInClassForActiveTermByClassId,
   recordAllStudentsExamScoresPerTerm,
   recordAllStudentsLastTermCumPerTerm,
-  getStudentResultByResultId,
-  getAllResultsOfAStudent,
-  getResultSetting,
+  recordAllStudentsScoresPerTerm,
+  recordStudentEffectiveAreasForActiveTerm,
+  recordStudentScorePerTerm,
   // createResultSetting,
   //////////////////////////////////////////
   subjectPositionGradingInClass,
-  calculateStudentsClassPosition,
 };

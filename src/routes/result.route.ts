@@ -1,24 +1,25 @@
 import express from 'express';
 import {
-  getResultSettings,
-  getLevelResultSetting,
-  recordStudentScorePerTerm,
+  calculateStudentsClassPosition,
+  getAllResultsOfAStudent,
+  getAllStudentResultsInClassForActiveTermByClassId,
   getAllSubjectResultOfStudentsInClass,
+  getLevelResultSetting,
+  getResultSettings,
+  getStudentResultByResultId,
+  getStudentSessionResults,
   getStudentSubjectResultInAClass,
   getStudentTermResult,
-  getStudentSessionResults,
-  getAllStudentResultsInClassForActiveTermByClassId,
-  getStudentResultByResultId,
-  getAllResultsOfAStudent,
-  calculateStudentsClassPosition,
-  subjectPositionGradingInClass,
-  recordAllStudentsLastTermCumPerTerm,
   recordAllStudentsExamScoresPerTerm,
+  recordAllStudentsLastTermCumPerTerm,
   recordAllStudentsScoresPerTerm,
+  recordStudentEffectiveAreasForActiveTerm,
   // getResultSetting,
+  recordStudentScorePerTerm,
+  subjectPositionGradingInClass,
 } from '../controllers/result.controller';
-import { verifyAccessToken } from '../middleware/jwtAuth';
 import { permission } from '../middleware/authorization';
+import { verifyAccessToken } from '../middleware/jwtAuth';
 
 const router = express.Router();
 
@@ -96,6 +97,13 @@ router.get(
   '/get-student-term-result/:student_id/:academic_session_id/:term',
   permission(['teacher', 'admin', 'super_admin', 'student', 'parent']),
   getStudentTermResult
+  // populate subject and subject teacher
+);
+
+router.put(
+  '/record-student-effective-areas-result/:student_id/:result_id',
+  permission(['teacher']),
+  recordStudentEffectiveAreasForActiveTerm
   // populate subject and subject teacher
 );
 

@@ -162,4 +162,30 @@ const fetchAdminByAdminId = async (admin_id: string) => {
   }
 };
 
-export { fetchMySchoolSummary, fetchAllAdmins, fetchAdminByAdminId };
+const adminDeletion = async (admin_id: string) => {
+  try {
+    const adminId = Object(admin_id);
+    const admin = await Admin.findById(adminId);
+
+    if (!admin) {
+      throw new AppError('Admin not found.', 404);
+    }
+
+    admin.redundant = true;
+    await admin.save();
+    return admin;
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw new AppError(error.message, error.statusCode);
+    } else {
+      throw new Error('Something happened');
+    }
+  }
+};
+
+export {
+  adminDeletion,
+  fetchAdminByAdminId,
+  fetchAllAdmins,
+  fetchMySchoolSummary,
+};

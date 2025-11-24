@@ -1,4 +1,3 @@
-import mongoose, { Types } from 'mongoose';
 import { TeacherToSubjectType } from '../constants/types';
 import {
   assigningTeacherToSubject,
@@ -8,13 +7,14 @@ import {
   fetchAllClassesTeacherTeachesByTeacherId,
   fetchAllStudentsInClassByClassId,
   fetchAllTeachers,
+  fetchClassTeacherManagesByTeacherId,
   fetchStudentsInClassOfferingTeacherSubject,
   fetchStudentsInClassThatTeacherManages,
   fetchStudentsOfferingTeacherSubjectUsingClassId,
   fetchTeachersBySubjectId,
   getTeacherDetailsById,
   onboardTeacher,
-  fetchClassTeacherManagesByTeacherId,
+  teacherDeletion,
 } from '../services/teacher.service';
 import { AppError } from '../utils/app.error';
 import catchErrors from '../utils/tryCatch';
@@ -155,6 +155,48 @@ const getATeacherById = catchErrors(async (req, res) => {
     success: true,
     status: 200,
     teacher: info,
+  });
+});
+
+const deleteTeacher = catchErrors(async (req, res) => {
+  // const start = Date.now();
+
+  const { teacher_id } = req.params;
+  if (!teacher_id) {
+    throw new AppError('Please provide teacher id.', 400);
+  }
+
+  const info = await teacherDeletion(teacher_id);
+
+  if (!info) {
+    throw new AppError('Unable to delete teacher', 400);
+  }
+
+  // const duration = Date.now() - start;
+
+  // const savelogPayload = {
+  //   level: 'info',
+  //   message: `Teacher information fetched successfully`,
+  //   service: 'klazik schools',
+  //   method: req.method,
+  //   route: req.originalUrl,
+  //   status_code: 200,
+  //   user_id: req.user?.userId,
+  //   user_role: req.user?.userRole,
+  //   ip: req.ip || 'unknown',
+  //   duration_ms: duration,
+  //   stack: undefined,
+  //   school_id: req.user?.school_id
+  //     ? new mongoose.Types.ObjectId(req.user.school_id)
+  //     : undefined,
+  // };
+
+  // await saveLog(savelogPayload);
+
+  return res.status(200).json({
+    message: `Teacher deleted successfully`,
+    success: true,
+    status: 200,
   });
 });
 
@@ -788,18 +830,19 @@ const getClassTeacherManagesByTeacherId = catchErrors(async (req, res) => {
 });
 
 export {
-  getClassTeacherManagesByTeacherId,
   assignTeacherToClass,
   assignTeacherToSubject,
-  getATeacherById,
-  getTeachersBySubjectId,
-  getAllTeachers,
-  teacherOnboardingById,
   changeClassTeacher,
   changeSubjectTeacherInAClass,
-  getStudentsInClassOfferingTeacherSubject,
+  deleteTeacher,
   getAllClassesTeacherTeachesByTeacherId,
-  getStudentsOfferingTeacherSubjectUsingClassId,
   getAllStudentsInClassByClassId,
+  getAllTeachers,
+  getATeacherById,
+  getClassTeacherManagesByTeacherId,
+  getStudentsInClassOfferingTeacherSubject,
   getStudentsInClassThatTeacherManages,
+  getStudentsOfferingTeacherSubjectUsingClassId,
+  getTeachersBySubjectId,
+  teacherOnboardingById,
 };

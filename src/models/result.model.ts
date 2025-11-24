@@ -1,5 +1,5 @@
 import mongoose, { Model, Schema } from 'mongoose';
-import { termEnum, finalResultStatusEnum } from '../constants/enum';
+import { finalResultStatusEnum, termEnum } from '../constants/enum';
 import { ResultDocument } from '../constants/types';
 
 const resultSchema = new mongoose.Schema<ResultDocument>(
@@ -28,6 +28,17 @@ const resultSchema = new mongoose.Schema<ResultDocument>(
         },
         cumulative_score: { type: Number, default: 0 },
         class_position: { type: String },
+        punctuality: { type: String },
+        neatness: { type: String },
+        politeness: { type: String },
+        honesty: { type: String },
+        relationshipWithOthers: { type: String },
+        leadership: { type: String },
+        emotionalStability: { type: String },
+        health: { type: String },
+        attitudeToSchoolWork: { type: String },
+        attentiveness: { type: String },
+        perseverance: { type: String },
         subject_results: [
           {
             subject: { type: Schema.Types.ObjectId, ref: 'Subject' },

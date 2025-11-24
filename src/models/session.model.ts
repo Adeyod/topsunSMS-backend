@@ -6,6 +6,8 @@ const termSchema = new mongoose.Schema<TermDocument>({
   name: { type: String, required: true },
   start_date: { type: Date, required: true },
   end_date: { type: Date, required: true },
+  date_of_resumption: { type: Date },
+  date_of_vacation: { type: Date },
   is_active: { type: Boolean, default: false },
 });
 

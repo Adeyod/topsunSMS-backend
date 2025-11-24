@@ -1,19 +1,20 @@
 import express from 'express';
 
-import { verifyAccessToken } from '../middleware/jwtAuth';
-import { permission } from '../middleware/authorization';
 import {
+  addingTermVacationAndNewTermResumptionDates,
   createNewSession,
   createNewTerm,
+  deleteSessionById,
+  deleteTermById,
+  endASessionBySessionId,
   endATermInASessionByTermId,
   getASessionBySessionId,
   getActiveSession,
   getAllSessions,
-  deleteSessionById,
-  deleteTermById,
-  endASessionBySessionId,
 } from '../controllers/session.controller';
+import { permission } from '../middleware/authorization';
 import { developerProtected } from '../middleware/developerProtected';
+import { verifyAccessToken } from '../middleware/jwtAuth';
 
 const router = express.Router();
 
@@ -68,6 +69,12 @@ router.delete(
   '/:session_id/delete-term/:term_id',
   permission(['admin', 'super_admin']),
   deleteTermById
+);
+
+router.put(
+  'add-vacation-and-new-term-resumption-dates/:session_id/:term_id',
+  permission(['admin', 'super_admin']),
+  addingTermVacationAndNewTermResumptionDates
 );
 
 export default router;
