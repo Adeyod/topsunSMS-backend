@@ -72,7 +72,7 @@ router.delete(
 );
 
 router.put(
-  'add-vacation-and-new-term-resumption-dates/:session_id/:term_id',
+  '/add-vacation-and-new-term-resumption-dates/:session_id/:term_id',
   permission(['admin', 'super_admin']),
   addingTermVacationAndNewTermResumptionDates
 );

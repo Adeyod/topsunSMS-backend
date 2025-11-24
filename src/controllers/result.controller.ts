@@ -1467,18 +1467,24 @@ const recordStudentEffectiveAreasForActiveTerm = catchErrors(
       throw new AppError('Student ID is required.', 400);
     }
 
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      throw new AppError('Please login to continue.', 400);
+    }
+
     const input = {
-      punctuality: punctuality.trim().toLowerCase(),
-      neatness: neatness.trim().toLowerCase(),
-      politeness: politeness.trim().toLowerCase(),
-      honesty: honesty.trim().toLowerCase(),
-      relationshipWithOthers: relationshipWithOthers.trim().toLowerCase(),
-      leadership: leadership.trim().toLowerCase(),
-      emotionalStability: emotionalStability.trim().toLowerCase(),
-      health: health.trim().toLowerCase(),
-      attitudeToSchoolWork: attitudeToSchoolWork.trim().toLowerCase(),
-      attentiveness: attentiveness.trim().toLowerCase(),
-      perseverance: perseverance.trim().toLowerCase(),
+      punctuality: punctuality.trim().toUpperCase(),
+      neatness: neatness.trim().toUpperCase(),
+      politeness: politeness.trim().toUpperCase(),
+      honesty: honesty.trim().toUpperCase(),
+      relationshipWithOthers: relationshipWithOthers.trim().toUpperCase(),
+      leadership: leadership.trim().toUpperCase(),
+      emotionalStability: emotionalStability.trim().toUpperCase(),
+      health: health.trim().toUpperCase(),
+      attitudeToSchoolWork: attitudeToSchoolWork.trim().toUpperCase(),
+      attentiveness: attentiveness.trim().toUpperCase(),
+      perseverance: perseverance.trim().toUpperCase(),
     };
 
     const validateInput = joiValidateEffectiveAreasSchema(input);
@@ -1492,6 +1498,7 @@ const recordStudentEffectiveAreasForActiveTerm = catchErrors(
     const payload = {
       student_id,
       result_id,
+      userId,
       punctuality: value.punctuality,
       neatness: value.neatness,
       politeness: value.politeness,

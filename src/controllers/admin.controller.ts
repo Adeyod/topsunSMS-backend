@@ -139,7 +139,7 @@ const deleteAdmin = catchErrors(async (req, res) => {
     throw new AppError('Unable to delete admin.', 400);
   }
 
-  res.status(200).json({
+  return res.status(200).json({
     message: 'Admin deleted successfully.',
     success: true,
     status: 200,

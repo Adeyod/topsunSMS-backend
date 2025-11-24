@@ -155,6 +155,10 @@ const userLogin = async (
 
     // let userPaymentDoc = null;
 
+    if (userExist.redundant === true) {
+      throw new AppError('User not found...', 404);
+    }
+
     if (userExist.role === 'parent') {
       await userExist.populate('children', '-password');
     } else if (userExist.role === 'student') {
@@ -239,10 +243,6 @@ const userLogin = async (
           400
         );
       }
-    }
-
-    if (userExist.redundant === true) {
-      throw new AppError('User not found...', 404);
     }
 
     // generate jwt token here to be sent to the frontend for authorization

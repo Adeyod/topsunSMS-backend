@@ -2878,6 +2878,7 @@ type EndSubjectInATimetableType = {
 type EffectiveAreasPayloadType = EffectiveAreasValidationType & {
   student_id: string;
   result_id: string;
+  userId: mongoose.Types.ObjectId;
 };
 
 type EffectiveAreasValidationType = {
