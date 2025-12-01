@@ -2237,13 +2237,15 @@ const studentEffectiveAreasForActiveTermRecording = async (
       // }
     );
 
-    console.log('studentResult:', studentResult);
-
     if (!studentResult || !studentResult.term_results.length) {
       throw new AppError('Specific term result not found.', 404);
     }
 
-    if (teacher.class_managing !== studentResult?.class) {
+    if (!teacher.class_managing) {
+      throw new AppError('You are not assigned to manage any class yet.', 400);
+    }
+
+    if (teacher.class_managing.toString() !== studentResult?.class.toString()) {
       throw new AppError('You are not the class teacher of this class.', 400);
     }
 
@@ -2251,21 +2253,15 @@ const studentEffectiveAreasForActiveTermRecording = async (
       (a) => a._id?.toString() === result.toString()
     );
 
-    console.log('termResult:', termResult);
-
     const sessionExist = await Session.findById({
       _id: studentResult.academic_session_id,
     });
-
-    console.log('sessionExist:', sessionExist);
 
     if (!sessionExist) {
       throw new AppError('Academic Session not found.', 404);
     }
 
     const getTerm = sessionExist.terms.find((t) => t.name === termResult?.term);
-
-    console.log('getTerm:', getTerm);
 
     if (getTerm?.is_active !== true) {
       throw new AppError(
