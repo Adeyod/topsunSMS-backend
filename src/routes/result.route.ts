@@ -10,6 +10,7 @@ import {
   getStudentSessionResults,
   getStudentSubjectResultInAClass,
   getStudentTermResult,
+  manualCbtRecordingPerStudentPerTerm,
   recordAllStudentsExamScoresPerTerm,
   recordAllStudentsLastTermCumPerTerm,
   recordAllStudentsScoresPerTerm,
@@ -129,6 +130,12 @@ router.get(
   '/all-student-results-in-class-for-the-session/:class_id/:academic_session_id/:term',
   permission(['teacher', 'admin', 'super_admin']),
   getAllStudentResultsInClassForActiveTermByClassId
+);
+
+router.put(
+  '/manual-cbt-recording-per-student-per-term',
+  permission(['teacher']),
+  manualCbtRecordingPerStudentPerTerm
 );
 
 // teacher onboarding

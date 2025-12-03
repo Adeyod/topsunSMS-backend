@@ -2905,6 +2905,18 @@ type VacationAndResumptionServicePayload = VacationAndResumptionDatesPayload & {
   session_id: string;
 };
 
+type ManualCbtScoreType = {
+  term: string;
+  student_id: string;
+  session_id: string;
+  teacher_id: string;
+  score: number;
+  subject_id: string;
+  key: string;
+  class_enrolment_id: string;
+  class_id: string;
+};
+
 export {
   AccessModeType,
   AccountCreationReturnType,
@@ -3007,6 +3019,7 @@ export {
   MandatoryFeePayloadType,
   MandatoryFeeProcessingType,
   MandatoryFeeType,
+  ManualCbtScoreType,
   // CustomRequest,
   MultipleExamScoreParamType,
   MultipleLastCumParamType,

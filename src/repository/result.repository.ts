@@ -6,6 +6,7 @@ import {
   CbtAssessmentResultType,
   CumScoreParamType,
   ExamScoreType,
+  ManualCbtScoreType,
   MultipleResultCreationType,
   ResultCreationType,
   ResultJobData,
@@ -28,6 +29,7 @@ import Student from '../models/students.model';
 import { SubjectResult } from '../models/subject_result.model';
 import { subjectCbtObjCbtAssessmentSubmission } from '../services/cbt.service';
 import { AppError } from '../utils/app.error';
+import { studentResultQueue } from '../utils/queue';
 
 const createResult = async (payload: ResultCreationType) => {
   try {
@@ -349,6 +351,212 @@ const recordScore = async (
   }
 };
 
+const recordCbtScore = async (
+  payload: ManualCbtScoreType
+): Promise<SubjectResultDocument> => {
+  try {
+    const {
+      term,
+      student_id,
+      session_id,
+      teacher_id,
+      score,
+      subject_id,
+      key,
+      class_enrolment_id,
+      class_id,
+    } = payload;
+
+    console.log('payload:', payload);
+
+    const subjectId = Object(subject_id);
+    const teacherId = Object(teacher_id);
+    const studentId = Object(student_id);
+    const sessionId = Object(session_id);
+    const classId = Object(class_id);
+    const classEnrolmentId = Object(class_enrolment_id);
+
+    const studentExist = await Student.findById({
+      _id: studentId,
+    });
+
+    if (!studentExist) {
+      throw new AppError('Student not found.', 404);
+    }
+
+    const sessionActive = await Session.findOne({
+      _id: sessionId,
+      is_active: true,
+    });
+
+    if (!sessionActive) {
+      throw new AppError('Session not found or it is not active.', 404);
+    }
+
+    const checkActiveTerm = sessionActive.terms.find((t) => t.name === term);
+
+    if (checkActiveTerm?.is_active === false) {
+      throw new AppError('Term is not active.', 400);
+    }
+
+    const classExist = await Class.findById({
+      _id: classId,
+    });
+
+    if (!classExist) {
+      throw new AppError('Class not found.', 404);
+    }
+
+    const resultSettings = await ResultSetting.findOne({
+      level: classExist.level,
+    });
+
+    if (!resultSettings) {
+      throw new AppError('Result setting not found for this level.', 404);
+    }
+
+    console.log('resultSettings:', resultSettings);
+
+    const validComponent = resultSettings.exam_components.component.find(
+      (comp) => comp.key === key.toLowerCase()
+    );
+    console.log('validComponent:', validComponent);
+
+    if (!validComponent) {
+      throw new AppError(`Invalid score key: ${key}.`, 400);
+    }
+
+    console.log('validComponent.percentage:', validComponent.percentage);
+    if (score > validComponent.percentage) {
+      throw new AppError(
+        `${validComponent.name} score can not be greater than ${validComponent.percentage}.`,
+        400
+      );
+    }
+
+    const subjectTeacher = classExist.teacher_subject_assignments.find(
+      (p) =>
+        p?.subject?.toString() === subject_id &&
+        p?.teacher?.toString() === teacher_id
+    );
+
+    if (!subjectTeacher) {
+      throw new AppError(
+        'You are not the teacher assigned to teach this subject.',
+        400
+      );
+    }
+
+    const classEnrolmentExist = await ClassEnrolment.findById({
+      _id: classEnrolmentId,
+    });
+
+    if (!classEnrolmentExist) {
+      throw new AppError('Class enrolment not found.', 404);
+    }
+
+    const scoreObj = {
+      score_name: validComponent.name,
+      score: score,
+      key: validComponent.key,
+    };
+
+    const subjectObj = {
+      subject: Object(subject_id),
+      subject_teacher: Object(teacher_id),
+      total_score: 0,
+      cumulative_average: 0,
+      last_term_cumulative: 0,
+      scores: [scoreObj],
+      exam_object: [scoreObj],
+      subject_position: '',
+    };
+
+    let studentSubjectResult = await SubjectResult.findOne({
+      enrolment: classEnrolmentExist._id,
+      student: studentId,
+      class: class_id,
+      session: sessionId,
+      subject: subjectId,
+    });
+
+    if (!studentSubjectResult) {
+      studentSubjectResult = new SubjectResult({
+        enrolment: classEnrolmentExist._id,
+        student: student_id,
+        class: class_id,
+        session: session_id,
+        subject: subjectId,
+        subject_teacher: teacherId,
+        term_results: [{ term, scores: [scoreObj], exam_object: [scoreObj] }],
+      });
+    } else {
+      let termResult = studentSubjectResult.term_results.find(
+        (t) => t.term === term
+      );
+
+      if (!termResult) {
+        studentSubjectResult.term_results.push({
+          term: term,
+          total_score: 0,
+          class_highest_mark: 0,
+          class_lowest_mark: 0,
+          last_term_cumulative: 0,
+          cumulative_average: 0,
+          // cumulative_score: 0,
+          class_position: '',
+          exam_object: [scoreObj],
+          scores: [scoreObj],
+          subject_position: '',
+          grade: '',
+          remark: '',
+        });
+      } else {
+        const existingScore = termResult.scores.find(
+          (s) => s.score_name === validComponent.name
+        );
+
+        if (existingScore) {
+          throw new AppError(
+            `${validComponent.name} score has already been recorded for this student`,
+            409
+          );
+        }
+        termResult.scores.push(scoreObj);
+        termResult.exam_object.push(scoreObj);
+      }
+    }
+
+    studentSubjectResult.markModified('term_results');
+    await studentSubjectResult.save();
+
+    const job = {
+      name: 'update-student-exam',
+      data: {
+        term,
+        session_id,
+        teacher_id,
+        subject_id,
+        class_enrolment_id,
+        class_id,
+        student_id,
+        term_results: studentSubjectResult.term_results,
+        resultObj: scoreObj,
+        exam_component_name: scoreObj.score_name,
+      },
+    };
+
+    await studentResultQueue.add(job.name, job.data);
+    return studentSubjectResult as SubjectResultDocument;
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw new AppError(error.message, error.statusCode);
+    } else {
+      throw new Error('Something happened.');
+    }
+  }
+};
+
 const recordCumScore = async (
   payload: CumScoreParamType
 ): Promise<SubjectResultDocument> => {
@@ -631,6 +839,8 @@ const processStudentExamResultUpdate = async (
     exam_component_name,
   } = payload;
   try {
+    console.log('payload:', payload);
+
     const resultExist = await Result.findOne({
       enrolment: class_enrolment_id,
       student: student_id,
@@ -702,6 +912,9 @@ const processStudentExamResultUpdate = async (
           (s) => s.score_name === scoreObj.score_name
         );
 
+        console.log('scoreObj.score_name:', scoreObj.score_name);
+        console.log('existingScore:', existingScore);
+
         if (existingScore) {
           console.log(
             `${scoreObj.score_name} score has already been recorded and can not be changed.`
@@ -710,20 +923,24 @@ const processStudentExamResultUpdate = async (
           //   `${score_name} score has already been recorded and can not be changed.`,
           //   403
           // );
+        } else {
+          subjectResult.scores.push(scoreObj);
+          subjectResult.exam_object.push(scoreObj);
         }
-
-        subjectResult.scores.push(scoreObj);
-        subjectResult.exam_object.push(scoreObj);
       }
 
       const actualTerm = term_results.find((t) => t.term === term);
       const examScore = actualTerm?.scores.find(
         (s) => s.score_name === exam_component_name
       );
+
       const totalScore = actualTerm?.total_score;
       const lastTermCum = actualTerm?.last_term_cumulative;
 
-      if (examScore) {
+      if (
+        examScore &&
+        !subjectResult.scores.some((s) => s.score_name === scoreObj.score_name)
+      ) {
         subjectResult.scores.push(examScore);
       }
 
@@ -1236,6 +1453,7 @@ export {
   processStudentResultUpdate,
   processStudentSubjectPositionUpdate,
   processSubjectCumScoreUpdate,
+  recordCbtScore,
   recordCumScore,
   recordScore,
 };

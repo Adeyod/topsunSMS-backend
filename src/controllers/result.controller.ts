@@ -546,6 +546,7 @@ import {
   recordManyStudentCumScores,
   recordManyStudentExamScores,
   recordManyStudentScores,
+  recordStudentCbtScore,
   recordStudentScore,
   studentEffectiveAreasForActiveTermRecording,
   studentsSubjectPositionInClass,
@@ -734,6 +735,108 @@ const recordStudentScorePerTerm = catchErrors(async (req, res) => {
 
   return res.status(200).json({
     message: `Score was successfully recorded for ${score_name}`,
+    success: true,
+    status: 201,
+    result,
+  });
+});
+
+const manualCbtRecordingPerStudentPerTerm = catchErrors(async (req, res) => {
+  // const start = Date.now();
+
+  const {
+    term,
+    session_id,
+    teacher_id,
+    score,
+    subject_id,
+    class_enrolment_id,
+    class_id,
+    student_id,
+  } = req.body;
+
+  const teacherId = req.user?.userId;
+  const role = req.user?.userRole;
+
+  if (!teacherId) {
+    throw new AppError(
+      'It is only a teacher that can record test or exam. You need to login as a teacher.',
+      400
+    );
+  }
+
+  if (teacherId.toString() !== teacher_id.toString()) {
+    throw new AppError('You are not the teacher taking this course.', 400);
+  }
+
+  if (!role || role !== 'teacher') {
+    throw new AppError('Only teacher can record test or exam.', 400);
+  }
+
+  const requiredFields = {
+    term,
+    student_id,
+    teacher_id,
+    session_id,
+    class_enrolment_id,
+    score,
+    subject_id,
+    class_id,
+  };
+  const missingField = Object.entries(requiredFields).find(
+    ([key, value]) => !value
+  );
+
+  if (missingField) {
+    throw new AppError(
+      `Please provide ${missingField[0].replace('_', ' ')} to proceed.`,
+      400
+    );
+  }
+
+  const key = 'obj';
+
+  const payload = {
+    term,
+    student_id,
+    session_id,
+    teacher_id,
+    score,
+    key,
+    subject_id,
+    class_enrolment_id,
+    class_id,
+  };
+
+  const result = await recordStudentCbtScore(payload);
+
+  if (!result) {
+    throw new AppError(`Unable to record CBT scores.`, 400);
+  }
+
+  // const duration = Date.now() - start;
+
+  // const savelogPayload = {
+  //   level: 'info',
+  //   message: `Score was successfully recorded for ${score_name}`,
+  //   service: 'klazik schools',
+  //   method: req.method,
+  //   route: req.originalUrl,
+  //   status_code: 200,
+  //   user_id: req.user?.userId,
+  //   user_role: req.user?.userRole,
+  //   ip: req.ip || 'unknown',
+  //   duration_ms: duration,
+  //   stack: undefined,
+  //   school_id: req.user?.school_id
+  //     ? new mongoose.Types.ObjectId(req.user.school_id)
+  //     : undefined,
+  // };
+
+  // await saveLog(savelogPayload);
+
+  return res.status(200).json({
+    message: `Score was successfully recorded.`,
     success: true,
     status: 201,
     result,
@@ -1849,6 +1952,7 @@ export {
   getStudentSessionResults,
   getStudentSubjectResultInAClass,
   getStudentTermResult,
+  manualCbtRecordingPerStudentPerTerm,
   recordAllStudentsExamScoresPerTerm,
   recordAllStudentsLastTermCumPerTerm,
   recordAllStudentsScoresPerTerm,

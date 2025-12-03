@@ -923,6 +923,7 @@ import {
   ClassResultsType,
   EffectiveAreasPayloadType,
   ExamScoreType,
+  ManualCbtScoreType,
   MultipleExamScoreParamType,
   MultipleLastCumParamType,
   MultipleScoreParamType,
@@ -955,7 +956,11 @@ import Student from '../models/students.model';
 import Subject from '../models/subject.model';
 import { SubjectResult } from '../models/subject_result.model';
 import Teacher from '../models/teachers.model';
-import { recordCumScore, recordScore } from '../repository/result.repository';
+import {
+  recordCbtScore,
+  recordCumScore,
+  recordScore,
+} from '../repository/result.repository';
 import { getAStudentById } from '../repository/student.repository';
 import { getTeacherById } from '../repository/teacher.repository';
 import { AppError } from '../utils/app.error';
@@ -1067,6 +1072,59 @@ const recordStudentScore = async (
     };
 
     const result = await recordScore(resultPayload);
+
+    if (!result) {
+      throw new AppError('Unable to process score.', 400);
+    }
+
+    // await session.commitTransaction();
+    // session.endSession();
+    return result;
+  } catch (error) {
+    // await session.abortTransaction();
+    // session.endSession();
+    if (error instanceof AppError) {
+      throw new AppError(error.message, error.statusCode);
+    } else {
+      throw new Error('Something happened.');
+    }
+  }
+};
+
+const recordStudentCbtScore = async (
+  payload: ManualCbtScoreType
+): Promise<SubjectResultDocument> => {
+  // const session = await mongoose.startSession();
+  // session.startTransaction();
+  try {
+    const {
+      term,
+      student_id,
+      session_id,
+      teacher_id,
+      score,
+      subject_id,
+      key,
+      class_enrolment_id,
+      class_id,
+    } = payload;
+
+    console.log('payload:', payload);
+
+    const resultPayload = {
+      term,
+      student_id,
+      session_id,
+      teacher_id,
+      score,
+      subject_id,
+      key,
+      class_enrolment_id,
+      class_id,
+      // session,
+    };
+
+    const result = await recordCbtScore(resultPayload);
 
     if (!result) {
       throw new AppError('Unable to process score.', 400);
@@ -2784,6 +2842,7 @@ export {
   recordManyStudentCumScores,
   recordManyStudentExamScores,
   recordManyStudentScores,
+  recordStudentCbtScore,
   // resultSettingCreation,
   recordStudentScore,
   studentEffectiveAreasForActiveTermRecording,
