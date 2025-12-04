@@ -134,7 +134,7 @@ router.get(
 
 router.put(
   '/manual-cbt-recording-per-student-per-term',
-  permission(['teacher']),
+  permission(['super_admin']),
   manualCbtRecordingPerStudentPerTerm
 );
 

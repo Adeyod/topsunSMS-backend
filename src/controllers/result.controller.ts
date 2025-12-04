@@ -755,22 +755,11 @@ const manualCbtRecordingPerStudentPerTerm = catchErrors(async (req, res) => {
     student_id,
   } = req.body;
 
-  const teacherId = req.user?.userId;
+  const superAdminId = req.user?.userId;
   const role = req.user?.userRole;
 
-  if (!teacherId) {
-    throw new AppError(
-      'It is only a teacher that can record test or exam. You need to login as a teacher.',
-      400
-    );
-  }
-
-  if (teacherId.toString() !== teacher_id.toString()) {
-    throw new AppError('You are not the teacher taking this course.', 400);
-  }
-
-  if (!role || role !== 'teacher') {
-    throw new AppError('Only teacher can record test or exam.', 400);
+  if (!role || role !== 'super_admin') {
+    throw new AppError('Only super admin can use this endpoint.', 400);
   }
 
   const requiredFields = {

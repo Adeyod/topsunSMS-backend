@@ -367,8 +367,6 @@ const recordCbtScore = async (
       class_id,
     } = payload;
 
-    console.log('payload:', payload);
-
     const subjectId = Object(subject_id);
     const teacherId = Object(teacher_id);
     const studentId = Object(student_id);
