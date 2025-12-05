@@ -1,6 +1,26 @@
+import { createBullBoard } from '@bull-board/api';
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
+import { ExpressAdapter } from '@bull-board/express';
 import { Job, Queue, Worker } from 'bullmq';
 import { Redis, RedisOptions } from 'ioredis';
-import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
+import {
+  CbtAssessmentEndedType,
+  CbtAssessmentJobData,
+  CbtAssessmentResultType,
+  EmailJobData,
+  ResultJobData,
+  SubjectCumScoreJobData,
+  SubjectPositionJobData,
+} from '../constants/types';
+import {
+  processCbtAssessmentResultSubmission,
+  processCbtAssessmentSubmission,
+  processStudentCbtExamResultUpdateManually,
+  processStudentExamResultUpdate,
+  processStudentResultUpdate,
+  processStudentSubjectPositionUpdate,
+  processSubjectCumScoreUpdate,
+} from '../repository/result.repository';
 import {
   sendChildLinkageMail,
   sendEmailVerification,
@@ -8,25 +28,6 @@ import {
   sendPasswordReset,
   sendStudentSessionNotification,
 } from './nodemailer';
-import {
-  EmailJobData,
-  CbtAssessmentJobData,
-  ResultJobData,
-  SubjectCumScoreJobData,
-  SubjectPositionJobData,
-  CbtAssessmentEndedType,
-  CbtAssessmentResultType,
-} from '../constants/types';
-import { ExpressAdapter } from '@bull-board/express';
-import { createBullBoard } from '@bull-board/api';
-import {
-  processCbtAssessmentResultSubmission,
-  processCbtAssessmentSubmission,
-  processStudentExamResultUpdate,
-  processStudentResultUpdate,
-  processStudentSubjectPositionUpdate,
-  processSubjectCumScoreUpdate,
-} from '../repository/result.repository';
 
 const isDocker = process.env.DOCKER_ENV === 'true';
 
@@ -142,6 +143,11 @@ const resultWorker = new Worker<
       case 'update-student-exam':
         await processStudentExamResultUpdate(job.data as CbtAssessmentJobData);
         break;
+      case 'update-student-cbt':
+        await processStudentCbtExamResultUpdateManually(
+          job.data as CbtAssessmentJobData
+        );
+        break;
       case 'subject-position':
         await processStudentSubjectPositionUpdate(
           job.data as SubjectPositionJobData
@@ -229,4 +235,4 @@ createBullBoard({
 
 serverAdapter.setBasePath('/bull-board');
 
-export { emailQueue, studentResultQueue, emailWorker, serverAdapter };
+export { emailQueue, emailWorker, serverAdapter, studentResultQueue };

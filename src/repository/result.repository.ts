@@ -932,12 +932,21 @@ const processStudentExamResultUpdate = async (
         (s) => s.score_name === exam_component_name
       );
 
+      console.log('examScore:', examScore);
+
       const totalScore = actualTerm?.total_score;
       const lastTermCum = actualTerm?.last_term_cumulative;
 
+      // if (
+      //   examScore &&
+      //   !subjectResult.scores.some((s) => s.score_name === scoreObj.score_name)
+      // ) {
+      //   subjectResult.scores.push(examScore);
+      // }
+
       if (
         examScore &&
-        !subjectResult.scores.some((s) => s.score_name === scoreObj.score_name)
+        !subjectResult.scores.some((s) => s.score_name === exam_component_name)
       ) {
         subjectResult.scores.push(examScore);
       }
@@ -1442,11 +1451,163 @@ const processCbtAssessmentResultSubmission = async (
   }
 };
 
+const processStudentCbtExamResultUpdateManually = async (
+  payload: CbtAssessmentJobData
+) => {
+  const {
+    term,
+    session_id,
+    teacher_id,
+    subject_id,
+    class_enrolment_id,
+    class_id,
+    student_id,
+    term_results,
+    resultObj,
+    exam_component_name,
+  } = payload;
+  try {
+    console.log('payload:', payload);
+
+    const resultExist = await Result.findOne({
+      enrolment: class_enrolment_id,
+      student: student_id,
+      class: class_id,
+      academic_session_id: session_id,
+    });
+
+    if (!resultExist) {
+      throw new AppError('No result found for this student.', 404);
+    }
+
+    let termExistInResultDoc = resultExist.term_results.find(
+      (t) => t.term === term
+    ) as TermResult | undefined;
+
+    const scoreObj = {
+      score_name: resultObj.score_name,
+      score: resultObj.score,
+      key: resultObj.key,
+    };
+
+    const subjectObj = {
+      subject: Object(subject_id),
+      subject_teacher: Object(teacher_id),
+      total_score: 0,
+      cumulative_average: 0,
+      last_term_cumulative: 0,
+      class_lowest_mark: 0,
+      class_highest_mark: 0,
+      scores: [scoreObj],
+      exam_object: [scoreObj],
+      subject_position: '',
+    };
+
+    if (!termExistInResultDoc) {
+      termExistInResultDoc = {
+        term,
+        cumulative_score: 0,
+        subject_results: [subjectObj],
+        class_position: '',
+      };
+
+      resultExist.term_results.push(termExistInResultDoc);
+    } else {
+      let subjectResult = termExistInResultDoc.subject_results.find(
+        (s) => s.subject?.toString() === subject_id
+      );
+
+      if (!subjectResult) {
+        subjectResult = {
+          subject: Object(subject_id),
+          subject_teacher: Object(teacher_id),
+          total_score: 0,
+          cumulative_average: 0,
+          last_term_cumulative: 0,
+          class_lowest_mark: 0,
+          class_highest_mark: 0,
+          scores: [scoreObj],
+          exam_object: [scoreObj],
+          subject_position: '',
+        };
+
+        termExistInResultDoc.subject_results = [
+          ...termExistInResultDoc.subject_results,
+          subjectResult,
+        ];
+      } else {
+        let existingScore = subjectResult.scores.find(
+          (s) => s.score_name === scoreObj.score_name
+        );
+
+        console.log('scoreObj.score_name:', scoreObj.score_name);
+        console.log('existingScore:', existingScore);
+
+        if (existingScore) {
+          console.log(
+            `${scoreObj.score_name} score has already been recorded and can not be changed.`
+          );
+          // throw new AppError(
+          //   `${score_name} score has already been recorded and can not be changed.`,
+          //   403
+          // );
+        } else {
+          subjectResult.scores.push(scoreObj);
+          subjectResult.exam_object.push(scoreObj);
+        }
+      }
+
+      const actualTerm = term_results.find((t) => t.term === term);
+      const examScore = actualTerm?.scores.find(
+        (s) => s.score_name === exam_component_name
+      );
+
+      const totalScore = actualTerm?.total_score;
+      const lastTermCum = actualTerm?.last_term_cumulative;
+
+      if (
+        examScore &&
+        !subjectResult.scores.some((s) => s.score_name === exam_component_name)
+      ) {
+        subjectResult.scores.push(examScore);
+      }
+
+      if (totalScore && totalScore !== 0) {
+        subjectResult.total_score = totalScore;
+      }
+
+      if (lastTermCum && lastTermCum !== 0) {
+        subjectResult.last_term_cumulative = lastTermCum;
+      }
+      // check inside actualTerm result to see if scores include
+      // exam_component_name, and if this is true then add it to
+      // the scores of the subject inside the result
+
+      // check if total_score is not 0 and add it as the
+      // total_score of the subject in the result and do same for
+      // last_term_cumulative
+
+      if (term_results) resultExist.markModified('term_results');
+    }
+
+    resultExist.markModified('term_results.subject_results');
+    resultExist.markModified('term_results.subject_results.scores');
+
+    const updatedResult = await resultExist.save();
+
+    return { student_id, updated: true };
+  } catch (error) {
+    console.error('Failed to process student result update:', error);
+    throw error;
+  }
+};
+
 export {
   createResult,
   createResultsForStudents,
   processCbtAssessmentResultSubmission,
   processCbtAssessmentSubmission,
+  processStudentCbtExamResultUpdateManually,
   processStudentExamResultUpdate,
   processStudentResultUpdate,
   processStudentSubjectPositionUpdate,

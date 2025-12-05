@@ -2828,6 +2828,327 @@ const calculatePositionOfStudentsInClass = async (
   }
 };
 
+const recordManyStudentCbtExamScoresManually = async (
+  payload: MultipleExamScoreParamType
+) => {
+  try {
+    const {
+      result_objs, // Array of { student_id, score_obj }
+      term,
+      session_id,
+      teacher_id,
+      subject_id,
+      score_name,
+      class_enrolment_id,
+      class_id,
+    } = payload;
+    const subject = Object(subject_id);
+
+    const classExist = await Class.findById({
+      _id: class_id,
+    });
+    if (!classExist) {
+      throw new AppError('Class not found.', 404);
+    }
+
+    const subjectTeacher = classExist.teacher_subject_assignments.find(
+      (p) =>
+        p?.subject?.toString() === subject_id &&
+        p?.teacher?.toString() === teacher_id
+    );
+
+    if (!subjectTeacher) {
+      throw new AppError(
+        'You are not the teacher assigned to teach this subject in this class.',
+        400
+      );
+    }
+
+    const sessionExist = await Session.findById({
+      _id: session_id,
+    });
+
+    if (!sessionExist) {
+      throw new AppError(`Session does not exist.`, 404);
+    }
+    if (!sessionExist.is_active) {
+      throw new AppError('This session is not active.', 400);
+    }
+
+    const termExist = sessionExist.terms.find((a) => a.name === term);
+    if (!termExist) {
+      throw new AppError(`Term named: ${term} does not exist.`, 404);
+    }
+
+    const resultSettings = await ResultSetting.findOne({
+      level: classExist.level,
+    });
+
+    if (!resultSettings) {
+      throw new AppError('Result setting not found.', 404);
+    }
+
+    const exam_component_name = resultSettings.exam_components.exam_name;
+    const exam_components = resultSettings.exam_components.component;
+    const expected_length = exam_components.length;
+
+    console.log('score_name:', score_name);
+    console.log('exam_components:', exam_components);
+    const actualScoreObj = exam_components.find(
+      (exam) => exam.name.toLowerCase() === score_name.toLowerCase()
+    );
+    if (!actualScoreObj) {
+      throw new AppError(`Invalid score type: ${score_name}.`, 400);
+    }
+
+    const nonExamComponentNames = resultSettings.components
+      .filter((c) => c.name.toLowerCase() !== exam_component_name.toLowerCase())
+      .map((a) => a.name.toLowerCase());
+
+    const studentIds = result_objs.map((obj) => obj.student_id);
+
+    // ********** change this to subject result
+    const existingResults = await SubjectResult.find({
+      enrolment: class_enrolment_id,
+      student: { $in: studentIds },
+      class: class_id,
+      session: session_id,
+      subject: subject,
+    });
+    // **********
+
+    const checkCBTScore = async (
+      type: 'obj' | 'theory',
+      student_id: string
+    ): Promise<number | undefined> => {
+      const result = await CbtResult.findOne({
+        academic_session_id: sessionExist._id,
+        term: termExist.name,
+        student_id,
+        subject_id,
+      });
+      return type === 'obj'
+        ? result?.objective_total_score
+        : result?.theory_total_score;
+    };
+
+    const successfulStudentIds = new Set<string>();
+    const successfulResultsMap = new Map<string, ExamScoreType>();
+
+    for (const result of result_objs) {
+      if (result.score === undefined) {
+        console.log(
+          `Student with ID: ${result.student_id} has no score inputted from frontend`
+        );
+        continue;
+      }
+
+      if (result.score > actualScoreObj.percentage) {
+        throw new AppError(
+          `Score exceeds max of ${actualScoreObj.percentage}.`,
+          400
+        );
+      }
+
+      const studentResult = existingResults.find(
+        (a) => a.student.toString() === result.student_id.toString()
+      );
+      if (!studentResult) {
+        continue;
+      }
+
+      const termResult = studentResult?.term_results.find(
+        (a) => a.term === term
+      );
+
+      if (!termResult) {
+        continue;
+      }
+
+      const alreadyHasExam = termResult?.scores.find(
+        (score) =>
+          score.score_name.toLowerCase() === exam_component_name.toLowerCase()
+      );
+      if (alreadyHasExam) {
+        console.log('Student already has exam result recorded.');
+        continue;
+      }
+
+      const hasRecordedExamScore = termResult.exam_object.find(
+        (s) => s.score_name.toLowerCase() === score_name.toLowerCase()
+      );
+      if (hasRecordedExamScore) {
+        console.log(
+          `Score for ${score_name} has been recorded for this student.`
+        );
+        continue;
+      }
+
+      let scoreToRecord = result.score;
+
+      console.log('actualScoreObj.key:', actualScoreObj.key);
+
+      if (actualScoreObj.key === 'obj') {
+        const objScore = await checkCBTScore('obj', result.student_id);
+
+        if (objScore !== undefined && objScore !== scoreToRecord) {
+          scoreToRecord = objScore;
+        }
+      }
+
+      if (actualScoreObj.key === 'theory') {
+        const theoryScore = await checkCBTScore('theory', result.student_id);
+        if (theoryScore !== undefined && theoryScore !== scoreToRecord) {
+          scoreToRecord = theoryScore;
+        }
+      }
+
+      if (scoreToRecord === undefined) {
+        scoreToRecord = result.score;
+        continue;
+      }
+
+      const scoreObject = {
+        score_name,
+        score: scoreToRecord,
+        key: actualScoreObj.key,
+      };
+
+      termResult.exam_object.push(scoreObject);
+
+      termResult.scores.push(scoreObject);
+
+      const studentIdStr = studentResult.student.toString();
+
+      // Always mark successful and push to queue, even if partial (obj/theory only)
+      successfulStudentIds.add(studentIdStr);
+      successfulResultsMap.set(studentIdStr, scoreObject);
+
+      const expectedKeys = exam_components.map((a) => a.key);
+      const recordedKeys = termResult.exam_object.map((b) => b.key);
+
+      const allKeysRecorded = expectedKeys.every((key) =>
+        recordedKeys.includes(key)
+      );
+
+      if (
+        termResult.exam_object.length === expected_length &&
+        allKeysRecorded
+      ) {
+        const totalExamScore = termResult.exam_object.reduce(
+          (prev, curr) => prev + curr.score,
+          0
+        );
+        termResult.scores.push({
+          score_name: exam_component_name,
+          score: totalExamScore,
+        });
+
+        const recordedNames = new Set(
+          termResult.scores.map((s) => s.score_name.toLowerCase())
+        );
+
+        const hasAllComponents =
+          !nonExamComponentNames.some((name) => !recordedNames.has(name)) &&
+          recordedNames.has(exam_component_name.toLowerCase());
+
+        if (hasAllComponents) {
+          const examComponentNames = termResult.exam_object.map((b) =>
+            b.score_name.toLowerCase()
+          );
+
+          const filteredScoreArray = termResult.scores.filter(
+            (a) => !examComponentNames.includes(a.score_name.toLowerCase())
+          );
+
+          const total = filteredScoreArray.reduce((sum, a) => sum + a.score, 0);
+
+          let last_term_cumulative = 0;
+          if (termExist.name === 'second_term') {
+            const firstTerm = studentResult.term_results.find(
+              (t) => t.term === 'first_term'
+            );
+            last_term_cumulative = firstTerm?.cumulative_average ?? 0;
+          } else if (termExist.name === 'third_term') {
+            const secondTerm = studentResult.term_results.find(
+              (t) => t.term === 'second_term'
+            );
+            last_term_cumulative = secondTerm?.cumulative_average ?? 0;
+          } else {
+            last_term_cumulative = total;
+          }
+
+          termResult.total_score = total;
+          termResult.last_term_cumulative = last_term_cumulative;
+        }
+
+        await studentResult.save();
+      }
+    }
+
+    for (const result of existingResults) {
+      await result.save();
+    }
+
+    const jobs = existingResults.map((studentRes) => {
+      const termResult = studentRes.term_results.find((t) => t.term === term);
+
+      const studentIdStr = studentRes.student.toString();
+
+      if (
+        termResult &&
+        successfulStudentIds.has(studentRes.student.toString()) &&
+        termResult.scores.some(
+          (s) =>
+            s.score_name.toLowerCase() === actualScoreObj.name.toLowerCase()
+        )
+      ) {
+        return {
+          name: 'update-student-cbt',
+          // name: 'update-student-exam',
+          // name: 'update-student-result',
+          data: {
+            term,
+            session_id,
+            teacher_id,
+            subject_id,
+            class_enrolment_id,
+            class_id,
+            student_id: studentIdStr,
+            term_results: studentRes.term_results,
+            resultObj: successfulResultsMap.get(studentIdStr),
+            exam_component_name,
+          },
+          opts: {
+            attempts: 5,
+            removeOnComplete: true,
+            // removeOnFail: { count: 3 },
+            backoff: {
+              type: 'exponential',
+              delay: 3000,
+            },
+          },
+        };
+      }
+      return null;
+    });
+
+    const validJobs = jobs.filter((j) => j !== null);
+
+    if (validJobs.length > 0) {
+      await studentResultQueue.addBulk(validJobs as any);
+    }
+
+    return existingResults;
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw new AppError(error.message, error.statusCode);
+    } else {
+      throw new Error('Something happened.');
+    }
+  }
+};
+
 export {
   calculatePositionOfStudentsInClass,
   fetchAllResultsOfAStudent,
@@ -2839,6 +3160,7 @@ export {
   fetchStudentSessionResults,
   fetchStudentSubjectResultInAClass,
   fetchStudentTermResult,
+  recordManyStudentCbtExamScoresManually,
   recordManyStudentCumScores,
   recordManyStudentExamScores,
   recordManyStudentScores,

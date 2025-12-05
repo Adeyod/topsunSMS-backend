@@ -531,6 +531,7 @@
 // };
 
 /////////////////////////////////////////////////////////
+import ResultSetting from '../models/result_setting.model';
 import {
   calculatePositionOfStudentsInClass,
   // resultSettingCreation,
@@ -543,10 +544,10 @@ import {
   fetchStudentSessionResults,
   fetchStudentSubjectResultInAClass,
   fetchStudentTermResult,
+  recordManyStudentCbtExamScoresManually,
   recordManyStudentCumScores,
   recordManyStudentExamScores,
   recordManyStudentScores,
-  recordStudentCbtScore,
   recordStudentScore,
   studentEffectiveAreasForActiveTermRecording,
   studentsSubjectPositionInClass,
@@ -748,12 +749,19 @@ const manualCbtRecordingPerStudentPerTerm = catchErrors(async (req, res) => {
     term,
     session_id,
     teacher_id,
-    score,
     subject_id,
+    result_objs,
+    level,
     class_enrolment_id,
     class_id,
-    student_id,
   } = req.body;
+
+  if (result_objs.length === 0) {
+    throw new AppError(
+      'Please provide student IDs and their respective score to proceed.',
+      400
+    );
+  }
 
   const superAdminId = req.user?.userId;
   const role = req.user?.userRole;
@@ -764,11 +772,9 @@ const manualCbtRecordingPerStudentPerTerm = catchErrors(async (req, res) => {
 
   const requiredFields = {
     term,
-    student_id,
     teacher_id,
     session_id,
     class_enrolment_id,
-    score,
     subject_id,
     class_id,
   };
@@ -785,19 +791,36 @@ const manualCbtRecordingPerStudentPerTerm = catchErrors(async (req, res) => {
 
   const key = 'obj';
 
+  const resultSetting = await ResultSetting.findOne({
+    level: level.trim().toUpperCase(),
+  });
+
+  if (!resultSetting) {
+    throw new AppError('No result setting.', 400);
+  }
+
+  const scoreObj = resultSetting.exam_components.component.find(
+    (a) => a.key === key
+  );
+
+  const score_name = scoreObj?.name;
+
+  if (!score_name) {
+    throw new AppError('Score name not found', 404);
+  }
+
   const payload = {
+    result_objs,
     term,
-    student_id,
     session_id,
     teacher_id,
-    score,
-    key,
     subject_id,
+    score_name,
     class_enrolment_id,
     class_id,
   };
 
-  const result = await recordStudentCbtScore(payload);
+  const result = await recordManyStudentCbtExamScoresManually(payload);
 
   if (!result) {
     throw new AppError(`Unable to record CBT scores.`, 400);
