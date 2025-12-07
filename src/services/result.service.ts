@@ -2457,17 +2457,54 @@ const studentsSubjectPositionInClass = async (
       );
     }
 
-    const studentsOfferingSubject = classEnrolment.students.map((s) => {
+    // const studentsOfferingSubject = classEnrolment.students.map((s) => {
+    //   const info = s?.subjects_offered?.find((subject) =>
+    //     (subject as mongoose.Types.ObjectId).equals(subjectExist._id)
+    //   );
+
+    //   console.log('info:', info);
+    //   const studentObj = {
+    //     student: s.student,
+    //     subject: info,
+    //   };
+    //   return studentObj;
+    // });
+    //////////////////////////////////////////////////////1 at the top
+
+    // const studentsOfferingSubject = classEnrolment.students
+    //   .filter((s) =>
+    //     s?.subjects_offered?.some((subject) =>
+    //       (subject as mongoose.Types.ObjectId).equals(subjectExist._id)
+    //     )
+    //   )
+    //   .map((s) => {
+    //     const info = s.subjects_offered?.find((subject) =>
+    //       (subject as mongoose.Types.ObjectId).equals(subjectExist._id)
+    //     );
+
+    //     return {
+    //       student: s.student,
+    //       subject: info,
+    //     };
+    //   });
+    // console.log('studentsOfferingSubject:', studentsOfferingSubject);
+
+    const studentsOfferingSubject = classEnrolment.students.reduce((acc, s) => {
       const info = s?.subjects_offered?.find((subject) =>
         (subject as mongoose.Types.ObjectId).equals(subjectExist._id)
       );
 
-      const studentObj = {
-        student: s.student,
-        subject: info,
-      };
-      return studentObj;
-    });
+      if (info) {
+        acc.push({
+          student: s.student,
+          subject: info,
+        });
+      }
+
+      return acc;
+    }, [] as { student: any; subject: any }[]);
+
+    console.log('studentsOfferingSubject:', studentsOfferingSubject);
 
     const studentResults = await Promise.all(
       studentsOfferingSubject.map(async (student) => {
