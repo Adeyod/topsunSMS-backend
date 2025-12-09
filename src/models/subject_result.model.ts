@@ -1,6 +1,6 @@
-import { Schema, model, Types, Document } from 'mongoose';
-import { SubjectResultDocument } from '../constants/types';
+import { model, Schema } from 'mongoose';
 import { termEnum } from '../constants/enum';
+import { SubjectResultDocument } from '../constants/types';
 
 const subjectResultSchema = new Schema<SubjectResultDocument>(
   {
@@ -46,6 +46,7 @@ const subjectResultSchema = new Schema<SubjectResultDocument>(
         remark: { type: String },
         class_highest_mark: { type: Number, default: null },
         class_lowest_mark: { type: Number, default: null },
+        class_average_mark: { type: Number, default: null },
         subject_position: { type: String },
       },
     ],

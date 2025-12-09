@@ -1375,6 +1375,7 @@ type SubjectResult = {
   cumulative_average: number;
   last_term_cumulative: number;
   class_highest_mark: number;
+  class_average_mark: number;
   class_lowest_mark: number;
 };
 
@@ -1431,6 +1432,7 @@ type SubjectTermResult = {
   cumulative_average: number;
   class_highest_mark: number;
   class_lowest_mark: number;
+  class_average_mark: number;
   exam_object: ExamScoreType[];
   scores: ScoreType[];
   subject_position: string;
@@ -2688,6 +2690,7 @@ type SubjectPositionJobData = SubjectPositionAndCumCommon & {
   subject_position: string;
   class_highest_mark: number;
   class_lowest_mark: number;
+  class_average_mark: number;
 };
 
 type SubjectCumScoreJobData = SubjectPositionAndCumCommon & {

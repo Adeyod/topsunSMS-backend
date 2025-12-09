@@ -322,15 +322,12 @@ import {
   ClassPositionCalType,
   CompanyEmailQueue,
   EmailQueue,
-  GenerateBankReferenceType,
   ObjQuestionType,
   ResultObjType,
   ScoreAndGradingType,
-  ScoreType,
   UserDocument,
 } from '../constants/types';
 import { AppError } from './app.error';
-import HashUtil from './crypto/sha256';
 import { emailQueue } from './queue';
 
 const capitalizeFirstLetter = (payload: string) => {
@@ -602,6 +599,16 @@ const classPositionCalculation = (
   return students;
 };
 
+// function getMinMax(nums: number[]) {
+//   if (!Array.isArray(nums) || nums.length === 0) {
+//     throw new AppError('Please provide a non-empty array of numbers.', 400);
+//   }
+
+//   const min = Math.min(...nums);
+//   const max = Math.max(...nums);
+//   return { lowest: min, highest: max };
+// }
+
 function getMinMax(nums: number[]) {
   if (!Array.isArray(nums) || nums.length === 0) {
     throw new AppError('Please provide a non-empty array of numbers.', 400);
@@ -609,7 +616,16 @@ function getMinMax(nums: number[]) {
 
   const min = Math.min(...nums);
   const max = Math.max(...nums);
-  return { lowest: min, highest: max };
+
+  // Calculate average
+  const sum = nums.reduce((acc, val) => acc + val, 0);
+  const average = sum / nums.length;
+
+  return {
+    lowest: min,
+    highest: max,
+    average: Number(average.toFixed(2)), // Round to 2 decimal places
+  };
 }
 
 const extractSubdomain = (host: string): string | null => {
@@ -705,27 +721,27 @@ const normalizeAmount = (amount: string | number) => {
 };
 
 export {
-  getMinMax,
-  normalizeAmount,
-  canonicalize,
-  mySchoolName,
-  mySchoolDomain,
-  normalizeQuestions,
-  formatDate,
-  schoolCountryHandCoded,
-  schoolCityHandCoded,
-  schoolStateHandCoded,
-  schoolNameHandCoded,
-  schoolSubscriptionPlan,
-  extractSubdomain,
-  classPositionCalculation,
   assignPositions,
-  validatePriorityOrder,
-  genderFunction,
-  validateGradingArray,
   calculateSubjectSumAndGrade,
-  schoolClassLevels,
-  sendingCompanyEmailToQueue,
+  canonicalize,
   capitalizeFirstLetter,
+  classPositionCalculation,
+  extractSubdomain,
+  formatDate,
+  genderFunction,
+  getMinMax,
+  mySchoolDomain,
+  mySchoolName,
+  normalizeAmount,
+  normalizeQuestions,
+  schoolCityHandCoded,
+  schoolClassLevels,
+  schoolCountryHandCoded,
+  schoolNameHandCoded,
+  schoolStateHandCoded,
+  schoolSubscriptionPlan,
+  sendingCompanyEmailToQueue,
   sendingEmailToQueue,
+  validateGradingArray,
+  validatePriorityOrder,
 };

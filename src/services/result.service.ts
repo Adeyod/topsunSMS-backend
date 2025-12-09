@@ -2586,7 +2586,9 @@ const studentsSubjectPositionInClass = async (
 
       const highestScore = minMax.highest;
       const lowestScore = minMax.lowest;
+      const averageScore = minMax.average;
 
+      console.log('averageScore:', averageScore);
       console.log('highestScore:', highestScore);
       console.log('lowestScore:', lowestScore);
       const studentReturns: SubjectPositionJobData[] = [];
@@ -2631,6 +2633,7 @@ const studentsSubjectPositionInClass = async (
                     student.subjectObj.subject_position,
                   'term_results.$[elem].class_highest_mark': highestScore,
                   'term_results.$[elem].class_lowest_mark': lowestScore,
+                  'term_results.$[elem].class_average_mark': averageScore,
                 },
               },
               {
@@ -2663,6 +2666,7 @@ const studentsSubjectPositionInClass = async (
               session_id: classEnrolment.academic_session_id,
               class_highest_mark: highestScore,
               class_lowest_mark: lowestScore,
+              class_average_mark: averageScore,
               subject_position: student.subjectObj.subject_position as string,
             };
 
@@ -2685,6 +2689,7 @@ const studentsSubjectPositionInClass = async (
               subject_position: studentRes.subject_position,
               class_highest_mark: studentRes.class_highest_mark,
               class_lowest_mark: studentRes.class_lowest_mark,
+              class_average_mark: studentRes.class_average_mark,
             },
             opts: {
               attempts: 5,

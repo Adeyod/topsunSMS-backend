@@ -312,6 +312,7 @@ const recordScore = async (
           term: term,
           total_score: 0,
           class_highest_mark: 0,
+          class_average_mark: 0,
           class_lowest_mark: 0,
           last_term_cumulative: 0,
           cumulative_average: 0,
@@ -498,6 +499,7 @@ const recordCbtScore = async (
           term: term,
           total_score: 0,
           class_highest_mark: 0,
+          class_average_mark: 0,
           class_lowest_mark: 0,
           last_term_cumulative: 0,
           cumulative_average: 0,
@@ -750,6 +752,7 @@ const processStudentResultUpdate = async (payload: ResultJobData) => {
       class_lowest_mark: 0,
       class_highest_mark: 0,
       last_term_cumulative: 0,
+      class_average_mark: 0,
       scores: [scoreObj],
       exam_object: [],
       subject_position: '',
@@ -777,6 +780,7 @@ const processStudentResultUpdate = async (payload: ResultJobData) => {
           cumulative_average: 0,
           last_term_cumulative: 0,
           class_lowest_mark: 0,
+          class_average_mark: 0,
           class_highest_mark: 0,
           scores: [scoreObj],
           exam_object: [],
@@ -868,6 +872,7 @@ const processStudentExamResultUpdate = async (
       last_term_cumulative: 0,
       class_lowest_mark: 0,
       class_highest_mark: 0,
+      class_average_mark: 0,
       scores: [scoreObj],
       exam_object: [scoreObj],
       subject_position: '',
@@ -895,6 +900,7 @@ const processStudentExamResultUpdate = async (
           cumulative_average: 0,
           last_term_cumulative: 0,
           class_lowest_mark: 0,
+          class_average_mark: 0,
           class_highest_mark: 0,
           scores: [scoreObj],
           exam_object: [scoreObj],
@@ -943,6 +949,13 @@ const processStudentExamResultUpdate = async (
       // ) {
       //   subjectResult.scores.push(examScore);
       // }
+
+      if (!subjectResult) {
+        throw new AppError(
+          'Unexpected error: subjectResult is undefined.',
+          400
+        );
+      }
 
       if (
         examScore &&
@@ -993,6 +1006,7 @@ const processStudentSubjectPositionUpdate = async (
     session_id,
     subject_position,
     class_highest_mark,
+    class_average_mark,
     class_lowest_mark,
   } = payload;
 
@@ -1019,6 +1033,7 @@ const processStudentSubjectPositionUpdate = async (
       actualSubject.subject_position = subject_position;
       actualSubject.class_highest_mark = class_highest_mark;
       actualSubject.class_lowest_mark = class_lowest_mark;
+      actualSubject.class_average_mark = class_average_mark;
       console.log(
         'actualSubject.class_highest_mark:',
         actualSubject.class_highest_mark
@@ -1166,6 +1181,7 @@ const processCbtAssessmentResultSubmission = async (
         total_score: 0,
         class_highest_mark: 0,
         class_lowest_mark: 0,
+        class_average_mark: 0,
         cumulative_average: 0,
         last_term_cumulative: 0,
         subject_position: '',
@@ -1228,6 +1244,7 @@ const processCbtAssessmentResultSubmission = async (
         last_term_cumulative: 0,
         class_lowest_mark: 0,
         class_highest_mark: 0,
+        class_average_mark: 0,
         scores: [testObj],
         exam_object: [],
         subject_position: '',
@@ -1277,6 +1294,7 @@ const processCbtAssessmentResultSubmission = async (
         last_term_cumulative: 0,
         class_lowest_mark: 0,
         class_highest_mark: 0,
+        class_average_mark: 0,
         scores: [examObj],
         exam_object: [examObj],
         subject_position: '',
@@ -1498,6 +1516,7 @@ const processStudentCbtExamResultUpdateManually = async (
       last_term_cumulative: 0,
       class_lowest_mark: 0,
       class_highest_mark: 0,
+      class_average_mark: 0,
       scores: [scoreObj],
       exam_object: [scoreObj],
       subject_position: '',
@@ -1525,6 +1544,7 @@ const processStudentCbtExamResultUpdateManually = async (
           cumulative_average: 0,
           last_term_cumulative: 0,
           class_lowest_mark: 0,
+          class_average_mark: 0,
           class_highest_mark: 0,
           scores: [scoreObj],
           exam_object: [scoreObj],
