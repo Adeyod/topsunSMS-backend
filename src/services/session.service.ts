@@ -1149,17 +1149,6 @@ const termVacationAndNewTermResumptionDates = async (
   }
 };
 
-// const date_of_resumption = '2026-01-05T00:00:00.000+00:00';
-// const date_of_vacation = '2025-12-10T00:00:00.000+00:00';
-// const payload = {
-//   date_of_resumption: new Date(date_of_resumption),
-//   date_of_vacation: new Date(date_of_vacation),
-//   term_id: '6901cfce86d3255eab8a254f',
-//   session_id: '6900ba5768f7bbc23430ede2',
-// };
-
-// termVacationAndNewTermResumptionDates(payload);
-
 export {
   createSession,
   creatingNewTerm,

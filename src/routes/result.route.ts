@@ -19,6 +19,7 @@ import {
   // getResultSetting,
   recordStudentScorePerTerm,
   subjectPositionGradingInClass,
+  subjectResultTotalCalculation,
 } from '../controllers/result.controller';
 import { permission } from '../middleware/authorization';
 import { verifyAccessToken } from '../middleware/jwtAuth';
@@ -125,6 +126,12 @@ router.put(
   '/subject-position-grading-in-class/:class_enrolment_id/:subject_id',
   permission(['teacher']),
   subjectPositionGradingInClass
+);
+
+router.put(
+  '/calculate-subject-result-total/:class_enrolment_id/:class_id/:subject_id/:session_id',
+  permission(['teacher']),
+  subjectResultTotalCalculation
 );
 
 router.put(

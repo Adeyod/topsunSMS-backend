@@ -549,6 +549,7 @@ import {
   recordManyStudentCumScores,
   recordManyStudentExamScores,
   recordManyStudentScores,
+  recordManyStudentSubjectResultTotal,
   recordStudentScore,
   studentEffectiveAreasForActiveTermRecording,
   studentsSubjectPositionInClass,
@@ -1586,7 +1587,7 @@ const getStudentSpecificResult = catchErrors(async (req, res) => {
   // await saveLog(savelogPayload);
 
   return res.status(200).json({
-    message: 'Student result fetched successfully.',
+    message: 'Subject results total calculated successfully.',
     success: true,
     status: 200,
     result,
@@ -1923,6 +1924,86 @@ const subjectPositionGradingInClass = catchErrors(async (req, res) => {
   });
 });
 
+const subjectResultTotalCalculation = catchErrors(async (req, res) => {
+  // const start = Date.now();
+
+  const { class_enrolment_id, subject_id, class_id, session_id } = req.params;
+
+  const userRole = req.user?.userRole;
+
+  if (!class_enrolment_id) {
+    throw new AppError('Please provide a class enrolment ID to proceed.', 400);
+  }
+
+  if (!subject_id) {
+    throw new AppError('Please provide a subject ID to proceed.', 400);
+  }
+
+  if (!class_id) {
+    throw new AppError('Please provide a class ID to proceed.', 400);
+  }
+
+  if (!session_id) {
+    throw new AppError('Please provide a session ID to proceed.', 400);
+  }
+
+  const teacherId = req.user?.userId;
+
+  if (!teacherId) {
+    throw new AppError(
+      'It is only a teacher that can record test or exam. You need to login as a teacher.',
+      400
+    );
+  }
+
+  if (!userRole || userRole !== 'teacher') {
+    throw new AppError('Only teacher can record test or exam.', 400);
+  }
+
+  const payload = {
+    class_enrolment_id,
+    subject_id,
+    userId: teacherId,
+    userRole,
+    class_id,
+    session_id,
+  };
+
+  const result = await recordManyStudentSubjectResultTotal(payload);
+
+  if (!result) {
+    throw new AppError('Unable to grade student for this subject.', 400);
+  }
+
+  // const duration = Date.now() - start;
+
+  // const savelogPayload = {
+  //   level: 'info',
+  //   message: 'Subject position successfully done for this class.',
+  //   service: 'klazik schools',
+  //   method: req.method,
+  //   route: req.originalUrl,
+  //   status_code: 200,
+  //   user_id: req.user?.userId,
+  //   user_role: req.user?.userRole,
+  //   ip: req.ip || 'unknown',
+  //   duration_ms: duration,
+  //   stack: undefined,
+  //   school_id: req.user?.school_id
+  //     ? new mongoose.Types.ObjectId(req.user.school_id)
+  //     : undefined,
+  // };
+
+  // await saveLog(savelogPayload);
+
+  return res.status(200).json({
+    message: 'Subject position successfully done for this class.',
+    success: true,
+    status: 200,
+    result,
+  });
+});
+
 const calculateStudentsClassPosition = catchErrors(async (req, res) => {
   // const start = Date.now();
 
@@ -2037,4 +2118,5 @@ export {
   // createResultSetting,
   //////////////////////////////////////////
   subjectPositionGradingInClass,
+  subjectResultTotalCalculation,
 };

@@ -904,6 +904,330 @@
 //   }
 // };
 
+// const recordManyStudentExamScores = async (
+//   payload: MultipleExamScoreParamType
+// ) => {
+//   try {
+//     const {
+//       result_objs, // Array of { student_id, score_obj }
+//       term,
+//       session_id,
+//       teacher_id,
+//       subject_id,
+//       score_name,
+//       class_enrolment_id,
+//       class_id,
+//     } = payload;
+//     const subject = Object(subject_id);
+
+//     const classExist = await Class.findById({
+//       _id: class_id,
+//     });
+//     if (!classExist) {
+//       throw new AppError('Class not found.', 404);
+//     }
+
+//     const subjectTeacher = classExist.teacher_subject_assignments.find(
+//       (p) =>
+//         p?.subject?.toString() === subject_id &&
+//         p?.teacher?.toString() === teacher_id
+//     );
+
+//     if (!subjectTeacher) {
+//       throw new AppError(
+//         'You are not the teacher assigned to teach this subject in this class.',
+//         400
+//       );
+//     }
+
+//     const sessionExist = await Session.findById({
+//       _id: session_id,
+//     });
+
+//     if (!sessionExist) {
+//       throw new AppError(`Session does not exist.`, 404);
+//     }
+//     if (!sessionExist.is_active) {
+//       throw new AppError('This session is not active.', 400);
+//     }
+
+//     const termExist = sessionExist.terms.find((a) => a.name === term);
+//     if (!termExist) {
+//       throw new AppError(`Term named: ${term} does not exist.`, 404);
+//     }
+
+//     const resultSettings = await ResultSetting.findOne({
+//       level: classExist.level,
+//     });
+
+//     if (!resultSettings) {
+//       throw new AppError('Result setting not found.', 404);
+//     }
+
+//     const exam_component_name = resultSettings.exam_components.exam_name;
+//     const exam_components = resultSettings.exam_components.component;
+//     const expected_length = exam_components.length;
+
+//     const actualScoreObj = exam_components.find(
+//       (exam) => exam.name.toLowerCase() === score_name.toLowerCase()
+//     );
+//     if (!actualScoreObj) {
+//       throw new AppError(`Invalid score type: ${score_name}.`, 400);
+//     }
+
+//     const nonExamComponentNames = resultSettings.components
+//       .filter((c) => c.name.toLowerCase() !== exam_component_name.toLowerCase())
+//       .map((a) => a.name.toLowerCase());
+
+//     const studentIds = result_objs.map((obj) => obj.student_id);
+
+//     // ********** change this to subject result
+//     const existingResults = await SubjectResult.find({
+//       enrolment: class_enrolment_id,
+//       student: { $in: studentIds },
+//       class: class_id,
+//       session: session_id,
+//       subject: subject,
+//     });
+//     // **********
+
+//     const checkCBTScore = async (
+//       type: 'obj' | 'theory',
+//       student_id: string
+//     ): Promise<number | undefined> => {
+//       const result = await CbtResult.findOne({
+//         academic_session_id: sessionExist._id,
+//         term: termExist.name,
+//         student_id,
+//         subject_id,
+//       });
+//       return type === 'obj'
+//         ? result?.objective_total_score
+//         : result?.theory_total_score;
+//     };
+
+//     const successfulStudentIds = new Set<string>();
+//     const successfulResultsMap = new Map<string, ExamScoreType>();
+
+//     for (const result of result_objs) {
+//       if (result.score === undefined) {
+//         console.log(
+//           `Student with ID: ${result.student_id} has no score inputted from frontend`
+//         );
+//         continue;
+//       }
+
+//       if (result.score > actualScoreObj.percentage) {
+//         throw new AppError(
+//           `Score exceeds max of ${actualScoreObj.percentage}.`,
+//           400
+//         );
+//       }
+
+//       const studentResult = existingResults.find(
+//         (a) => a.student.toString() === result.student_id.toString()
+//       );
+//       if (!studentResult) {
+//         continue;
+//       }
+
+//       const termResult = studentResult?.term_results.find(
+//         (a) => a.term === term
+//       );
+
+//       if (!termResult) {
+//         continue;
+//       }
+
+//       const alreadyHasExam = termResult?.scores.find(
+//         (score) =>
+//           score.score_name.toLowerCase() === exam_component_name.toLowerCase()
+//       );
+//       if (alreadyHasExam) {
+//         console.log('Student already has exam result recorded.');
+//         continue;
+//       }
+
+//       const hasRecordedExamScore = termResult.exam_object.find(
+//         (s) => s.score_name.toLowerCase() === score_name.toLowerCase()
+//       );
+//       if (hasRecordedExamScore) {
+//         console.log(
+//           `Score for ${score_name} has been recorded for this student.`
+//         );
+//         continue;
+//       }
+
+//       let scoreToRecord = result.score;
+
+//       console.log('actualScoreObj.key:', actualScoreObj.key);
+
+//       if (actualScoreObj.key === 'obj') {
+//         const objScore = await checkCBTScore('obj', result.student_id);
+
+//         if (objScore !== undefined && objScore !== scoreToRecord) {
+//           scoreToRecord = objScore;
+//         }
+//       }
+
+//       if (actualScoreObj.key === 'theory') {
+//         const theoryScore = await checkCBTScore('theory', result.student_id);
+//         if (theoryScore !== undefined && theoryScore !== scoreToRecord) {
+//           scoreToRecord = theoryScore;
+//         }
+//       }
+
+//       if (scoreToRecord === undefined) {
+//         scoreToRecord = result.score;
+//         continue;
+//       }
+
+//       const scoreObject = {
+//         score_name,
+//         score: scoreToRecord,
+//         key: actualScoreObj.key,
+//       };
+
+//       termResult.exam_object.push(scoreObject);
+
+//       termResult.scores.push(scoreObject);
+
+//     await studentResult.save();
+
+//       // //////////////////////////////////////////////////
+//       const studentIdStr = studentResult.student.toString();
+
+//       // Always mark successful and push to queue, even if partial (obj/theory only)
+//       successfulStudentIds.add(studentIdStr);
+//       successfulResultsMap.set(studentIdStr, scoreObject);
+
+//       const expectedKeys = exam_components.map((a) => a.key);
+//       const recordedKeys = termResult.exam_object.map((b) => b.key);
+
+//       const allKeysRecorded = expectedKeys.every((key) =>
+//         recordedKeys.includes(key)
+//       );
+
+//       if (
+//         termResult.exam_object.length === expected_length &&
+//         allKeysRecorded
+//       ) {
+//         const totalExamScore = termResult.exam_object.reduce(
+//           (prev, curr) => prev + curr.score,
+//           0
+//         );
+//         termResult.scores.push({
+//           score_name: exam_component_name,
+//           score: totalExamScore,
+//         });
+
+//         const recordedNames = new Set(
+//           termResult.scores.map((s) => s.score_name.toLowerCase())
+//         );
+
+//         const hasAllComponents =
+//           !nonExamComponentNames.some((name) => !recordedNames.has(name)) &&
+//           recordedNames.has(exam_component_name.toLowerCase());
+
+//         if (hasAllComponents) {
+//           const examComponentNames = termResult.exam_object.map((b) =>
+//             b.score_name.toLowerCase()
+//           );
+
+//           const filteredScoreArray = termResult.scores.filter(
+//             (a) => !examComponentNames.includes(a.score_name.toLowerCase())
+//           );
+
+//           const total = filteredScoreArray.reduce((sum, a) => sum + a.score, 0);
+
+//           let last_term_cumulative = 0;
+//           if (termExist.name === 'second_term') {
+//             const firstTerm = studentResult.term_results.find(
+//               (t) => t.term === 'first_term'
+//             );
+//             last_term_cumulative = firstTerm?.cumulative_average ?? 0;
+//           } else if (termExist.name === 'third_term') {
+//             const secondTerm = studentResult.term_results.find(
+//               (t) => t.term === 'second_term'
+//             );
+//             last_term_cumulative = secondTerm?.cumulative_average ?? 0;
+//           } else {
+//             last_term_cumulative = total;
+//           }
+
+//           termResult.total_score = total;
+//           termResult.last_term_cumulative = last_term_cumulative;
+
+//         }
+
+//       //   //////////////////////////////////////
+
+//         await studentResult.save();
+//       }
+//     }
+
+//     for (const result of existingResults) {
+//       await result.save();
+//     }
+
+//     const jobs = existingResults.map((studentRes) => {
+//       const termResult = studentRes.term_results.find((t) => t.term === term);
+
+//       const studentIdStr = studentRes.student.toString();
+
+//       if (
+//         termResult &&
+//         successfulStudentIds.has(studentRes.student.toString()) &&
+//         termResult.scores.some(
+//           (s) =>
+//             s.score_name.toLowerCase() === actualScoreObj.name.toLowerCase()
+//         )
+//       ) {
+//         return {
+//           name: 'update-student-exam',
+//           // name: 'update-student-result',
+//           data: {
+//             term,
+//             session_id,
+//             teacher_id,
+//             subject_id,
+//             class_enrolment_id,
+//             class_id,
+//             student_id: studentIdStr,
+//             term_results: studentRes.term_results,
+//             resultObj: successfulResultsMap.get(studentIdStr),
+//             exam_component_name,
+//           },
+//           opts: {
+//             attempts: 5,
+//             removeOnComplete: true,
+//             // removeOnFail: { count: 3 },
+//             backoff: {
+//               type: 'exponential',
+//               delay: 3000,
+//             },
+//           },
+//         };
+//       }
+//       return null;
+//     });
+
+//     const validJobs = jobs.filter((j) => j !== null);
+
+//     if (validJobs.length > 0) {
+//       await studentResultQueue.addBulk(validJobs as any);
+//     }
+
+//     return existingResults;
+//   } catch (error) {
+//     if (error instanceof AppError) {
+//       throw new AppError(error.message, error.statusCode);
+//     } else {
+//       throw new Error('Something happened.');
+//     }
+//   }
+// };
+
 // export {
 //   calculatePositionOfStudentsInClass,
 //   fetchAllStudentResultsInClassForActiveTermByClassId,
@@ -924,6 +1248,7 @@ import {
   EffectiveAreasPayloadType,
   ExamScoreType,
   ManualCbtScoreType,
+  ManyStudentSubjectResultTotalPayloadType,
   MultipleExamScoreParamType,
   MultipleLastCumParamType,
   MultipleScoreParamType,
@@ -971,6 +1296,7 @@ import {
   assignPositions,
   classPositionCalculation,
   getMinMax,
+  getMissingScoreNames,
 } from '../utils/functions';
 import { studentResultQueue } from '../utils/queue';
 
@@ -1583,43 +1909,48 @@ const recordManyStudentExamScores = async (
           score: totalExamScore,
         });
 
-        const recordedNames = new Set(
-          termResult.scores.map((s) => s.score_name.toLowerCase())
-        );
+        // ********************************************
 
-        const hasAllComponents =
-          !nonExamComponentNames.some((name) => !recordedNames.has(name)) &&
-          recordedNames.has(exam_component_name.toLowerCase());
+        //   const recordedNames = new Set(
+        //     termResult.scores.map((s) => s.score_name.toLowerCase())
+        //   );
 
-        if (hasAllComponents) {
-          const examComponentNames = termResult.exam_object.map((b) =>
-            b.score_name.toLowerCase()
-          );
+        //   const hasAllComponents =
+        //     !nonExamComponentNames.some((name) => !recordedNames.has(name)) &&
+        //     recordedNames.has(exam_component_name.toLowerCase());
 
-          const filteredScoreArray = termResult.scores.filter(
-            (a) => !examComponentNames.includes(a.score_name.toLowerCase())
-          );
+        //   if (hasAllComponents) {
+        //     const examComponentNames = termResult.exam_object.map((b) =>
+        //       b.score_name.toLowerCase()
+        //     );
 
-          const total = filteredScoreArray.reduce((sum, a) => sum + a.score, 0);
+        //     const filteredScoreArray = termResult.scores.filter(
+        //       (a) => !examComponentNames.includes(a.score_name.toLowerCase())
+        //     );
 
-          let last_term_cumulative = 0;
-          if (termExist.name === 'second_term') {
-            const firstTerm = studentResult.term_results.find(
-              (t) => t.term === 'first_term'
-            );
-            last_term_cumulative = firstTerm?.cumulative_average ?? 0;
-          } else if (termExist.name === 'third_term') {
-            const secondTerm = studentResult.term_results.find(
-              (t) => t.term === 'second_term'
-            );
-            last_term_cumulative = secondTerm?.cumulative_average ?? 0;
-          } else {
-            last_term_cumulative = total;
-          }
+        //     const total = filteredScoreArray.reduce((sum, a) => sum + a.score, 0);
 
-          termResult.total_score = total;
-          termResult.last_term_cumulative = last_term_cumulative;
-        }
+        //     let last_term_cumulative = 0;
+        //     if (termExist.name === 'second_term') {
+        //       const firstTerm = studentResult.term_results.find(
+        //         (t) => t.term === 'first_term'
+        //       );
+        //       last_term_cumulative = firstTerm?.cumulative_average ?? 0;
+        //     } else if (termExist.name === 'third_term') {
+        //       const secondTerm = studentResult.term_results.find(
+        //         (t) => t.term === 'second_term'
+        //       );
+        //       last_term_cumulative = secondTerm?.cumulative_average ?? 0;
+        //     } else {
+        //       last_term_cumulative = total;
+        //     }
+
+        //     termResult.total_score = total;
+        //     termResult.last_term_cumulative = last_term_cumulative;
+
+        //   }
+
+        // //   //////////////////////////////////////
 
         await studentResult.save();
       }
@@ -1629,53 +1960,56 @@ const recordManyStudentExamScores = async (
       await result.save();
     }
 
-    const jobs = existingResults.map((studentRes) => {
-      const termResult = studentRes.term_results.find((t) => t.term === term);
+    // THIS IS THE PART PUSHING TO QUEUE AND WE DON'T NEED IT AGAIN
+    // const jobs = existingResults.map((studentRes) => {
+    //   const termResult = studentRes.term_results.find((t) => t.term === term);
 
-      const studentIdStr = studentRes.student.toString();
+    //   const studentIdStr = studentRes.student.toString();
 
-      if (
-        termResult &&
-        successfulStudentIds.has(studentRes.student.toString()) &&
-        termResult.scores.some(
-          (s) =>
-            s.score_name.toLowerCase() === actualScoreObj.name.toLowerCase()
-        )
-      ) {
-        return {
-          name: 'update-student-exam',
-          // name: 'update-student-result',
-          data: {
-            term,
-            session_id,
-            teacher_id,
-            subject_id,
-            class_enrolment_id,
-            class_id,
-            student_id: studentIdStr,
-            term_results: studentRes.term_results,
-            resultObj: successfulResultsMap.get(studentIdStr),
-            exam_component_name,
-          },
-          opts: {
-            attempts: 5,
-            removeOnComplete: true,
-            // removeOnFail: { count: 3 },
-            backoff: {
-              type: 'exponential',
-              delay: 3000,
-            },
-          },
-        };
-      }
-      return null;
-    });
+    //   if (
+    //     termResult &&
+    //     successfulStudentIds.has(studentRes.student.toString()) &&
+    //     termResult.scores.some(
+    //       (s) =>
+    //         s.score_name.toLowerCase() === actualScoreObj.name.toLowerCase()
+    //     )
+    //   ) {
+    //     return {
+    //       name: 'update-student-exam',
+    //       // name: 'update-student-result',
+    //       data: {
+    //         term,
+    //         session_id,
+    //         teacher_id,
+    //         subject_id,
+    //         class_enrolment_id,
+    //         class_id,
+    //         student_id: studentIdStr,
+    //         term_results: studentRes.term_results,
+    //         resultObj: successfulResultsMap.get(studentIdStr),
+    //         exam_component_name,
+    //       },
+    //       opts: {
+    //         attempts: 5,
+    //         removeOnComplete: true,
+    //         // removeOnFail: { count: 3 },
+    //         backoff: {
+    //           type: 'exponential',
+    //           delay: 3000,
+    //         },
+    //       },
+    //     };
+    //   }
+    //   return null;
+    // });
 
-    const validJobs = jobs.filter((j) => j !== null);
+    // const validJobs = jobs.filter((j) => j !== null);
 
-    if (validJobs.length > 0) {
-      await studentResultQueue.addBulk(validJobs as any);
-    }
+    // if (validJobs.length > 0) {
+    //   await studentResultQueue.addBulk(validJobs as any);
+    // }
+
+    // IT ENDS HERE
 
     return existingResults;
   } catch (error) {
@@ -3341,6 +3675,265 @@ const recordManyStudentCbtExamScoresManually = async (
   }
 };
 
+const recordManyStudentSubjectResultTotal = async (
+  payload: ManyStudentSubjectResultTotalPayloadType
+) => {
+  try {
+    const {
+      class_enrolment_id,
+      subject_id,
+      userId,
+      userRole,
+      class_id,
+      session_id,
+    } = payload;
+
+    const session = Object(session_id);
+    const subject = Object(subject_id);
+    const classId = Object(class_id);
+    const enrolment = Object(class_enrolment_id);
+
+    if (!userId || !userRole) {
+      throw new AppError(
+        'Please login as the subject teacher to proceed.',
+        400
+      );
+    }
+
+    const classEnrolment = await ClassEnrolment.findById({
+      _id: enrolment,
+    }).populate<{
+      students: {
+        student: UserDocument;
+        subjects_offered: mongoose.Types.ObjectId[];
+      }[];
+    }>('students.student', '-password');
+
+    if (!classEnrolment) {
+      throw new AppError(`Class Enrolment not found.`, 404);
+    }
+
+    if (classEnrolment.is_active !== true) {
+      throw new AppError(
+        `The session has ended and as such you can not perform this action on the document again.`,
+        400
+      );
+    }
+
+    const activeSession = await Session.findById({
+      _id: session,
+    });
+
+    if (!activeSession) {
+      throw new AppError('Session not found.', 404);
+    }
+
+    if (activeSession.is_active !== true) {
+      throw new AppError(
+        'You can only give position in an active session.',
+        400
+      );
+    }
+
+    const activeTerm = activeSession.terms.find(
+      (term) => term.is_active === true
+    );
+
+    if (!activeTerm) {
+      throw new AppError('There is no active term in the session,', 400);
+    }
+
+    const classExist = await Class.findById({ _id: classId });
+
+    if (!classExist) {
+      throw new AppError('This class does not exist.', 400);
+    }
+
+    const subjectExist = await Subject.findById({
+      _id: subject,
+    });
+
+    if (!subjectExist) {
+      throw new AppError('Subject does not exist.', 400);
+    }
+
+    const subjectTeacher = classExist.teacher_subject_assignments.find(
+      (assignment) => assignment.teacher?.equals(userId.toString())
+    );
+
+    if (!subjectTeacher) {
+      throw new AppError(
+        `You are not the teacher assigned to teach ${subjectExist.name} in ${classExist.name} and as such you can not perform this action.`,
+        403
+      );
+    }
+
+    const studentsOfferingSubject = classEnrolment.students.reduce((acc, s) => {
+      const info = s?.subjects_offered?.find((subject) =>
+        (subject as mongoose.Types.ObjectId).equals(subjectExist._id)
+      );
+
+      if (info) {
+        acc.push({
+          student: s.student,
+          subject: info,
+        });
+      }
+
+      return acc;
+    }, [] as { student: any; subject: any }[]);
+
+    const studentResults = await Promise.all(
+      studentsOfferingSubject.map(async (student) => {
+        const studentSubjectId = new mongoose.Types.ObjectId(student?.subject);
+        const sessionResult = await SubjectResult.findOne({
+          enrolment: classEnrolment._id,
+          student: student.student,
+          class: classExist._id,
+          session: classEnrolment.academic_session_id,
+          subject: studentSubjectId,
+        });
+
+        const info = sessionResult?.term_results.find(
+          (term) => term.term === activeTerm.name
+        );
+
+        const obj = {
+          studentId: student.student._id,
+          first_name: student.student.first_name,
+          last_name: student.student.last_name,
+          term: info?.term,
+          subjectObj: info,
+          scores: info?.scores,
+          exam_object: info?.exam_object,
+          allThreeSubjectResults: sessionResult,
+        };
+
+        return obj;
+      })
+    );
+
+    const resultHeader = await ResultSetting.findOne({
+      level: classExist.level,
+    });
+
+    const skippedStudents: any[] = [];
+    const processedStudents: any[] = [];
+
+    const expectedExamNames = resultHeader?.exam_components.component.map(
+      (a) => a.name
+    );
+    const expectedResultComponents = resultHeader?.components.map(
+      (a) => a.name
+    );
+    const examName = resultHeader?.exam_components.exam_name;
+
+    const expectedNames = new Set<string>([
+      ...(expectedExamNames ?? []),
+      ...(expectedResultComponents ?? []),
+    ]);
+
+    const bulkOps: any[] = [];
+
+    for (const result of studentResults) {
+      const { subjectObj, scores, term, allThreeSubjectResults } = result;
+
+      const missingNames = getMissingScoreNames(scores, expectedNames);
+
+      if (missingNames.length > 0) {
+        skippedStudents.push({
+          studentId: result.studentId,
+          name: `${result?.first_name} ${result?.last_name}`,
+          missing: missingNames,
+        });
+
+        continue;
+      }
+
+      const filteredScoreArray = scores?.filter(
+        (a) => !expectedExamNames?.includes(a.score_name.toLowerCase())
+      );
+
+      const total =
+        filteredScoreArray?.reduce((sum, val) => sum + val.score, 0) ?? 0;
+
+      if (!subjectObj) {
+        skippedStudents.push({
+          studentId: result.studentId,
+          name: `${result?.first_name} ${result?.last_name}`,
+          missing: ['term_result_not_found'],
+        });
+
+        continue;
+      }
+
+      subjectObj.total_score = total;
+
+      let last_term_cumulative = 0;
+      if (term === 'second_term') {
+        const firstTerm = allThreeSubjectResults?.term_results.find(
+          (t) => t.term === 'first_term'
+        );
+        last_term_cumulative = firstTerm?.cumulative_average ?? 0;
+      } else if (term === 'third_term') {
+        const secondTerm = allThreeSubjectResults?.term_results.find(
+          (t) => t.term === 'second_term'
+        );
+        last_term_cumulative = secondTerm?.cumulative_average ?? 0;
+      } else {
+        last_term_cumulative = total;
+      }
+
+      bulkOps.push({
+        updateOne: {
+          filter: {
+            _id: allThreeSubjectResults?._id,
+            'term_results.term': term,
+          },
+          update: {
+            $set: {
+              'term_results.$.total_score': total,
+              'term_results.$.last_term_cumulative': last_term_cumulative,
+              'term_results.$.updated_at': new Date(),
+            },
+          },
+        },
+      });
+
+      processedStudents.push({
+        studentId: result.studentId,
+        name: `${result?.first_name} ${result?.last_name}`,
+        total,
+        term,
+      });
+    }
+
+    if (bulkOps.length > 0) {
+      await SubjectResult.bulkWrite(bulkOps);
+    }
+
+    return {
+      subject: subjectExist.name,
+      class: classExist.name,
+      term: activeTerm.name,
+      summary: {
+        totalStudents: studentResults.length,
+        processed: processedStudents.length,
+        skipped: skippedStudents.length,
+      },
+
+      processedStudents,
+      skippedStudents,
+    };
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw new AppError(error.message, error.statusCode);
+    } else {
+      throw new Error('Something happened.');
+    }
+  }
+};
+
 // const userId = '6900cffa68f7bbc23430efe4';
 
 // const payload = {
@@ -3369,6 +3962,7 @@ export {
   recordManyStudentCumScores,
   recordManyStudentExamScores,
   recordManyStudentScores,
+  recordManyStudentSubjectResultTotal,
   recordStudentCbtScore,
   // resultSettingCreation,
   recordStudentScore,

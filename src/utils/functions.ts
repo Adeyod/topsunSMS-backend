@@ -1,321 +1,3 @@
-// import {
-//   ClassDocument,
-//   ClassPositionCalType,
-//   ResultObjType,
-//   ScoreAndGradingType,
-//   UserDocument,
-// } from '../constants/types';
-// import Session from '../models/session.model';
-// import Student from '../models/students.model';
-// import { AppError } from './app.error';
-
-// const capitalizeFirstLetter = (payload: string) => {
-//   const value = payload.charAt(0).toUpperCase() + payload.slice(1);
-
-//   return value;
-// };
-
-// const generateAdmissionNumber = async () => {
-//   try {
-//     const sessionInfo = await Session.findOne({
-//       is_active: true,
-//     });
-
-//     if (!sessionInfo) {
-//       throw new AppError(
-//         'You need to first create an active session before you can do this.',
-//         404
-//       );
-//     }
-
-//     const session = sessionInfo.academic_session;
-
-//     const lastStudent = await Student.findOne({
-//       admission_number: { $regex: `CS/${session}/` },
-//     }).sort({ admission_number: -1 });
-
-//     let lastStudentNumber = 0;
-
-//     if (lastStudent && lastStudent.admission_number) {
-//       const parts = lastStudent.admission_number.split('/');
-//       lastStudentNumber = parseInt(parts[2], 10) || 0;
-//     }
-
-//     const newStudentNumber = lastStudentNumber + 1;
-//     const admissionNumber = `CS/${session}/${newStudentNumber
-//       .toString()
-//       .padStart(4, '0')}`;
-
-//     return admissionNumber;
-//   } catch (error) {
-//     throw new Error('Error generating admission number: ' + error);
-//   }
-// };
-
-// const genderFunction = (user: UserDocument) => {
-//   let title = '';
-//   let rep = '';
-//   if (user.gender === 'male') {
-//     title = 'Mr';
-//     rep = 'he';
-//   } else if (user.gender === 'female') {
-//     title = 'Mrs';
-//     rep = 'she';
-//   }
-
-//   return { title, rep };
-// };
-
-// const calculateSubjectSumAndGrade = async (
-//   payload: TotalSumType
-// ): Promise<ResultObjType> => {
-//   try {
-//     const result =
-//       payload.first_test_score + payload.second_test_score + payload.exam_score;
-//     let grade;
-
-//     if (result >= 70) grade = 'A';
-//     else if (result >= 60) grade = 'B';
-//     else if (result >= 50) grade = 'C';
-//     else if (result >= 45) grade = 'D';
-//     else if (result >= 40) grade = 'E';
-//     else grade = 'F';
-
-//     const resultObj = {
-//       grade: grade,
-//       total: result,
-//     };
-
-//     return resultObj as ResultObjType;
-//   } catch (error) {
-//     if (error instanceof AppError) {
-//       throw new AppError(error.message, error.statusCode);
-//     } else {
-//       throw new Error('Something happened.');
-//     }
-//   }
-// };
-
-// const calculateSubjectSumAndGrade = async (
-//   payload: ScoreAndGradingType
-// ): Promise<ResultObjType> => {
-//   try {
-//     const result = payload.score.reduce((sum, a) => sum + a.score, 0);
-
-//     // let last_term_cumulative
-//     // let cumulative_score
-
-//     //     if(payload.current_term === 'first_term') {
-//     // last_term_cumulative === result
-//     //     }else if(payload.current_term === 'second_term') {
-
-//     //     }
-
-//     // let resultObj;
-//     for (const gradeItem of payload.gradingObj) {
-//       if (result >= gradeItem.value) {
-//         return {
-//           grade: gradeItem.grade,
-//           remark: gradeItem.remark,
-//           total: result,
-//         };
-//       }
-//     }
-
-//     return {
-//       grade: 'F',
-//       remark: 'Fail',
-//       total: result,
-//     };
-//   } catch (error) {
-//     if (error instanceof AppError) {
-//       throw new AppError(error.message, error.statusCode);
-//     } else {
-//       throw new Error('Something happened.');
-//     }
-//   }
-// };
-
-// const getPositionWithSuffix = (position: number): string => {
-//   const suffixes = ['th', 'st', 'nd', 'rd'];
-//   const v = position % 100;
-//   const suffix = suffixes[(v - 20) % 100] || suffixes[v] || suffixes[0];
-//   return `${position}${suffix}`;
-// };
-
-// const assignPositions = (students: any[]): any[] => {
-//   const sortedStudents = [...students]
-//     .filter(
-//       (student) =>
-//         student.subjectObj && student.subjectObj.total_score !== undefined
-//     )
-//     .sort((a, b) => b.subjectObj.total_score - a.subjectObj.total_score);
-
-//   let previousScore: number | null = null;
-//   let previousPosition = 0;
-//   let rank = 0;
-
-//   sortedStudents.forEach((student, index) => {
-//     if (student.subjectObj.total_score !== previousScore) {
-//       rank = index + 1;
-//       previousScore = student.subjectObj.total_score;
-//     }
-//     previousPosition = rank;
-//     student.subjectObj.subject_position =
-//       getPositionWithSuffix(previousPosition);
-//   });
-
-//   return sortedStudents;
-// };
-
-// const classPositionCalculation = (
-//   students: ClassPositionCalType[]
-// ): ClassPositionCalType[] => {
-//   students.forEach((student) => {
-//     const subjects = student.allCummulatives.subject_results;
-//     const totalScores = subjects.reduce(
-//       (sum, subject) => sum + subject.total_score,
-//       0
-//     );
-//     student.allCummulatives.cumulative_score = subjects.length
-//       ? parseFloat((totalScores / subjects.length).toFixed(2))
-//       : 0;
-//   });
-
-//   students.sort(
-//     (a, b) =>
-//       (b.allCummulatives.cumulative_score ?? 0) -
-//       (a.allCummulatives.cumulative_score ?? 0)
-//   );
-
-//   let position;
-
-//   students.forEach((student, index) => {
-//     position = index + 1;
-//     student.allCummulatives.class_position = getPositionWithSuffix(position);
-//   });
-
-//   return students;
-// };
-
-// const schoolClassLevels = async (schoolClasses: ClassDocument[]) => {
-//   const uniqueClass = [];
-//   const seenLevels = new Set();
-
-//   for (const classObj of schoolClasses) {
-//     if (classObj && !seenLevels.has(classObj.level)) {
-//       seenLevels.add(classObj.level);
-//       uniqueClass.push(classObj);
-//     }
-//   }
-
-//   return uniqueClass;
-// };
-
-// export {schoolClassLevels,
-//   assignPositions,
-//   getPositionWithSuffix,
-//   calculateSubjectSumAndGrade,
-//   genderFunction,
-//   capitalizeFirstLetter,
-//   generateAdmissionNumber,
-//   classPositionCalculation,
-// };
-
-// "students_result": [
-//   {
-//       "studentId": "6765188d2cb4b100c441fed6",
-//       "first_name": "ayodeji",
-//       "last_name": "adebolu",
-//       "allCummulatives": {
-//           "term": "second_term",
-//           "cumulative_score": 0,
-//           "subject_results": [
-//               {
-//                   "subject": "677511cd6c080204ac2b4d8f",
-//                   "subject_teacher": "6767b965920cb08b990e5c36",
-//                   "total_score": 75,
-//                   "first_test_score": 18,
-//                   "second_test_score": 12,
-//                   "exam_score": 45,
-//                   "_id": "678a5aad9ec7a1f24cfd35e4",
-//                   "grade": "A",
-//                   "subject_position": "2nd"
-//               },
-//               {
-//                 "subject": "677511cd6c080204ac2bsyat",
-//                 "subject_teacher": "6767b965920cb08b990evbcn",
-//                 "total_score": 68,
-//                 "first_test_score": 13,
-//                 "second_test_score": 12,
-//                 "exam_score": 43,
-//                 "_id": "678a5a479sy7a1fdycbjh5d3",
-//                 "grade": "A",
-//                 "subject_position": "1st"
-//             },
-//             {
-//                 "subject": "677511cd6c080204ac2vnd8f",
-//                 "subject_teacher": "6767b965920cb08b990wuc36",
-//                 "total_score": 90,
-//                 "first_test_score": 15,
-//                 "second_test_score": 19,
-//                 "exam_score": 56,
-//                 "_id": "678a5a479ec7a1f2vyfd35sc",
-//                 "grade": "A",
-//                 "subject_position": "2nd"
-//             }
-//           ],
-//           "_id": "678a5a469ec7a1f24cfd35cf"
-//       }
-//   },
-//   {
-//       "studentId": "676d2abd8b0681ad37a724f0",
-//       "first_name": "kolade",
-//       "last_name": "dafa",
-//       "allCummulatives": {
-//           "term": "second_term",
-//           "cumulative_score": 0,
-//           "subject_results": [
-//               {
-//                   "subject": "677511cd6c080204ac2b4d8f",
-//                   "subject_teacher": "6767b965920cb08b990e5c36",
-//                   "total_score": 85,
-//                   "first_test_score": 15,
-//                   "second_test_score": 18,
-//                   "exam_score": 52,
-//                   "_id": "678a5a479ec7a1f24cfd35d3",
-//                   "grade": "A",
-//                   "subject_position": "1st"
-//               },
-//               {
-//                   "subject": "677511cd6c080204ac2bsyat",
-//                   "subject_teacher": "6767b965920cb08b990evbcn",
-//                   "total_score": 70,
-//                   "first_test_score": 13,
-//                   "second_test_score": 12,
-//                   "exam_score": 45,
-//                   "_id": "678a5a479sy7a1f24cbjh5d3",
-//                   "grade": "A",
-//                   "subject_position": "1st"
-//               },
-//               {
-//                   "subject": "677511cd6c080204ac2vnd8f",
-//                   "subject_teacher": "6767b965920cb08b990wuc36",
-//                   "total_score": 95,
-//                   "first_test_score": 18,
-//                   "second_test_score": 20,
-//                   "exam_score": 57,
-//                   "_id": "678a5a479ec7a1f24cfd35sc",
-//                   "grade": "A",
-//                   "subject_position": "1st"
-//               }
-//           ],
-//           "_id": "678a5a479ec7a1f24cfd35d2"
-//       }
-//   }
-// ]
-
-////////////////////////////////////////////////////////////
 import { subscriptionEnum } from '../constants/enum';
 import {
   ClassDocument,
@@ -325,6 +7,7 @@ import {
   ObjQuestionType,
   ResultObjType,
   ScoreAndGradingType,
+  ScoreType,
   UserDocument,
 } from '../constants/types';
 import { AppError } from './app.error';
@@ -720,6 +403,23 @@ const normalizeAmount = (amount: string | number) => {
   }
 };
 
+const getMissingScoreNames = (
+  scores: ScoreType[] | undefined,
+  expectedNames: Set<string>
+) => {
+  if (!scores || scores.length === 0) {
+    return Array.from(expectedNames);
+  }
+
+  const recordedNames = scores
+    .filter((s) => s.score !== null && s.score !== undefined)
+    .map((s) => s.score_name);
+
+  return Array.from(expectedNames).filter(
+    (key) => !recordedNames.includes(key)
+  );
+};
+
 export {
   assignPositions,
   calculateSubjectSumAndGrade,
@@ -730,6 +430,7 @@ export {
   formatDate,
   genderFunction,
   getMinMax,
+  getMissingScoreNames,
   mySchoolDomain,
   mySchoolName,
   normalizeAmount,
