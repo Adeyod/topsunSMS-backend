@@ -1362,7 +1362,7 @@ type ScoreAndGradingType = {
   current_term: string;
 };
 
-type SubjectResult = {
+type SubjectResultProp = {
   // school: mongoose.Types.ObjectId;
   subject: mongoose.Types.ObjectId;
   subject_teacher: mongoose.Types.ObjectId;
@@ -1394,7 +1394,7 @@ type TermResult = {
   attitudeToSchoolWork?: string;
   attentiveness?: string;
   perseverance?: string;
-  subject_results: SubjectResult[];
+  subject_results: SubjectResultProp[];
   _id?: mongoose.Types.ObjectId;
 };
 
@@ -1461,6 +1461,13 @@ type SessionDocument = Document & {
   is_active: boolean;
   is_promotion_done: boolean;
   is_subscription_mail_sent: boolean;
+};
+
+type TermSettingsDocument = Document & {
+  session: mongoose.Types.ObjectId;
+  term: 'first_term' | 'second_term' | 'third_term';
+  date_of_resumption: Date;
+  date_of_vacation: Date;
 };
 
 type TermCreationType = TermDocument & {
@@ -2216,6 +2223,14 @@ type StudentSubjectPositionType = {
   userId: mongoose.Types.ObjectId;
   userRole: string;
   // school_id: string;
+};
+
+type StudentSpecificResultPayloadType = {
+  student_id: string;
+  session_id: string;
+  term: string;
+  userRole: string;
+  userId: mongoose.Types.ObjectId;
 };
 
 type StudentResultPopulatedType = ResultDocument & { student: UserDocument };
@@ -3092,6 +3107,7 @@ export {
   StudentResultTermType,
   StudentSchoolBusSubType,
   StudentSessionSubscriptionType,
+  StudentSpecificResultPayloadType,
   StudentSubjectPositionType,
   StudentSubjectType,
   StudentUpdateDetailsReturnType,
@@ -3110,6 +3126,7 @@ export {
   SubjectPositionJobData,
   SubjectRemovalType,
   SubjectResultDocument,
+  SubjectResultProp,
   SubjectResultType,
   SubjectTermResult,
   SubmissionDocument,
@@ -3119,6 +3136,7 @@ export {
   TermCreationType,
   TermDocument,
   TermResult,
+  TermSettingsDocument,
   TimetableArrayType,
   TokenType,
   TransactionDocument,

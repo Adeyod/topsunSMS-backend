@@ -938,6 +938,7 @@ import {
   StudentResultPopulatedType,
   StudentResultSessionType,
   StudentResultTermType,
+  StudentSpecificResultPayloadType,
   StudentSubjectPositionType,
   SubjectPopulatedType,
   SubjectPositionJobData,
@@ -949,6 +950,7 @@ import {
 import CbtResult from '../models/cbt_result.model';
 import Class from '../models/class.model';
 import ClassEnrolment from '../models/classes_enrolment.model';
+import Parent from '../models/parents.model';
 import Result from '../models/result.model';
 import ResultSetting from '../models/result_setting.model';
 import Session from '../models/session.model';
@@ -956,6 +958,7 @@ import Student from '../models/students.model';
 import Subject from '../models/subject.model';
 import { SubjectResult } from '../models/subject_result.model';
 import Teacher from '../models/teachers.model';
+import TermSettings from '../models/term_settings.model';
 import {
   recordCbtScore,
   recordCumScore,
@@ -2253,6 +2256,153 @@ const fetchStudentResultByResultId = async (
   }
 };
 
+const fetchStudentSpecificResult = async (
+  payload: StudentSpecificResultPayloadType
+) => {
+  try {
+    const { student_id, session_id, term, userRole, userId } = payload;
+
+    const student = Object(student_id);
+    const session = Object(session_id);
+
+    if (userRole === 'student') {
+      if (userId.toString() !== student.toString()) {
+        throw new AppError('You can only view your own result.', 403);
+      }
+    } else if (userRole === 'parent') {
+      const parentDoc = await Parent.findById({
+        _id: userId,
+      });
+
+      if (!parentDoc) {
+        throw new AppError('Parent not found.', 404);
+      }
+
+      const allowed = parentDoc.children?.includes(student);
+      if (!allowed) {
+        throw new AppError('Access denied for this student.', 403);
+      }
+    } else {
+      if (!student) {
+        throw new AppError('Student is required.', 400);
+      }
+    }
+
+    const sessionExist = await Session.findById({
+      _id: session,
+    });
+
+    if (!sessionExist) {
+      throw new AppError('Session does not exist.', 404);
+    }
+
+    const termExist = sessionExist.terms.find((t) => t.name === term);
+    if (!termExist) {
+      throw new AppError('Term does not exist in this session.', 400);
+    }
+
+    const classEnrolment = await ClassEnrolment.findOne(
+      {
+        academic_session_id: sessionExist,
+        'students.student': student,
+      },
+      {
+        students: { $elemMatch: { student: student } },
+      }
+    ).select('class');
+
+    const studentSubjectEnrolled = classEnrolment?.students[0].subjects_offered;
+
+    // console.log('classEnrolment:', classEnrolment);
+
+    const subjectResults = await SubjectResult.find({
+      student: student,
+      session: sessionExist._id,
+      class: classEnrolment?.class,
+      subject: { $in: studentSubjectEnrolled },
+    });
+
+    if (!subjectResults || subjectResults.length === 0) {
+      throw new AppError(
+        'No result found for this student for this term.',
+        404
+      );
+    }
+
+    // console.log('subjectResults:', subjectResults);
+
+    const studentResult = await Result.findOne(
+      {
+        student: student,
+      },
+      {
+        term_results: { $elemMatch: { term: term } },
+      }
+    ).populate([{ path: 'student', select: '-password' }]);
+    // console.log('studentResult.term_results:', studentResult?.term_results);
+
+    if (!studentResult || !studentResult.term_results.length) {
+      throw new AppError('Specific term result not found.', 404);
+    }
+
+    const studentType = studentResult.student as unknown as UserDocument;
+
+    const studentObj = studentType.toObject();
+
+    const { password, ...remainingValues } = studentObj;
+    // console.log('remainingValues:', remainingValues);
+
+    const studentResultObj = studentResult.toObject();
+    const actualTermResult = studentResultObj.term_results[0];
+
+    const { subject_results, ...others } = actualTermResult;
+
+    const actualSubjectResultForTerm = subjectResults.map((s) =>
+      s.term_results.find((a) => a.term === term)
+    );
+    // .filter((result) => result !== undefined) as unknown as SubjectResultProp[]
+
+    if (
+      !actualSubjectResultForTerm ||
+      actualSubjectResultForTerm === undefined ||
+      actualSubjectResultForTerm.length === 0
+    ) {
+      throw new AppError(
+        'There is not main result for this term for this student yet.',
+        404
+      );
+    }
+
+    // actualTermResult.subject_results = actualSubjectResultForTerm
+
+    const termSettingExist = await TermSettings.findOne({
+      session: sessionExist._id,
+      term: term,
+    });
+
+    const formattedResult = {
+      ...others,
+      subject_results: actualSubjectResultForTerm,
+      term_settings: termSettingExist,
+    };
+    console.log('formattedResult:', formattedResult);
+
+    const neededObj = {
+      academic_session: sessionExist._id,
+      student: remainingValues,
+      term_result: formattedResult,
+    };
+
+    return neededObj;
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw new AppError(error.message, error.statusCode);
+    } else {
+      throw new Error('Something happened');
+    }
+  }
+};
+
 const studentEffectiveAreasForActiveTermRecording = async (
   payload: EffectiveAreasPayloadType
 ) => {
@@ -3191,6 +3341,18 @@ const recordManyStudentCbtExamScoresManually = async (
   }
 };
 
+// const userId = '6900cffa68f7bbc23430efe4';
+
+// const payload = {
+//   student_id: '6900cffa68f7bbc23430efe4',
+//   session_id: '6900ba5768f7bbc23430ede2',
+//   term: 'first_term',
+//   userRole: 'student',
+//   userId: Object(userId),
+// };
+
+// fetchStudentSpecificResult(payload);
+
 export {
   calculatePositionOfStudentsInClass,
   fetchAllResultsOfAStudent,
@@ -3200,6 +3362,7 @@ export {
   fetchResultSetting,
   fetchStudentResultByResultId,
   fetchStudentSessionResults,
+  fetchStudentSpecificResult,
   fetchStudentSubjectResultInAClass,
   fetchStudentTermResult,
   recordManyStudentCbtExamScoresManually,

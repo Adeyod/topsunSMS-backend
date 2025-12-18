@@ -537,6 +537,7 @@ import CbtExam from '../models/cbt_exam.model';
 import ClassEnrolment from '../models/classes_enrolment.model';
 import Session from '../models/session.model';
 import Student from '../models/students.model';
+import TermSettings from '../models/term_settings.model';
 import { AppError } from '../utils/app.error';
 
 const createSession = async (): Promise<SessionDocument> => {
@@ -1116,9 +1117,28 @@ const termVacationAndNewTermResumptionDates = async (
       throw new AppError('This term is not active.', 400);
     }
 
-    actualTerm.date_of_resumption = new Date(date_of_resumption);
-    actualTerm.date_of_vacation = new Date(date_of_vacation);
-    await sessionExist.save();
+    const termSettingExist = await TermSettings.findOne({
+      session: sessionExist._id,
+
+      term: actualTerm.name,
+    });
+
+    if (termSettingExist) {
+      throw new AppError(
+        'Vacation and New Resumption dates have been recorded for this term already.',
+        400
+      );
+    }
+
+    const newTermSetting = new TermSettings({
+      session: sessionExist._id,
+      term: actualTerm.name,
+      date_of_resumption: new Date(date_of_resumption),
+      date_of_vacation: new Date(date_of_vacation),
+    });
+
+    await newTermSetting.save();
+
     return actualTerm;
   } catch (error) {
     if (error instanceof AppError) {
@@ -1128,6 +1148,17 @@ const termVacationAndNewTermResumptionDates = async (
     }
   }
 };
+
+// const date_of_resumption = '2026-01-05T00:00:00.000+00:00';
+// const date_of_vacation = '2025-12-10T00:00:00.000+00:00';
+// const payload = {
+//   date_of_resumption: new Date(date_of_resumption),
+//   date_of_vacation: new Date(date_of_vacation),
+//   term_id: '6901cfce86d3255eab8a254f',
+//   session_id: '6900ba5768f7bbc23430ede2',
+// };
+
+// termVacationAndNewTermResumptionDates(payload);
 
 export {
   createSession,

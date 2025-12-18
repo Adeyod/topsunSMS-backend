@@ -1594,7 +1594,6 @@ const joiValidateVacationAndResumptionDatesSchema = (
   }).custom((obj, helper) => {
     const { date_of_vacation, date_of_resumption } = obj;
 
-    // Convert to Date objects and remove time for comparison
     const vacationDate = new Date(date_of_vacation);
     vacationDate.setHours(0, 0, 0, 0);
 
@@ -1604,7 +1603,6 @@ const joiValidateVacationAndResumptionDatesSchema = (
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Validation rules
     if (vacationDate < today) {
       return helper.message({
         custom: 'Date of vacation cannot be in the past.',

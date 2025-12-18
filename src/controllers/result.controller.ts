@@ -542,6 +542,7 @@ import {
   fetchResultSetting,
   fetchStudentResultByResultId,
   fetchStudentSessionResults,
+  fetchStudentSpecificResult,
   fetchStudentSubjectResultInAClass,
   fetchStudentTermResult,
   recordManyStudentCbtExamScoresManually,
@@ -1530,6 +1531,68 @@ const getStudentResultByResultId = catchErrors(async (req, res) => {
   });
 });
 
+const getStudentSpecificResult = catchErrors(async (req, res) => {
+  // const start = Date.now();
+
+  const { student_id, session_id, term } = req.params;
+
+  if (!session_id) {
+    throw new AppError('Session is required.', 400);
+  }
+
+  if (!student_id) {
+    throw new AppError('Student ID is required.', 400);
+  }
+
+  if (!term) {
+    throw new AppError('Term is required.', 400);
+  }
+
+  const user = req.user;
+
+  if (!user) {
+    throw new AppError('Please login to continue.', 400);
+  }
+
+  const payload = {
+    student_id,
+    session_id,
+    term,
+    userRole: user?.userRole,
+    userId: user?.userId,
+  };
+
+  const result = await fetchStudentSpecificResult(payload);
+
+  // const duration = Date.now() - start;
+
+  // const savelogPayload = {
+  //   level: 'info',
+  //   message: 'Student result fetched successfully.',
+  //   service: 'klazik schools',
+  //   method: req.method,
+  //   route: req.originalUrl,
+  //   status_code: 200,
+  //   user_id: req.user?.userId,
+  //   user_role: req.user?.userRole,
+  //   ip: req.ip || 'unknown',
+  //   duration_ms: duration,
+  //   stack: undefined,
+  //   school_id: req.user?.school_id
+  //     ? new mongoose.Types.ObjectId(req.user.school_id)
+  //     : undefined,
+  // };
+
+  // await saveLog(savelogPayload);
+
+  return res.status(200).json({
+    message: 'Student result fetched successfully.',
+    success: true,
+    status: 200,
+    result,
+  });
+});
+
 const recordStudentEffectiveAreasForActiveTerm = catchErrors(
   async (req, res) => {
     // const start = Date.now();
@@ -1962,6 +2025,7 @@ export {
   getResultSettings,
   getStudentResultByResultId,
   getStudentSessionResults,
+  getStudentSpecificResult,
   getStudentSubjectResultInAClass,
   getStudentTermResult,
   manualCbtRecordingPerStudentPerTerm,

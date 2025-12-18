@@ -8,6 +8,7 @@ import {
   getResultSettings,
   getStudentResultByResultId,
   getStudentSessionResults,
+  getStudentSpecificResult,
   getStudentSubjectResultInAClass,
   getStudentTermResult,
   manualCbtRecordingPerStudentPerTerm,
@@ -56,6 +57,12 @@ router.get(
   permission(['teacher', 'admin', 'super_admin', 'student', 'parent']),
   getStudentResultByResultId
   // populate subject and subject teacher
+);
+
+router.get(
+  '/get-student-result/:student_id/:session_id/:term',
+  permission(['teacher', 'admin', 'super_admin', 'student', 'parent']),
+  getStudentSpecificResult
 );
 
 router.put(

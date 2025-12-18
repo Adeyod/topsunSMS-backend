@@ -267,7 +267,6 @@
 // };
 
 /////////////////////////////////////////////////////////////////////////////
-import mongoose from 'mongoose';
 import { ClassEnrolmentDocument } from '../constants/types';
 import {
   createResult,
@@ -338,6 +337,8 @@ const studentEnrolmentToClass = catchErrors(async (req, res) => {
     class_id: info.class,
     academic_session_id: info.academic_session_id,
   };
+
+  // I will disable the creation of result here
   const createResultForStudent = await createResult(payload2);
 
   // const duration = Date.now() - start;
@@ -752,12 +753,12 @@ const manyStudentsEnrolmentToClass = catchErrors(async (req, res) => {
 // addLogoToASchool, addSchoolImageToASchool,
 
 export {
-  studentEnrolmentToClass,
-  getASingleEnrollmentById,
+  getAllActiveClassEnrollments,
   getAllEnrollments,
   getAllSessionEnrollmentsBySessionId,
-  getAllActiveClassEnrollments,
   getAllStudentsInAClass,
   getAllStudentsInAClassInActiveSession,
+  getASingleEnrollmentById,
   manyStudentsEnrolmentToClass,
+  studentEnrolmentToClass,
 };

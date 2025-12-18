@@ -39,6 +39,8 @@ const resultSchema = new mongoose.Schema<ResultDocument>(
         attitudeToSchoolWork: { type: String },
         attentiveness: { type: String },
         perseverance: { type: String },
+        // required_statuses: [],
+        // published: {type: Boolean, default: false},
         subject_results: [
           {
             subject: { type: Schema.Types.ObjectId, ref: 'Subject' },
