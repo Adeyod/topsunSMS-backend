@@ -2773,8 +2773,6 @@ const fetchStudentSpecificResult = async (
 
     const studentSubjectEnrolled = classEnrolment?.students[0].subjects_offered;
 
-    // console.log('classEnrolment:', classEnrolment);
-
     const subjectResults = await SubjectResult.find({
       student: student,
       session: sessionExist._id,
