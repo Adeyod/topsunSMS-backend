@@ -233,17 +233,16 @@ const fetchAllSubjectAssignmentsInClass = async (
       throw new AppError(`There is no enrolment found for class.`, 404);
     }
 
+    const classExist = await Class.findById({
+      _id: classId,
+    });
+
+    if (!classExist) {
+      throw new AppError('Class does not exist for this assignment.', 404);
+    }
+
     if (userRole === 'teacher') {
-      // Check if the teacher is the one taking the subject in the class
-      const classDetails = await Class.findById({
-        _id: classId,
-      });
-
-      if (!classDetails) {
-        throw new AppError('Class does not exist for this assignment.', 404);
-      }
-
-      const subjectTeacher = classDetails.teacher_subject_assignments.find(
+      const subjectTeacher = classExist.teacher_subject_assignments.find(
         (a) =>
           a.subject.toString() === subjectId.toString() &&
           a.teacher.toString() === userId.toString()
@@ -256,8 +255,6 @@ const fetchAllSubjectAssignmentsInClass = async (
         );
       }
     } else if (userRole === 'student') {
-      // check if the student is enrolled to take the subject in the class this session
-
       const offeredSubject = classEnrolmentExist.students.find(
         (a) =>
           a.student.toString() === userId.toString() &&
@@ -272,11 +269,23 @@ const fetchAllSubjectAssignmentsInClass = async (
       }
     }
 
+    const subjectExist = await Subject.findById({ _id: subjectId });
+
+    if (!subjectExist) {
+      throw new AppError('subject not found.', 404);
+    }
+
+    const sessionExist = await Session.findById(sessionId);
+
+    if (!sessionExist) {
+      throw new AppError('session not found.', 404);
+    }
     let query = Assignment.find({
-      subject_id: subjectId,
+      subject_id: subjectExist._id,
       class_enrolment: classEnrolmentExist._id,
-      session_id: sessionId,
-    }).sort({ createdAt: -1 });
+      session_id: sessionExist._id,
+      class: classExist._id,
+    });
 
     if (searchParams?.trim()) {
       const regex = new RegExp(searchParams, 'i');
