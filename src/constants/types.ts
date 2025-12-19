@@ -1893,6 +1893,7 @@ type TransactionDocument = {
 type AssignmentCreationPayloadType = {
   subject_id: mongoose.Types.ObjectId;
   class_id: mongoose.Types.ObjectId;
+  session_id: mongoose.Types.ObjectId;
   title: string;
   due_date: Date;
   user: mongoose.Types.ObjectId;
@@ -1902,10 +1903,10 @@ type AssignmentCreationPayloadType = {
 type QuestionObject = {
   question_number: number;
   question_text: string;
-  attachments: {
-    url: string;
-    public_url: string;
-  }[];
+  // attachments: {
+  //   url: string;
+  //   public_url: string;
+  // }
 };
 
 type AssignmentDocument = Document & {
@@ -1915,6 +1916,7 @@ type AssignmentDocument = Document & {
   status: 'open' | 'closed';
   due_date: Date;
   subject: string;
+  term: string;
   class: mongoose.Types.ObjectId;
   subject_id: mongoose.Types.ObjectId;
   class_enrolment: mongoose.Types.ObjectId;
@@ -2038,6 +2040,20 @@ type ManyStudentSubjectResultTotalPayloadType = {
   session_id: string;
 };
 
+type GetAssignmentPayloadType = {
+  assignment_id: string;
+  userId: mongoose.Types.ObjectId;
+  userRole: string;
+};
+
+type GetAllSubjectPayloadType = {
+  subject_id: string;
+  session_id: string;
+  class_id: string;
+  userRole: string;
+  userId: mongoose.Types.ObjectId;
+};
+
 export {
   AccessModeType,
   AccountCreationReturnType,
@@ -2125,6 +2141,8 @@ export {
   FilePath,
   FolderName,
   GenerateBankReferenceType,
+  GetAllSubjectPayloadType,
+  GetAssignmentPayloadType,
   GetClassCbtAssessmentTimetablePayloadType,
   GetClassPayloadType,
   GetClassStudentsType,

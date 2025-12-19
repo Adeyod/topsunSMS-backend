@@ -23,7 +23,7 @@ router.get('/get-active-session', getActiveSession);
 
 router.get(
   '/get-sessions',
-  permission(['admin', 'super_admin']),
+  permission(['admin', 'super_admin', 'parent', 'student', 'teacher']),
   getAllSessions
 );
 

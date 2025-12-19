@@ -1,16 +1,15 @@
 import mongoose from 'mongoose';
-import { teacherStatusEnum, genderEnum, rolesEnum } from '../constants/enum';
 import { AssignmentDocument } from '../constants/types';
 
 const questionSchema = new mongoose.Schema({
   question_number: { type: Number, required: true },
   question_text: { type: String, required: true },
-  attachments: [
-    {
-      url: { type: String },
-      public_url: { type: String },
-    },
-  ], // image URLs, PDFs, etc.
+  // attachments: [
+  //   {
+  //     url: { type: String },
+  //     public_url: { type: String },
+  //   },
+  // ], // image URLs, PDFs, etc.
 });
 
 const assignmentSchema = new mongoose.Schema<AssignmentDocument>(
@@ -23,6 +22,7 @@ const assignmentSchema = new mongoose.Schema<AssignmentDocument>(
       ref: 'ClassEnrolment',
     },
     title: { type: String, required: true },
+    term: { type: String, required: true },
     questions: [questionSchema],
     due_date: { type: Date, required: true },
     submission_type: {
