@@ -1453,33 +1453,28 @@
 
 ////////////////////////////////////////////////////////////////////////
 import mongoose from 'mongoose';
-import { AppError } from '../utils/app.error';
-import Session from '../models/session.model';
-import Student from '../models/students.model';
-import Fee from '../models/fees.model';
+import { paymentEnum, paymentStatusEnum } from '../constants/enum';
 import {
   AddFeeToStudentPaymentDocType,
   AddingFeeToPaymentPayload,
+  ApproveStudentPayloadType,
   PaymentDataType,
   PaymentDocument,
   PaymentHistoryDataType,
+  StudentFeePaymentType,
   StudentPaymentHistoryType,
   UserDocument,
-  PaymentPayloadType,
-  PaymentPriorityType,
-  AccountDetailsType,
-  StudentFeePaymentType,
   WaitingForConfirmationType,
-  ApproveStudentPayloadType,
 } from '../constants/types';
+import Fee from '../models/fees.model';
 import Payment from '../models/payment.model';
+import Session from '../models/session.model';
+import Student from '../models/students.model';
 import {
   addFeeToStudentPaymentDoc,
   calculateAndUpdateStudentPaymentDocuments,
 } from '../repository/payment.repository';
-import { Request, Response } from 'express';
-import { bankWebhook } from '../utils/bank';
-import { paymentEnum, paymentStatusEnum } from '../constants/enum';
+import { AppError } from '../utils/app.error';
 // import BusSubscription from '../models/bus_subscription.model';
 
 const createSchoolFeePaymentDocumentForStudents = async (
@@ -2290,12 +2285,12 @@ const studentBankFeePayment = async (
       throw new AppError('No payment record found', 404);
     }
 
-    if (findPaymentDocument.is_submit_response === false) {
-      throw new AppError(
-        'You need to inform us if you are subscribing to school bus for this term or not.',
-        400
-      );
-    }
+    // if (findPaymentDocument.is_submit_response === false) {
+    //   throw new AppError(
+    //     'You need to inform us if you are subscribing to school bus for this term or not.',
+    //     400
+    //   );
+    // }
 
     if (findPaymentDocument.is_payment_complete === true) {
       throw new AppError(
@@ -2312,6 +2307,22 @@ const studentBankFeePayment = async (
       fee_name: 'school-fees',
       amount: amount_paying,
     };
+
+    const allTellers = [
+      ...findPaymentDocument.waiting_for_confirmation,
+      ...findPaymentDocument.payment_summary,
+    ];
+
+    const transactionIdExists = allTellers.some(
+      (s) => s.transaction_id === teller_number
+    );
+
+    if (transactionIdExists) {
+      throw new AppError(
+        `Teller number ${teller_number} has already being submitted for this student before.`,
+        400
+      );
+    }
 
     const paymentPayload = {
       amount_paid: amount_paying,
@@ -2501,19 +2512,197 @@ const fetchAPaymentNeedingApprovalById = async (
   }
 };
 
+const fetchAllPaymentsNeedingApproval = async (
+  page: number | undefined,
+  limit: number | undefined,
+  searchParams: string
+): Promise<{
+  resultArray: WaitingForConfirmationType[];
+  totalCount: number;
+  totalPages: number;
+}> => {
+  try {
+    let query = Payment.find({
+      'waiting_for_confirmation.0': { $exists: true },
+    });
+
+    if (searchParams) {
+      const regex = new RegExp(searchParams, 'i');
+      const isNumber = !isNaN(Number(searchParams));
+
+      query = query.where({
+        waiting_for_confirmation: {
+          $elemMatch: {
+            $or: [
+              {
+                payment_method: {
+                  $regex: regex,
+                },
+              },
+              {
+                bank_name: {
+                  $regex: regex,
+                },
+              },
+              isNumber
+                ? {
+                    amount_paid: {
+                      $regex: regex,
+                    },
+                  }
+                : undefined,
+              {
+                transaction_id: {
+                  $regex: regex,
+                },
+              },
+              {
+                status: {
+                  $regex: regex,
+                },
+              },
+            ].filter(Boolean),
+          },
+        },
+      });
+    }
+
+    if (!query) {
+      throw new AppError('Payment not found.', 404);
+    }
+
+    const count = await query.clone().countDocuments(); // Clone query to avoid execution conflict
+    let pages = 0;
+
+    if (page !== undefined && limit !== undefined && count !== 0) {
+      const offset = (page - 1) * limit;
+
+      query = query.skip(offset).limit(limit).sort({ createdAt: -1 });
+
+      pages = Math.ceil(count / limit);
+
+      if (page > pages) {
+        throw new AppError('Page can not be found.', 404);
+      }
+    }
+
+    const result = await query;
+
+    if (!result || result.length === 0) {
+      throw new AppError('Payment not found.', 404);
+    }
+
+    const expectedReturn = result
+      .map(
+        (payment) => (
+          payment._id,
+          payment.waiting_for_confirmation.filter(
+            (p) => p.payment_method === 'bank'
+          )
+        )
+      )
+      .flat();
+
+    const paymentDoc = expectedReturn as WaitingForConfirmationType[];
+
+    return { resultArray: paymentDoc, totalPages: pages, totalCount: count };
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw new AppError(error.message, error.statusCode);
+    } else {
+      console.log(error);
+      throw new Error('Something happened.');
+    }
+  }
+};
+
+const fetchAllPaymentsApprovedByBursarId = async (
+  bursar_id: string,
+  page: number | undefined,
+  limit: number | undefined,
+  searchParams: string
+): Promise<{
+  resultArray: WaitingForConfirmationType[];
+  totalCount: number;
+  totalPages: number;
+}> => {
+  try {
+    let query = Payment.find({
+      payment_summary: {
+        $elemMatch: {
+          staff_who_approve: bursar_id,
+        },
+      },
+    }).populate('payment_summary.staff_who_approve', '-password');
+
+    if (searchParams) {
+      const regex = new RegExp(searchParams, 'i');
+
+      query = query.where({
+        $or: [{ payment_method: { $regex: regex } }],
+      });
+    }
+
+    if (!query) {
+      throw new AppError('Payment not found.', 404);
+    }
+
+    const count = await query.clone().countDocuments();
+
+    let pages = 0;
+
+    if (page !== undefined && limit !== undefined && count !== 0) {
+      const offset = (page - 1) * limit;
+
+      query = query.skip(offset).limit(limit).sort({ createdAt: -1 });
+
+      pages = Math.ceil(count / limit);
+
+      if (page > pages) {
+        throw new AppError('Page not found', 404);
+      }
+    }
+    const response = await query;
+
+    if (!response || response.length === 0) {
+      throw new AppError('Payments not found.', 404);
+    }
+
+    const expectedReturn = response
+      .map((payment) =>
+        payment.payment_summary.filter(
+          (p) => p?.staff_who_approve?._id.toString() === bursar_id
+        )
+      )
+      .flat();
+
+    const paymentDoc = expectedReturn as WaitingForConfirmationType[];
+
+    return { resultArray: paymentDoc, totalCount: count, totalPages: pages };
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw new AppError(error.message, error.statusCode);
+    } else {
+      throw new Error('Something happened');
+    }
+  }
+};
+
 export {
-  fetchAPaymentNeedingApprovalById,
-  studentCashFeePayment,
+  addingFeeToStudentPaymentDocument,
   approveStudentBankPayment,
-  studentBankFeePayment,
+  createSchoolFeePaymentDocumentForStudents,
+  fetchAllPaymentDocuments,
+  fetchAllPaymentsApprovedByBursarId,
+  fetchAllPaymentsNeedingApproval,
   fetchAllPaymentSummaryFailedAndSuccessful,
-  fetchStudentSinglePaymentDoc,
+  fetchAllStudentPaymentDocumentsByStudentId,
+  fetchAPaymentNeedingApprovalById,
+  fetchCurrentTermPaymentDocuments,
   fetchPaymentDetailsByPaymentId,
   fetchPaymentTransactionHistoryByStudentId,
-  fetchCurrentTermPaymentDocuments,
   fetchStudentOutstandingPaymentDoc,
-  fetchAllPaymentDocuments,
-  fetchAllStudentPaymentDocumentsByStudentId,
-  addingFeeToStudentPaymentDocument,
-  createSchoolFeePaymentDocumentForStudents,
+  fetchStudentSinglePaymentDoc,
+  studentBankFeePayment,
+  studentCashFeePayment,
 };

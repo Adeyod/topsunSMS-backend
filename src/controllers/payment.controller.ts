@@ -714,34 +714,32 @@
 // };
 
 ////////////////////////////////////////////////////////////
-import mongoose from 'mongoose';
 import {
   addingFeeToStudentPaymentDocument,
+  approveStudentBankPayment,
   createSchoolFeePaymentDocumentForStudents,
+  fetchAPaymentNeedingApprovalById,
   fetchAllPaymentDocuments,
   fetchAllPaymentSummaryFailedAndSuccessful,
+  fetchAllPaymentsApprovedByBursarId,
+  fetchAllPaymentsNeedingApproval,
   fetchAllStudentPaymentDocumentsByStudentId,
   fetchCurrentTermPaymentDocuments,
   fetchPaymentDetailsByPaymentId,
   fetchPaymentTransactionHistoryByStudentId,
   fetchStudentOutstandingPaymentDoc,
   fetchStudentSinglePaymentDoc,
-  studentCashFeePayment,
-  approveStudentBankPayment,
   studentBankFeePayment,
-  fetchAPaymentNeedingApprovalById,
+  studentCashFeePayment,
 } from '../services/payment.service';
 import { AppError } from '../utils/app.error';
 // import { company_subdomain } from '../utils/code';
-import { validatePriorityOrder } from '../utils/functions';
 import catchErrors from '../utils/tryCatch';
 import {
-  joiAccountArrayValidation,
-  joiPriorityOrderValidation,
   bankApprovalValidation,
-  optionalFeesValidation,
-  cashPaymentValidation,
   bankPaymentValidation,
+  cashPaymentValidation,
+  optionalFeesValidation,
 } from '../utils/validation';
 // import { saveLog } from '../logs/log.service';
 
@@ -1492,25 +1490,84 @@ const makeCashPayment = catchErrors(async (req, res) => {
   });
 });
 
-const getAllPaymentsNeedingApproval = catchErrors(async (req, res) => {});
-const getAllPaymentsApprovedByBursarId = catchErrors(async (req, res) => {});
+const getAllPaymentsNeedingApproval = catchErrors(async (req, res) => {
+  const page = req.query.page ? Number(req.query.page) : undefined;
+  const limit = req.query.limit ? Number(req.query.limit) : undefined;
+
+  const searchQuery =
+    typeof req.query.searchParams === 'string' ? req.query.searchParams : '';
+
+  const result = await fetchAllPaymentsNeedingApproval(
+    page,
+    limit,
+    searchQuery
+  );
+
+  if (!result) {
+    throw new AppError(
+      'unable to fetch all payment documents needing approval.',
+      400
+    );
+  }
+
+  return res.status(200).json({
+    message: 'All payment documents waiting for approval fetched successfully.',
+    success: true,
+    status: 200,
+    payment_documents: result,
+  });
+});
+
+const getAllPaymentsApprovedByBursarId = catchErrors(async (req, res) => {
+  const page = req.query.page ? Number(req.query.page) : undefined;
+  const limit = req.query.limit ? Number(req.query.limit) : undefined;
+
+  const searchQuery =
+    typeof req.query.searchParams === 'string' ? req.query.searchParams : '';
+  const { bursar_id } = req.params;
+
+  if (!bursar_id) {
+    throw new AppError('Please provide a valid bursar_id to continue.', 400);
+  }
+
+  const result = await fetchAllPaymentsApprovedByBursarId(
+    bursar_id,
+    page,
+    limit,
+    searchQuery
+  );
+
+  if (!result) {
+    throw new AppError(
+      'Unable to fetch all payments approved by this bursar.',
+      400
+    );
+  }
+
+  return res.status(200).json({
+    message: 'All payments approved by this bursar fetched successfully',
+    success: true,
+    status: 200,
+    payment_documents: result,
+  });
+});
 
 export {
-  createPaymentDocumentForAllStudent,
   addFeeToStudentPaymentDocument,
-  makeBankPayment,
-  makeCashPayment,
-  getAllStudentPaymentDocumentsByStudentId,
-  getAllPaymentDocuments,
-  getAllOutstandingPaymentDocumentsOfStudent,
-  getCurrentTermPaymentDocuments,
-  getPaymentTransactionHistoryByStudentId,
-  getPaymentDetailsByPaymentId,
-  getAPaymentDocumentOfStudentByStudentIdAndPaymentId,
-  getAllPaymentSummaryFailedAndSuccessful,
   ////////////////////////////////////////////////////
   approveBankPaymentWithId,
+  createPaymentDocumentForAllStudent,
+  getAPaymentDocumentOfStudentByStudentIdAndPaymentId,
   getAPaymentNeedingApprovalById,
-  getAllPaymentsNeedingApproval,
+  getAllOutstandingPaymentDocumentsOfStudent,
+  getAllPaymentDocuments,
+  getAllPaymentSummaryFailedAndSuccessful,
   getAllPaymentsApprovedByBursarId,
+  getAllPaymentsNeedingApproval,
+  getAllStudentPaymentDocumentsByStudentId,
+  getCurrentTermPaymentDocuments,
+  getPaymentDetailsByPaymentId,
+  getPaymentTransactionHistoryByStudentId,
+  makeBankPayment,
+  makeCashPayment,
 };

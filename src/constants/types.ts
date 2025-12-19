@@ -428,6 +428,8 @@ type ResultSettingDocument = {
   exam_components: ExamComponentType;
   grading_and_remark: GradingAndRemarkType[];
   level: string;
+  allow_cbt: boolean;
+  exam_split: boolean;
 };
 
 type ScoreType = {

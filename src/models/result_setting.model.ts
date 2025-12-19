@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
-import { ResultSettingDocument } from '../constants/types';
 import { examKeyEnum } from '../constants/enum';
+import { ResultSettingDocument } from '../constants/types';
 
 const gradingSchema = new mongoose.Schema(
   {
@@ -25,6 +25,8 @@ const gradingSchema = new mongoose.Schema(
 
 const resultSettingSchema = new mongoose.Schema<ResultSettingDocument>({
   level: { type: String, required: true },
+  allow_cbt: { type: Boolean, default: true },
+  exam_split: { type: Boolean, default: true },
   components: [
     {
       name: String,
@@ -38,8 +40,8 @@ const resultSettingSchema = new mongoose.Schema<ResultSettingDocument>({
     component: [
       {
         key: { type: String, enum: examKeyEnum },
-        name: { type: String, required: true, trim: true },
-        percentage: { type: Number, required: true, trim: true },
+        name: { type: String, trim: true },
+        percentage: { type: Number, trim: true },
         _id: false,
       },
     ],
