@@ -20,6 +20,7 @@ import {
   recordStudentScorePerTerm,
   subjectPositionGradingInClass,
   subjectResultTotalCalculation,
+  updateStudentsSubjectScoreInAClass,
 } from '../controllers/result.controller';
 import { permission } from '../middleware/authorization';
 import { verifyAccessToken } from '../middleware/jwtAuth';
@@ -138,6 +139,12 @@ router.put(
   '/students-class-position/:class_id',
   permission(['teacher']),
   calculateStudentsClassPosition
+);
+
+router.put(
+  '/update-score',
+  permission(['super_admin']),
+  updateStudentsSubjectScoreInAClass
 );
 
 router.get(

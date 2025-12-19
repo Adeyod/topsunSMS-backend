@@ -1252,6 +1252,7 @@ import {
   MultipleExamScoreParamType,
   MultipleLastCumParamType,
   MultipleScoreParamType,
+  MultipleScoreUpdateParamType,
   // ResultSettingComponentType,
   // GradingAndRemarkType,
   ScoreParamType,
@@ -1288,6 +1289,7 @@ import {
   recordCbtScore,
   recordCumScore,
   recordScore,
+  updateScore,
 } from '../repository/result.repository';
 import { getAStudentById } from '../repository/student.repository';
 import { getTeacherById } from '../repository/teacher.repository';
@@ -1577,6 +1579,130 @@ const recordManyStudentScores = async (payload: MultipleScoreParamType) => {
 
       await studentResultQueue.addBulk(jobs);
     }
+
+    return {
+      successfulRecords: successfulRecords,
+      failedRecords: failedRecords,
+      skippedRecords: skippedRecords,
+      all_results: results,
+    };
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw new AppError(error.message, error.statusCode);
+    } else {
+      throw new Error('Something happened.');
+    }
+  }
+};
+
+const studentsSubjectScoreInAClassUpdating = async (
+  payload: MultipleScoreUpdateParamType
+) => {
+  try {
+    const {
+      result_objs, // Array of { student_id, score }
+      term,
+      session_id,
+      teacher_id,
+      userId,
+      subject_id,
+      score_name,
+      class_enrolment_id,
+      class_id,
+    } = payload;
+
+    // change here to update score
+    const recordPromises = result_objs.map((student) =>
+      updateScore({
+        term,
+        session_id,
+        teacher_id,
+        subject_id,
+        score_name,
+        class_enrolment_id,
+        class_id,
+        student_id: student.student_id,
+        score: student.score,
+      })
+        .then((result) => {
+          const currentTermResult = result.term_results.find(
+            (t) => t.term === term
+          );
+          return {
+            status: 'fulfilled',
+            student_id: student.student_id,
+            result,
+            score: student.score,
+            score_name: score_name,
+          };
+        })
+        .catch((err) => {
+          // Skip only if it's the "score already recorded" error
+          if (
+            err instanceof AppError &&
+            err.message.includes('score has already been recorded')
+          ) {
+            return {
+              status: 'skipped',
+              student_id: student.student_id,
+              reason: err.message,
+              score_name: score_name,
+              score: student.score,
+            };
+          }
+          return {
+            status: 'rejected',
+            student_id: student.student_id,
+            reason: err.message || 'Unknown error',
+            score_name: score_name,
+            score: student.score,
+          };
+        })
+    );
+
+    const results = await Promise.all(recordPromises);
+
+    const successfulRecords = results.filter((r) => r.status === 'fulfilled');
+    const skippedRecords = results.filter((r) => r.status === 'skipped');
+    const failedRecords = results.filter((r) => r.status === 'rejected');
+
+    // if (results.length > 0) {
+    //   const jobs = results.map((record) => {
+    //     const r = record as {
+    //       // status: 'fulfilled';
+    //       status: 'fulfilled' | 'skipped' | 'rejected';
+    //       student_id: string;
+    //       score: number;
+    //       score_name: string;
+    //     };
+
+    //     return {
+    //       name: 'update-student-result',
+    //       data: {
+    //         term: term,
+    //         session_id: session_id,
+    //         teacher_id: teacher_id,
+    //         subject_id: subject_id,
+    //         class_enrolment_id: class_enrolment_id,
+    //         class_id: class_id,
+    //         status: r.status,
+    //         student_id: r.student_id,
+    //         score: r.score,
+    //         score_name: r.score_name,
+    //       },
+    //       opts: {
+    //         attempts: 5,
+    //         removeOnComplete: true,
+    //         backoff: {
+    //           type: 'exponential',
+    //           delay: 3000,
+    //         },
+    //       },
+    //     };
+    //   });
+
+    //   await studentResultQueue.addBulk(jobs);
+    // }
 
     return {
       successfulRecords: successfulRecords,
@@ -3826,7 +3952,7 @@ const recordManyStudentSubjectResultTotal = async (
     const expectedResultComponents = resultHeader?.components.map(
       (a) => a.name
     );
-    const examName = resultHeader?.exam_components.exam_name;
+    // const examName = resultHeader?.exam_components.exam_name;
 
     const expectedNames = new Set<string>([
       ...(expectedExamNames ?? []),
@@ -3934,18 +4060,6 @@ const recordManyStudentSubjectResultTotal = async (
   }
 };
 
-// const userId = '6900cffa68f7bbc23430efe4';
-
-// const payload = {
-//   student_id: '6900cffa68f7bbc23430efe4',
-//   session_id: '6900ba5768f7bbc23430ede2',
-//   term: 'first_term',
-//   userRole: 'student',
-//   userId: Object(userId),
-// };
-
-// fetchStudentSpecificResult(payload);
-
 export {
   calculatePositionOfStudentsInClass,
   fetchAllResultsOfAStudent,
@@ -3968,4 +4082,5 @@ export {
   recordStudentScore,
   studentEffectiveAreasForActiveTermRecording,
   studentsSubjectPositionInClass,
+  studentsSubjectScoreInAClassUpdating,
 };

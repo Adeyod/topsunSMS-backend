@@ -1091,6 +1091,10 @@ type MultipleScoreParamType = {
   // school_id: string;
 };
 
+type MultipleScoreUpdateParamType = MultipleScoreParamType & {
+  userId: mongoose.Types.ObjectId;
+};
+
 type MultipleExamScoreParamType = {
   term: string;
   result_objs: StudentExamScoreObj[];
@@ -2141,6 +2145,7 @@ export {
   MultipleLastCumParamType,
   MultipleResultCreationType,
   MultipleScoreParamType,
+  MultipleScoreUpdateParamType,
   NegotiatedFeesType,
   NewDateTimetable,
   NotificationDocument,
