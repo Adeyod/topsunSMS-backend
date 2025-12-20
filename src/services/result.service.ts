@@ -4012,9 +4012,14 @@ const fetchStudentSpecificResult = async (
       {
         term_results: { $elemMatch: { term: term } },
       }
-    ).populate([{ path: 'student', select: '-password' }]);
+    ).populate([
+      { path: 'student', select: 'first_name last_name profile_image' },
+    ]);
     // console.log('studentResult.term_results:', studentResult?.term_results);
 
+    /**
+     * first name, last name, image,
+     */
     if (!studentResult || !studentResult.term_results.length) {
       throw new AppError('Specific term result not found.', 404);
     }
@@ -4060,12 +4065,7 @@ const fetchStudentSpecificResult = async (
     const termSettingExist = await TermSettings.findOne({
       session: sessionExist._id,
       term: term,
-    });
-
-    const academicDetails = {
-      academic_session: sessionExist._id,
-      term: termExist.name,
-    };
+    }).populate([{ path: 'session', select: 'academic_session' }]);
 
     const classDetails = {
       class_id: classExist._id,
@@ -4075,18 +4075,16 @@ const fetchStudentSpecificResult = async (
 
     const formattedResult = {
       ...others,
-      academicDetails,
       classDetails,
       subject_results: actualSubjectResultForTerm,
       term_settings: termSettingExist,
     };
 
     const neededObj = {
-      academic_session: sessionExist._id,
+      // academic_session: sessionExist._id,
       student: remainingValues,
       term_result: formattedResult,
     };
-    console.log('neededObj:', neededObj);
 
     return neededObj;
   } catch (error) {
@@ -4097,16 +4095,6 @@ const fetchStudentSpecificResult = async (
     }
   }
 };
-
-const userId = '68ee6cab8d28802fc7a03109';
-const payload = {
-  student_id: '68ee6cab8d28802fc7a03109',
-  session_id: '68ee6b758d28802fc7a03077',
-  term: 'first_term',
-  userRole: 'student',
-  userId: Object(userId),
-};
-// fetchStudentSpecificResult(payload);
 
 export {
   calculatePositionOfStudentsInClass,
@@ -4132,29 +4120,3 @@ export {
   studentsSubjectPositionInClass,
   studentsSubjectScoreInAClassUpdating,
 };
-
-/**
- * type SubjectResult = {
-  _id: string;
-  remark: string;
-  cumulative_average: number;
-  last_term_cumulative: number;
-  class_highest_mark: number;
-  class_lowest_mark: number;
-  class_average_mark: number;
-  exam_object: { key: "obj" | "theory"; score_name: string; score: number; _id: string }[];
-  scores: [
-    {
-      key?: string;
-      score: number;
-      score_name: string;
-      _id: string;
-    },
-  ];
-  subject: Subject;
-  subject_position: string;
-  subject_teacher: string;
-  total_score: number;
-  grade: string;
-};
- */
