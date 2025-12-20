@@ -1,39 +1,39 @@
-import mongoose, { Types } from 'mongoose';
+import mongoose from 'mongoose';
 import {
   examKeyEnum,
   examStatusEnum,
   triggerTypeEnum,
 } from '../constants/enum';
 import {
-  CbtAssessmentDocumentCreationType,
-  CbtAssessmentDocumentPayload,
-  CbtAssessmentStartingType,
-  SubjectObjQuestionDocumentCreationType,
-  ClassCbtAssessmentTimetablePayloadType,
   CbtAssessmentAuthorizationPayloadType,
-  CbtAssessmentUpdateType,
-  CbtAssessmentTimeUpdateType,
-  CbtAssessmentEndedType,
-  GetClassCbtAssessmentTimetablePayloadType,
-  UserDocument,
-  ExamScoreType,
-  ScoreType,
   CbtAssessmentDocumentArrayType,
+  CbtAssessmentDocumentPayload,
+  CbtAssessmentEndedType,
+  CbtAssessmentStartingType,
+  CbtAssessmentTimeUpdateType,
+  CbtAssessmentUpdateType,
   ChangeSubjectStartTimeType,
+  ClassCbtAssessmentTimetablePayloadType,
   EndSubjectInATimetableType,
+  ExamScoreType,
+  GetClassCbtAssessmentTimetablePayloadType,
+  ScoreType,
+  SubjectObjQuestionDocumentCreationType,
+  UserDocument,
 } from '../constants/types';
-import CbtCutoff from '../models/cbt_cutoffs.model';
+import Admin from '../models/admin.model';
 import CbtExam from '../models/cbt_exam.model';
 import CbtQuestion from '../models/cbt_question.model';
 import CbtResult from '../models/cbt_result.model';
 import Class from '../models/class.model';
 import ClassExamTimetable from '../models/class_exam_timetable.model';
 import ClassEnrolment from '../models/classes_enrolment.model';
-import Result from '../models/result.model';
 import ResultSetting from '../models/result_setting.model';
 import Session from '../models/session.model';
 import Student from '../models/students.model';
 import Subject from '../models/subject.model';
+import { SubjectResult } from '../models/subject_result.model';
+import SuperAdmin from '../models/super_admin.model';
 import Teacher from '../models/teachers.model';
 import { AppError } from '../utils/app.error';
 import {
@@ -41,10 +41,6 @@ import {
   formatDate,
   normalizeQuestions,
 } from '../utils/functions';
-import SuperAdmin from '../models/super_admin.model';
-import Admin from '../models/admin.model';
-import { SubjectResult } from '../models/subject_result.model';
-import { studentResultQueue } from '../utils/queue';
 
 const termCbtAssessmentDocumentCreation = async (
   payload: CbtAssessmentDocumentArrayType
@@ -2387,6 +2383,62 @@ const subjectCbtObjCbtAssessmentSubmission = async (
     let objKeyName;
     let testName: string;
 
+    // *********Added
+    let studentSubjectResult = await SubjectResult.findOne({
+      enrolment: result.enrolment,
+      student: result.student_id,
+      class: result.class_id,
+      session: result.academic_session_id,
+      subject: result.subject_id,
+    }).session(session);
+
+    if (!studentSubjectResult) {
+      studentSubjectResult = new SubjectResult({
+        enrolment: result.enrolment,
+        student: result.student_id,
+        class: result.class_id,
+        session: result.academic_session_id,
+        subject: result.subject_id,
+        subject_teacher: result.subject_teacher,
+        term_results: [],
+      });
+    }
+
+    let termResult = studentSubjectResult?.term_results.find(
+      (a) => a.term === result.term
+    );
+
+    if (!termResult) {
+      const termEntry = {
+        term: result.term,
+        scores: [],
+        exam_object: [],
+        total_score: 0,
+        class_highest_mark: 0,
+        class_lowest_mark: 0,
+        class_average_mark: 0,
+        cumulative_average: 0,
+        last_term_cumulative: 0,
+        subject_position: '',
+        class_position: '',
+      };
+      studentSubjectResult.term_results.push(termEntry);
+
+      termResult =
+        studentSubjectResult.term_results[
+          studentSubjectResult.term_results.length - 1
+        ];
+    }
+
+    // let objKeyName;
+
+    let subjectObj;
+    let examObj: ExamScoreType | null = null;
+    let testObj: ScoreType | null = null;
+    // *********Added
+
+    const rawPercentage = (totalStudentScore / totalPossibleScore) * 100;
+
     if (
       examDocExist.assessment_type.trim().toLowerCase() !==
         exam_component_name.trim().toLowerCase() &&
@@ -2407,6 +2459,45 @@ const subjectCbtObjCbtAssessmentSubmission = async (
         );
       }
       testName = objKeyName?.name;
+
+      // *******************added
+      const maxPercentage = objKeyName?.percentage; // we get this from the result settings of the school
+      const calTestScore = totalPossibleScore
+        ? (rawPercentage / 100) * maxPercentage
+        : 0;
+      testObj = {
+        score_name: objKeyName?.name,
+        score: calTestScore,
+      };
+
+      subjectObj = {
+        subject: result.subject_id,
+        subject_teacher: result.subject_teacher,
+        total_score: 0,
+        cumulative_average: 0,
+        last_term_cumulative: 0,
+        class_lowest_mark: 0,
+        class_highest_mark: 0,
+        class_average_mark: 0,
+        scores: [testObj],
+        exam_object: [],
+        subject_position: '',
+      };
+
+      const hasRecordedExamScore = termResult?.scores.find(
+        (s) =>
+          s.score_name.trim().toLowerCase() ===
+          testObj?.score_name.trim().toLowerCase()
+      );
+
+      if (hasRecordedExamScore) {
+        console.log(
+          `Score for ${testObj.score_name} has been recorded for this student.`
+        );
+      } else {
+        termResult?.scores.push(testObj);
+      }
+      // *******************added
     } else {
       // do for exam
       const exam_components = resultSettings?.exam_components.component;
@@ -2421,9 +2512,50 @@ const subjectCbtObjCbtAssessmentSubmission = async (
           400
         );
       }
+
+      // ********************added
+      const maxPercent = objKeyName?.percentage; // we get this from the result settings of the school
+      const calScore = totalPossibleScore
+        ? (rawPercentage / 100) * maxPercent
+        : 0;
+
+      examObj = {
+        key: objKeyName.key,
+        score_name: objKeyName?.name,
+        score: calScore,
+      };
+
+      subjectObj = {
+        subject: result.subject_id,
+        subject_teacher: result.subject_teacher,
+        total_score: 0,
+        cumulative_average: 0,
+        last_term_cumulative: 0,
+        class_lowest_mark: 0,
+        class_highest_mark: 0,
+        class_average_mark: 0,
+        scores: [examObj],
+        exam_object: [examObj],
+        subject_position: '',
+      };
+
+      const hasRecordedExamScore = termResult?.exam_object.find(
+        (s) =>
+          s.score_name.trim().toLowerCase() ===
+          examObj?.score_name.trim().toLowerCase()
+      );
+      if (hasRecordedExamScore) {
+        console.log(
+          `Score for ${examObj.score_name} has been recorded for this student.`
+        );
+      } else {
+        termResult?.scores.push(examObj);
+        termResult?.exam_object.push(examObj);
+      }
+      // ********************added
     }
 
-    const rawPercentage = (totalStudentScore / totalPossibleScore) * 100;
+    // const rawPercentage = (totalStudentScore / totalPossibleScore) * 100;
 
     const maxObjectivePercent = objKeyName?.percentage; // we get this from the result settings of the school
     const convertedScore = totalPossibleScore
@@ -2435,38 +2567,40 @@ const subjectCbtObjCbtAssessmentSubmission = async (
     result.percent_score = convertedScore;
     result.obj_trigger_type = trigger_type;
 
+    studentSubjectResult?.markModified('term_results');
+    await studentSubjectResult.save({ session });
     result.markModified('shuffled_obj_questions');
     await result.save({ session });
 
     await session.commitTransaction();
     session.endSession();
 
-    const queuePayload = {
-      cbt_result_id: result._id,
-      student_id: result.student_id,
-      exam_id: result.exam_id,
-      convertedScore: result.percent_score,
-      term: result.term,
-      level: result.level,
-      enrolment: result.enrolment,
-      class_id: result.class_id,
-      subject_teacher: result.subject_teacher,
-      subject_id: result.subject_id,
-      session: result.academic_session_id,
-    };
+    // const queuePayload = {
+    //   cbt_result_id: result._id,
+    //   student_id: result.student_id,
+    //   exam_id: result.exam_id,
+    //   convertedScore: result.percent_score,
+    //   term: result.term,
+    //   level: result.level,
+    //   enrolment: result.enrolment,
+    //   class_id: result.class_id,
+    //   subject_teacher: result.subject_teacher,
+    //   subject_id: result.subject_id,
+    //   session: result.academic_session_id,
+    // };
 
-    const name = 'cbt-result-submission';
-    const data = queuePayload;
-    const opts = {
-      attempts: 5,
-      removeOnComplete: true,
-      backoff: {
-        type: 'exponential',
-        delay: 3000,
-      },
-    };
+    // const name = 'cbt-result-submission';
+    // const data = queuePayload;
+    // const opts = {
+    //   attempts: 5,
+    //   removeOnComplete: true,
+    //   backoff: {
+    //     type: 'exponential',
+    //     delay: 3000,
+    //   },
+    // };
 
-    studentResultQueue.add(name, data, opts);
+    // studentResultQueue.add(name, data, opts);
 
     return result;
   } catch (error) {
@@ -2719,22 +2853,22 @@ const theoryQestionSetting = async (
 // };
 
 export {
-  subjectCbtObjCbtAssessmentRemainingTimeUpdate,
+  allActiveTermCbtAssessmentDocumentsInATermEnding,
+  endSubjectInATimetable,
+  fetchAllCbtAssessmentDocument,
+  fetchAllClassCbtAssessmentTimetables,
+  fetchCbtAssessmentDocumentById,
+  fetchTermCbtAssessmentDocument,
   fetchTermClassCbtAssessmentTimetable,
-  termClassCbtAssessmentTimetableToChangeSubjectDateUpdating,
+  objQestionSetting,
+  studentCbtSubjectCbtAssessmentAuthorization,
+  subjectCbtObjCbtAssessmentRemainingTimeUpdate,
+  subjectCbtObjCbtAssessmentStarting,
   subjectCbtObjCbtAssessmentSubmission,
   subjectCbtObjCbtAssessmentUpdate,
-  studentCbtSubjectCbtAssessmentAuthorization,
-  termClassCbtAssessmentTimetableCreation,
-  subjectCbtObjCbtAssessmentStarting,
   termCbtAssessmentDocumentCreation,
-  allActiveTermCbtAssessmentDocumentsInATermEnding,
-  objQestionSetting,
-  theoryQestionSetting,
   termCbtAssessmentDocumentEnding,
-  fetchTermCbtAssessmentDocument,
-  fetchCbtAssessmentDocumentById,
-  fetchAllClassCbtAssessmentTimetables,
-  fetchAllCbtAssessmentDocument,
-  endSubjectInATimetable,
+  termClassCbtAssessmentTimetableCreation,
+  termClassCbtAssessmentTimetableToChangeSubjectDateUpdating,
+  theoryQestionSetting,
 };

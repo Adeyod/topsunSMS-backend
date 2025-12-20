@@ -1300,7 +1300,7 @@ import {
   getMinMax,
   getMissingScoreNames,
 } from '../utils/functions';
-import { studentResultQueue } from '../utils/queue';
+// import { studentResultQueue } from '../utils/queue';
 
 // MAKE PROVISION FOR CUMMULATIVE. THEN IF FIRST TERM,
 // CUMMULATIVE SPACE SHOULD TAKE TOTAL AND WHEN IT IS SECOND TERM,
@@ -1542,43 +1542,45 @@ const recordManyStudentScores = async (payload: MultipleScoreParamType) => {
     const skippedRecords = results.filter((r) => r.status === 'skipped');
     const failedRecords = results.filter((r) => r.status === 'rejected');
 
-    if (results.length > 0) {
-      const jobs = results.map((record) => {
-        const r = record as {
-          // status: 'fulfilled';
-          status: 'fulfilled' | 'skipped' | 'rejected';
-          student_id: string;
-          score: number;
-          score_name: string;
-        };
+    // *********************************
+    // if (results.length > 0) {
+    //   const jobs = results.map((record) => {
+    //     const r = record as {
+    //       // status: 'fulfilled';
+    //       status: 'fulfilled' | 'skipped' | 'rejected';
+    //       student_id: string;
+    //       score: number;
+    //       score_name: string;
+    //     };
 
-        return {
-          name: 'update-student-result',
-          data: {
-            term: term,
-            session_id: session_id,
-            teacher_id: teacher_id,
-            subject_id: subject_id,
-            class_enrolment_id: class_enrolment_id,
-            class_id: class_id,
-            status: r.status,
-            student_id: r.student_id,
-            score: r.score,
-            score_name: r.score_name,
-          },
-          opts: {
-            attempts: 5,
-            removeOnComplete: true,
-            backoff: {
-              type: 'exponential',
-              delay: 3000,
-            },
-          },
-        };
-      });
+    //     return {
+    //       name: 'update-student-result',
+    //       data: {
+    //         term: term,
+    //         session_id: session_id,
+    //         teacher_id: teacher_id,
+    //         subject_id: subject_id,
+    //         class_enrolment_id: class_enrolment_id,
+    //         class_id: class_id,
+    //         status: r.status,
+    //         student_id: r.student_id,
+    //         score: r.score,
+    //         score_name: r.score_name,
+    //       },
+    //       opts: {
+    //         attempts: 5,
+    //         removeOnComplete: true,
+    //         backoff: {
+    //           type: 'exponential',
+    //           delay: 3000,
+    //         },
+    //       },
+    //     };
+    //   });
 
-      await studentResultQueue.addBulk(jobs);
-    }
+    //   await studentResultQueue.addBulk(jobs);
+    // }
+    // *********************************
 
     return {
       successfulRecords: successfulRecords,
@@ -1776,37 +1778,39 @@ const recordManyStudentCumScores = async (
         result,
       });
 
-      if (results.length > 0) {
-        const jobs = results.map((r) => {
-          const termCumScore = r.result.term_results.find(
-            (t) => t.term === term
-          );
+      // **********************************
+      // if (results.length > 0) {
+      // const jobs = results.map((r) => {
+      //   const termCumScore = r.result.term_results.find(
+      //     (t) => t.term === term
+      //   );
 
-          return {
-            name: 'update-cum-score',
-            data: {
-              term: term,
-              session_id: session_id,
-              teacher_id: teacher_id,
-              subject_id: subject_id,
-              class_enrolment_id: class_enrolment_id,
-              class_id: class_id,
-              student_id: r.student_id,
-              actual_term_result: termCumScore,
-            },
-            opts: {
-              attempts: 5,
-              removeOnComplete: true,
-              backoff: {
-                type: 'exponential',
-                delay: 3000,
-              },
-            },
-          };
-        });
+      //   return {
+      //     name: 'update-cum-score',
+      //     data: {
+      //       term: term,
+      //       session_id: session_id,
+      //       teacher_id: teacher_id,
+      //       subject_id: subject_id,
+      //       class_enrolment_id: class_enrolment_id,
+      //       class_id: class_id,
+      //       student_id: r.student_id,
+      //       actual_term_result: termCumScore,
+      //     },
+      //     opts: {
+      //       attempts: 5,
+      //       removeOnComplete: true,
+      //       backoff: {
+      //         type: 'exponential',
+      //         delay: 3000,
+      //       },
+      //     },
+      //   };
+      // });
 
-        await studentResultQueue.addBulk(jobs);
-      }
+      // await studentResultQueue.addBulk(jobs);
+      // }
+      // *********************************
     }
 
     // await session.commitTransaction();
@@ -3138,37 +3142,37 @@ const studentsSubjectPositionInClass = async (
         })
       );
 
-      const jobs = studentReturns.map((studentRes) => {
-        if (studentReturns.length !== 0) {
-          return {
-            name: 'subject-position',
-            data: {
-              student_id: studentRes.student_id,
-              term: studentRes.term,
-              subject_id: studentRes.subject_id,
-              class_id: studentRes.class_id,
-              class_enrolment_id: studentRes.class_enrolment_id,
-              session_id: studentRes.session_id,
-              subject_position: studentRes.subject_position,
-              class_highest_mark: studentRes.class_highest_mark,
-              class_lowest_mark: studentRes.class_lowest_mark,
-              class_average_mark: studentRes.class_average_mark,
-            },
-            opts: {
-              attempts: 5,
-              removeOnComplete: true,
-              // removeOnFail: { count: 3 },
-              backoff: {
-                type: 'exponential',
-                delay: 3000,
-              },
-            },
-          };
-        }
-        return null;
-      });
+      // const jobs = studentReturns.map((studentRes) => {
+      //   if (studentReturns.length !== 0) {
+      //     return {
+      //       name: 'subject-position',
+      //       data: {
+      //         student_id: studentRes.student_id,
+      //         term: studentRes.term,
+      //         subject_id: studentRes.subject_id,
+      //         class_id: studentRes.class_id,
+      //         class_enrolment_id: studentRes.class_enrolment_id,
+      //         session_id: studentRes.session_id,
+      //         subject_position: studentRes.subject_position,
+      //         class_highest_mark: studentRes.class_highest_mark,
+      //         class_lowest_mark: studentRes.class_lowest_mark,
+      //         class_average_mark: studentRes.class_average_mark,
+      //       },
+      //       opts: {
+      //         attempts: 5,
+      //         removeOnComplete: true,
+      //         // removeOnFail: { count: 3 },
+      //         backoff: {
+      //           type: 'exponential',
+      //           delay: 3000,
+      //         },
+      //       },
+      //     };
+      //   }
+      //   return null;
+      // });
 
-      await studentResultQueue.addBulk(jobs as any);
+      // await studentResultQueue.addBulk(jobs as any);
     }
 
     await session.commitTransaction();
@@ -3549,44 +3553,46 @@ const recordManyStudentCbtExamScoresManually = async (
           score: totalExamScore,
         });
 
-        const recordedNames = new Set(
-          termResult.scores.map((s) => s.score_name.toLowerCase())
-        );
+        // ***************************************************
+        // const recordedNames = new Set(
+        //   termResult.scores.map((s) => s.score_name.toLowerCase())
+        // );
 
-        const hasAllComponents =
-          !nonExamComponentNames.some((name) => !recordedNames.has(name)) &&
-          recordedNames.has(exam_component_name.toLowerCase());
+        // const hasAllComponents =
+        //   !nonExamComponentNames.some((name) => !recordedNames.has(name)) &&
+        //   recordedNames.has(exam_component_name.toLowerCase());
 
-        if (hasAllComponents) {
-          const examComponentNames = termResult.exam_object.map((b) =>
-            b.score_name.toLowerCase()
-          );
+        // if (hasAllComponents) {
+        //   const examComponentNames = termResult.exam_object.map((b) =>
+        //     b.score_name.toLowerCase()
+        //   );
 
-          const filteredScoreArray = termResult.scores.filter(
-            (a) => !examComponentNames.includes(a.score_name.toLowerCase())
-          );
+        //   const filteredScoreArray = termResult.scores.filter(
+        //     (a) => !examComponentNames.includes(a.score_name.toLowerCase())
+        //   );
 
-          const total = filteredScoreArray.reduce((sum, a) => sum + a.score, 0);
+        //   const total = filteredScoreArray.reduce((sum, a) => sum + a.score, 0);
 
-          let last_term_cumulative = 0;
-          if (termExist.name === 'second_term') {
-            const firstTerm = studentResult.term_results.find(
-              (t) => t.term === 'first_term'
-            );
-            last_term_cumulative = firstTerm?.cumulative_average ?? 0;
-          } else if (termExist.name === 'third_term') {
-            const secondTerm = studentResult.term_results.find(
-              (t) => t.term === 'second_term'
-            );
-            last_term_cumulative = secondTerm?.cumulative_average ?? 0;
-          } else {
-            last_term_cumulative = total;
-          }
+        //   let last_term_cumulative = 0;
+        //   if (termExist.name === 'second_term') {
+        //     const firstTerm = studentResult.term_results.find(
+        //       (t) => t.term === 'first_term'
+        //     );
+        //     last_term_cumulative = firstTerm?.cumulative_average ?? 0;
+        //   } else if (termExist.name === 'third_term') {
+        //     const secondTerm = studentResult.term_results.find(
+        //       (t) => t.term === 'second_term'
+        //     );
+        //     last_term_cumulative = secondTerm?.cumulative_average ?? 0;
+        //   } else {
+        //     last_term_cumulative = total;
+        //   }
 
-          termResult.total_score = total;
-          termResult.last_term_cumulative = last_term_cumulative;
-        }
+        //   termResult.total_score = total;
+        //   termResult.last_term_cumulative = last_term_cumulative;
+        // }
 
+        // **********************************************
         await studentResult.save();
       }
     }
@@ -3595,54 +3601,54 @@ const recordManyStudentCbtExamScoresManually = async (
       await result.save();
     }
 
-    const jobs = existingResults.map((studentRes) => {
-      const termResult = studentRes.term_results.find((t) => t.term === term);
+    // const jobs = existingResults.map((studentRes) => {
+    //   const termResult = studentRes.term_results.find((t) => t.term === term);
 
-      const studentIdStr = studentRes.student.toString();
+    //   const studentIdStr = studentRes.student.toString();
 
-      if (
-        termResult &&
-        successfulStudentIds.has(studentRes.student.toString()) &&
-        termResult.scores.some(
-          (s) =>
-            s.score_name.toLowerCase() === actualScoreObj.name.toLowerCase()
-        )
-      ) {
-        return {
-          name: 'update-student-cbt',
-          // name: 'update-student-exam',
-          // name: 'update-student-result',
-          data: {
-            term,
-            session_id,
-            teacher_id,
-            subject_id,
-            class_enrolment_id,
-            class_id,
-            student_id: studentIdStr,
-            term_results: studentRes.term_results,
-            resultObj: successfulResultsMap.get(studentIdStr),
-            exam_component_name,
-          },
-          opts: {
-            attempts: 5,
-            removeOnComplete: true,
-            // removeOnFail: { count: 3 },
-            backoff: {
-              type: 'exponential',
-              delay: 3000,
-            },
-          },
-        };
-      }
-      return null;
-    });
+    //   if (
+    //     termResult &&
+    //     successfulStudentIds.has(studentRes.student.toString()) &&
+    //     termResult.scores.some(
+    //       (s) =>
+    //         s.score_name.toLowerCase() === actualScoreObj.name.toLowerCase()
+    //     )
+    //   ) {
+    //     return {
+    //       name: 'update-student-cbt',
+    //       // name: 'update-student-exam',
+    //       // name: 'update-student-result',
+    //       data: {
+    //         term,
+    //         session_id,
+    //         teacher_id,
+    //         subject_id,
+    //         class_enrolment_id,
+    //         class_id,
+    //         student_id: studentIdStr,
+    //         term_results: studentRes.term_results,
+    //         resultObj: successfulResultsMap.get(studentIdStr),
+    //         exam_component_name,
+    //       },
+    //       opts: {
+    //         attempts: 5,
+    //         removeOnComplete: true,
+    //         // removeOnFail: { count: 3 },
+    //         backoff: {
+    //           type: 'exponential',
+    //           delay: 3000,
+    //         },
+    //       },
+    //     };
+    //   }
+    //   return null;
+    // });
 
-    const validJobs = jobs.filter((j) => j !== null);
+    // const validJobs = jobs.filter((j) => j !== null);
 
-    if (validJobs.length > 0) {
-      await studentResultQueue.addBulk(validJobs as any);
-    }
+    // if (validJobs.length > 0) {
+    //   await studentResultQueue.addBulk(validJobs as any);
+    // }
 
     return existingResults;
   } catch (error) {

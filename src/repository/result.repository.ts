@@ -29,7 +29,7 @@ import Student from '../models/students.model';
 import { SubjectResult } from '../models/subject_result.model';
 import { subjectCbtObjCbtAssessmentSubmission } from '../services/cbt.service';
 import { AppError } from '../utils/app.error';
-import { studentResultQueue } from '../utils/queue';
+// import { studentResultQueue } from '../utils/queue';
 
 const createResult = async (payload: ResultCreationType) => {
   try {
@@ -719,23 +719,23 @@ const recordCbtScore = async (
     studentSubjectResult.markModified('term_results');
     await studentSubjectResult.save();
 
-    const job = {
-      name: 'update-student-exam',
-      data: {
-        term,
-        session_id,
-        teacher_id,
-        subject_id,
-        class_enrolment_id,
-        class_id,
-        student_id,
-        term_results: studentSubjectResult.term_results,
-        resultObj: scoreObj,
-        exam_component_name: scoreObj.score_name,
-      },
-    };
+    // const job = {
+    //   name: 'update-student-exam',
+    //   data: {
+    //     term,
+    //     session_id,
+    //     teacher_id,
+    //     subject_id,
+    //     class_enrolment_id,
+    //     class_id,
+    //     student_id,
+    //     term_results: studentSubjectResult.term_results,
+    //     resultObj: scoreObj,
+    //     exam_component_name: scoreObj.score_name,
+    //   },
+    // };
 
-    await studentResultQueue.add(job.name, job.data);
+    // await studentResultQueue.add(job.name, job.data);
     return studentSubjectResult as SubjectResultDocument;
   } catch (error) {
     if (error instanceof AppError) {
