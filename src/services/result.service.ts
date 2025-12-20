@@ -3974,6 +3974,21 @@ const fetchStudentSpecificResult = async (
       }
     ).select('class');
 
+    if (!classEnrolment) {
+      throw new AppError(
+        'Student not enrolled in this class for this session.',
+        404
+      );
+    }
+
+    const classExist = await Class.findById({
+      _id: classEnrolment.class,
+    });
+
+    if (!classExist) {
+      throw new AppError('Class not found.', 404);
+    }
+
     const studentSubjectEnrolled = classEnrolment?.students[0].subjects_offered;
 
     const subjectResults = await SubjectResult.find({
@@ -4020,11 +4035,13 @@ const fetchStudentSpecificResult = async (
     // );
 
     const actualSubjectResultForTerm = subjectResults.map((s) => {
-      const termResult = s.term_results.find((a) => a.term === term);
+      const obj = s.toObject();
+      const termResult = obj.term_results.find((a) => a.term === term);
 
+      const { term_results, ...rest } = obj;
       return {
-        ...s.toObject(),
-        term_results: termResult ? [termResult] : [],
+        ...rest,
+        ...termResult,
       };
     });
     // console.log('actualSubjectResultForTerm:', actualSubjectResultForTerm);
@@ -4045,8 +4062,21 @@ const fetchStudentSpecificResult = async (
       term: term,
     });
 
+    const academicDetails = {
+      academic_session: sessionExist._id,
+      term: termExist.name,
+    };
+
+    const classDetails = {
+      class_id: classExist._id,
+      level: classExist.level,
+      name: classExist.name,
+    };
+
     const formattedResult = {
       ...others,
+      academicDetails,
+      classDetails,
       subject_results: actualSubjectResultForTerm,
       term_settings: termSettingExist,
     };
@@ -4056,7 +4086,7 @@ const fetchStudentSpecificResult = async (
       student: remainingValues,
       term_result: formattedResult,
     };
-    console.log('neededObj:', neededObj.term_result);
+    console.log('neededObj:', neededObj);
 
     return neededObj;
   } catch (error) {
@@ -4067,6 +4097,16 @@ const fetchStudentSpecificResult = async (
     }
   }
 };
+
+const userId = '68ee6cab8d28802fc7a03109';
+const payload = {
+  student_id: '68ee6cab8d28802fc7a03109',
+  session_id: '68ee6b758d28802fc7a03077',
+  term: 'first_term',
+  userRole: 'student',
+  userId: Object(userId),
+};
+// fetchStudentSpecificResult(payload);
 
 export {
   calculatePositionOfStudentsInClass,
@@ -4092,3 +4132,29 @@ export {
   studentsSubjectPositionInClass,
   studentsSubjectScoreInAClassUpdating,
 };
+
+/**
+ * type SubjectResult = {
+  _id: string;
+  remark: string;
+  cumulative_average: number;
+  last_term_cumulative: number;
+  class_highest_mark: number;
+  class_lowest_mark: number;
+  class_average_mark: number;
+  exam_object: { key: "obj" | "theory"; score_name: string; score: number; _id: string }[];
+  scores: [
+    {
+      key?: string;
+      score: number;
+      score_name: string;
+      _id: string;
+    },
+  ];
+  subject: Subject;
+  subject_position: string;
+  subject_teacher: string;
+  total_score: number;
+  grade: string;
+};
+ */
