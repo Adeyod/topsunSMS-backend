@@ -447,6 +447,8 @@ const updateScore = async (
       _id: teacherId,
     });
 
+    console.log('teacherExist:', teacherExist);
+
     if (!teacherExist) {
       throw new AppError('This teacher is not found.', 404);
     }
@@ -459,7 +461,7 @@ const updateScore = async (
 
     console.log('subjectTeacher:', subjectTeacher);
 
-    if (!subjectTeacher) {
+    if (!subjectTeacher || subjectTeacher === undefined) {
       throw new AppError(
         'The teacher selected is not the teacher assigned to teach this subject.',
         400
