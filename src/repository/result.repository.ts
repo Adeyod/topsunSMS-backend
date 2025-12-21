@@ -27,6 +27,7 @@ import ResultSetting from '../models/result_setting.model';
 import Session from '../models/session.model';
 import Student from '../models/students.model';
 import { SubjectResult } from '../models/subject_result.model';
+import Teacher from '../models/teachers.model';
 import { subjectCbtObjCbtAssessmentSubmission } from '../services/cbt.service';
 import { AppError } from '../utils/app.error';
 // import { studentResultQueue } from '../utils/queue';
@@ -442,10 +443,18 @@ const updateScore = async (
       );
     }
 
+    const teacherExist = await Teacher.findById({
+      _id: teacherId,
+    });
+
+    if (!teacherExist) {
+      throw new AppError('This teacher is not found.', 404);
+    }
+
     const subjectTeacher = classExist.teacher_subject_assignments.find(
       (p) =>
-        p?.subject?.toString() === subject_id &&
-        p?.teacher?.toString() === teacher_id
+        p?.subject?.toString() === subjectId.toString() &&
+        p?.teacher?.toString() === teacherExist._id.toString()
     );
 
     console.log('subjectTeacher:', subjectTeacher);
