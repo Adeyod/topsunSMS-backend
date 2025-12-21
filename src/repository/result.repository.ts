@@ -388,6 +388,8 @@ const updateScore = async (
       is_active: true,
     });
 
+    console.log('sessionActive:', sessionActive);
+
     if (!sessionActive) {
       throw new AppError('Session not found or it is not active.', 404);
     }
@@ -401,6 +403,8 @@ const updateScore = async (
     const classExist = await Class.findById({
       _id: classId,
     });
+
+    console.log('classExist:', classExist);
 
     if (!classExist) {
       throw new AppError('Class not found.', 404);
@@ -419,9 +423,13 @@ const updateScore = async (
       ...resultSettings.components,
     ];
 
+    console.log('allComponentsArray:', allComponentsArray);
+
     const validComponent = allComponentsArray.find(
       (comp) => comp.name === score_name
     );
+
+    console.log('validComponent:', validComponent);
 
     if (!validComponent) {
       throw new AppError(`Invalid score type: ${score_name}.`, 400);
@@ -466,6 +474,8 @@ const updateScore = async (
     if (!studentSubjectResult) {
       throw new AppError('Subject result not found.', 400);
     }
+
+    console.log('studentSubjectResult:', studentSubjectResult);
 
     const actualTermResult = studentSubjectResult.term_results.find(
       (a) => a.term === term.trim()
@@ -528,8 +538,10 @@ const updateScore = async (
       }
     }
 
+    console.log('studentSubjectResult:', studentSubjectResult);
     studentSubjectResult.markModified('term_results');
     await studentSubjectResult.save();
+    console.log('studentSubjectResult:', studentSubjectResult);
 
     return studentSubjectResult as SubjectResultDocument;
   } catch (error) {

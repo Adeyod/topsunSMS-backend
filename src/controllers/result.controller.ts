@@ -1110,7 +1110,7 @@ const updateStudentsSubjectScoreInAClass = catchErrors(async (req, res) => {
   return res.status(200).json({
     message: returnMsg,
     success: true,
-    status: 201,
+    status: 200,
     Records: result.successfulRecords,
   });
 });

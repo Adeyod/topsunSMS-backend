@@ -78,7 +78,7 @@ router.get(
 
 router.get(
   '/get-students-in-class-offering-subject/:academic_session_id/:class_id/:subject_id',
-  permission(['admin', 'super_admin', 'teacher']),
+  permission(['super_admin', 'teacher']),
   getStudentsInClassOfferingTeacherSubject
 );
 
