@@ -1630,6 +1630,8 @@ const studentsSubjectScoreInAClassUpdating = async (
           const currentTermResult = result.term_results.find(
             (t) => t.term === term
           );
+
+          console.log('currentTermResult:', currentTermResult);
           return {
             status: 'fulfilled',
             student_id: student.student_id,

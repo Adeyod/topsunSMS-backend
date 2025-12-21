@@ -448,6 +448,8 @@ const updateScore = async (
         p?.teacher?.toString() === teacher_id
     );
 
+    console.log('subjectTeacher:', subjectTeacher);
+
     if (!subjectTeacher) {
       throw new AppError(
         'The teacher selected is not the teacher assigned to teach this subject.',
@@ -458,6 +460,8 @@ const updateScore = async (
     const classEnrolmentExist = await ClassEnrolment.findById({
       _id: classEnrolmentId,
     });
+
+    console.log('classEnrolmentExist:', classEnrolmentExist);
 
     if (!classEnrolmentExist) {
       throw new AppError('Class enrolment not found.', 404);
@@ -480,6 +484,8 @@ const updateScore = async (
     const actualTermResult = studentSubjectResult.term_results.find(
       (a) => a.term === term.trim()
     );
+
+    console.log('actualTermResult:', actualTermResult);
 
     if (!actualTermResult) {
       throw new AppError(
