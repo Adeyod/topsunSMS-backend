@@ -692,8 +692,6 @@ type ClassEnrolmentDocument = {
   is_active: boolean;
   all_subjects_offered_in_the_class: mongoose.Types.ObjectId[];
   status: string;
-  // compulsory_subjects: object[];
-  // optional_subjects: object[];
   performance: PerformanceType[];
   test_scores: PerformanceType[];
   exam_scores: PerformanceType[];

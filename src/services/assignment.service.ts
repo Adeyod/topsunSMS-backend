@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import {
   AssignmentCreationPayloadType,
   AssignmentSubmissionType,
@@ -230,21 +231,27 @@ const fetchAllSubjectAssignmentsInClass = async (
     const sessionId = Object(session_id);
     const subjectId = Object(subject_id);
 
-    const classEnrolmentExist = await ClassEnrolment.findOne({
-      class: classId,
-      academic_session_id: sessionId,
-    });
+    const [classEnrolmentExist, classExist, subjectExist] = await Promise.all([
+      ClassEnrolment.findOne({
+        class: classId,
+        academic_session_id: sessionId,
+      }),
+      Class.findById({
+        _id: classId,
+      }),
+      Subject.findById({ _id: subjectId }),
+    ]);
 
     if (!classEnrolmentExist) {
       throw new AppError(`There is no enrolment found for class.`, 404);
     }
 
-    const classExist = await Class.findById({
-      _id: classId,
-    });
-
     if (!classExist) {
       throw new AppError('Class does not exist for this assignment.', 404);
+    }
+
+    if (!subjectExist) {
+      throw new AppError('subject not found.', 404);
     }
 
     if (userRole === 'teacher') {
@@ -264,7 +271,10 @@ const fetchAllSubjectAssignmentsInClass = async (
       const offeredSubject = classEnrolmentExist.students.find(
         (a) =>
           a.student.toString() === userId.toString() &&
-          a.subjects_offered.includes(subjectId)
+          a.subjects_offered.some(
+            (subId: mongoose.Types.ObjectId) =>
+              subId.toString() === subjectExist._id.toString()
+          )
       );
 
       if (!offeredSubject) {
@@ -275,15 +285,7 @@ const fetchAllSubjectAssignmentsInClass = async (
       }
     }
 
-    const subjectExist = await Subject.findById({ _id: subjectId });
-
-    if (!subjectExist) {
-      throw new AppError('subject not found.', 404);
-    }
-
     const sessionExist = await Session.findById(sessionId);
-
-    console.log('sessionExist:', sessionExist);
 
     if (!sessionExist) {
       throw new AppError('session not found.', 404);
