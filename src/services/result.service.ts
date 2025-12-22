@@ -1653,14 +1653,15 @@ const studentsSubjectScoreInAClassUpdating = async (
               score_name: score_name,
               score: student.score,
             };
+          } else {
+            return {
+              status: 'rejected',
+              student_id: student.student_id,
+              reason: err.message || 'Unknown error',
+              score_name: score_name,
+              score: student.score,
+            };
           }
-          return {
-            status: 'rejected',
-            student_id: student.student_id,
-            reason: err.message || 'Unknown error',
-            score_name: score_name,
-            score: student.score,
-          };
         })
     );
 

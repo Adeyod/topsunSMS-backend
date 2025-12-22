@@ -1,16 +1,17 @@
 import express from 'express';
-import { verifyAccessToken } from '../middleware/jwtAuth';
-import { permission } from '../middleware/authorization';
 import {
   createASubject,
-  getAllSubjects,
-  getASubjectById,
-  getAllJssSubjects,
-  getAllSssCompulsorySubjects,
-  getAllOptionalSubjects,
   // chooseOptionalSubjects,
   getAllClassSubjectsByClassId,
+  getAllJssSubjects,
+  getAllOptionalSubjects,
+  getAllSssCompulsorySubjects,
+  getAllSubjects,
+  getAllSubjectsThatStudentOffersInATerm,
+  getASubjectById,
 } from '../controllers/subject.controller';
+import { permission } from '../middleware/authorization';
+import { verifyAccessToken } from '../middleware/jwtAuth';
 
 const router = express.Router();
 
@@ -54,6 +55,12 @@ router.get(
   '/get-a-subject/:subject_id',
   permission(['admin', 'super_admin']),
   getASubjectById
+);
+
+router.get(
+  '/get-all-subjects-that student-offer-in-a-session/:session_id/:class_id',
+  permission(['student']),
+  getAllSubjectsThatStudentOffersInATerm
 );
 
 // router.post(

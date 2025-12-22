@@ -295,17 +295,15 @@
 // };
 
 /////////////////////////////////////////////////////////////////////
-import mongoose from 'mongoose';
 import {
   ClassSubjectFetchPayload,
-  OptionalSubjectProcessingType,
+  EnrolledStudentSubjects,
   SubjectCreationType,
   SubjectFetchingPayload,
 } from '../constants/types';
 import Class from '../models/class.model';
 import ClassEnrolment from '../models/classes_enrolment.model';
 import Session from '../models/session.model';
-import Student from '../models/students.model';
 import Subject from '../models/subject.model';
 import { AppError } from '../utils/app.error';
 
@@ -361,6 +359,55 @@ const fetchingAllSubjects = async () => {
     }
 
     return getSubjects;
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+    throw new Error(`An error occurred: ${error}`);
+  }
+};
+
+const fetchAllSubjectsThatStudentOffersInATerm = async (
+  payload: EnrolledStudentSubjects
+) => {
+  try {
+    const { session_id, userId, class_id } = payload;
+
+    const sessionId = Object(session_id);
+    const classId = Object(class_id);
+
+    const sessionExist = await Session.findById({
+      _id: sessionId,
+    });
+
+    if (!sessionExist) {
+      throw new AppError('Session not found.', 404);
+    }
+
+    const classExist = await Class.findById({
+      _id: classId,
+    });
+
+    if (!classExist) {
+      throw new AppError('Class not found.', 404);
+    }
+
+    const classEnrolment = await ClassEnrolment.findOne({
+      class: classExist._id,
+      academic_session_id: sessionExist._id,
+      'students.student': userId,
+    }).populate('students.subjects_offered');
+
+    if (!classEnrolment) {
+      throw new AppError(
+        `This student is not enrolled into any class in ${sessionExist.academic_session} session.`,
+        404
+      );
+    }
+
+    console.log('classEnrolment:', classEnrolment);
+
+    return classEnrolment;
   } catch (error) {
     if (error instanceof AppError) {
       throw error;
@@ -469,11 +516,12 @@ const fetchAllClassSubjectsByClassId = async (
 
 export {
   fetchAllClassSubjectsByClassId,
+  fetchAllSubjectsThatStudentOffersInATerm,
+  fetchingAllJssSubjects,
   // storingOptionalSubjectsOfStudent,
   fetchingAllOptionalSubjects,
   fetchingAllSssCompulsorySubjects,
-  fetchingAllJssSubjects,
-  subjectCreation,
-  fetchingASubject,
   fetchingAllSubjects,
+  fetchingASubject,
+  subjectCreation,
 };

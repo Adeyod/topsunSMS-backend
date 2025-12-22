@@ -1921,6 +1921,7 @@ type AssignmentDocument = Document & {
   subject_id: mongoose.Types.ObjectId;
   class_enrolment: mongoose.Types.ObjectId;
   teacher_id: mongoose.Types.ObjectId;
+  session_id: mongoose.Types.ObjectId;
   attachments?: string[]; // file URLs (optional)
 };
 
@@ -2054,6 +2055,12 @@ type GetAllSubjectPayloadType = {
   userId: mongoose.Types.ObjectId;
 };
 
+type EnrolledStudentSubjects = {
+  session_id: string;
+  class_id: string;
+  userId: mongoose.Types.ObjectId;
+};
+
 export {
   AccessModeType,
   AccountCreationReturnType,
@@ -2132,6 +2139,7 @@ export {
   EmailQueue,
   EmailType,
   EndSubjectInATimetableType,
+  EnrolledStudentSubjects,
   ExamComponentType,
   ExamScoreType,
   ExcludeParentAndStudent,

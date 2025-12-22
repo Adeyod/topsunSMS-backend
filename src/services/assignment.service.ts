@@ -277,6 +277,8 @@ const fetchAllSubjectAssignmentsInClass = async (
 
     const sessionExist = await Session.findById(sessionId);
 
+    console.log('sessionExist:', sessionExist);
+
     if (!sessionExist) {
       throw new AppError('session not found.', 404);
     }

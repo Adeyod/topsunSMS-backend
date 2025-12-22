@@ -15,6 +15,7 @@ const questionSchema = new mongoose.Schema({
 const assignmentSchema = new mongoose.Schema<AssignmentDocument>(
   {
     class: { type: mongoose.Schema.Types.ObjectId, ref: 'Class' },
+    session_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Session' },
     teacher_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Teacher' },
     subject_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Subject' },
     class_enrolment: {

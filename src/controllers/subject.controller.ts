@@ -1,5 +1,6 @@
-import mongoose from 'mongoose';
 import {
+  fetchAllClassSubjectsByClassId,
+  fetchAllSubjectsThatStudentOffersInATerm,
   fetchingAllJssSubjects,
   fetchingAllOptionalSubjects,
   fetchingAllSssCompulsorySubjects,
@@ -7,7 +8,6 @@ import {
   fetchingASubject,
   // storingOptionalSubjectsOfStudent,
   subjectCreation,
-  fetchAllClassSubjectsByClassId,
 } from '../services/subject.service';
 import { AppError, JoiError } from '../utils/app.error';
 import catchErrors from '../utils/tryCatch';
@@ -249,13 +249,54 @@ const getAllOptionalSubjects = catchErrors(async (req, res) => {
   });
 });
 
+const getAllSubjectsThatStudentOffersInATerm = catchErrors(async (req, res) => {
+  const { class_id, session_id } = req.params;
+
+  if (!session_id) {
+    throw new AppError('Session ID is required.', 400);
+  }
+
+  if (!class_id) {
+    throw new AppError('Class ID is required.', 400);
+  }
+
+  const userId = req.user?.userId;
+
+  if (!userId) {
+    throw new AppError('Please login to continue.', 400);
+  }
+
+  const payload = {
+    userId,
+    session_id,
+    class_id,
+  };
+
+  const result = await fetchAllSubjectsThatStudentOffersInATerm(payload);
+
+  if (!result) {
+    throw new AppError(
+      'Unable to fetch all subjects that this student was enrolled for in this term.',
+      400
+    );
+  }
+
+  return res.status(200).json({
+    message: 'Student subjects fetched successfully.',
+    status: 200,
+    success: true,
+    subjects: result,
+  });
+});
+
 export {
-  getAllSubjects,
   createASubject,
-  getASubjectById,
-  getAllJssSubjects,
-  getAllSssCompulsorySubjects,
-  getAllOptionalSubjects,
   // chooseOptionalSubjects,
   getAllClassSubjectsByClassId,
+  getAllJssSubjects,
+  getAllOptionalSubjects,
+  getAllSssCompulsorySubjects,
+  getAllSubjects,
+  getAllSubjectsThatStudentOffersInATerm,
+  getASubjectById,
 };
