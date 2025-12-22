@@ -3,6 +3,9 @@ import {
   AssignmentSubmissionType,
   GetAllSubjectPayloadType,
   GetAssignmentPayloadType,
+  StudentSubjectAssignmentSubmissionsType,
+  SubjectAssignmentSubmissionsType,
+  SubmissionDocument,
 } from '../constants/types';
 import Assignment from '../models/assignment.model';
 import AssignmentSubmission from '../models/assignment_submission.model';
@@ -331,6 +334,178 @@ const fetchAllSubjectAssignmentsInClass = async (
   }
 };
 
+const fetchSubjectAssignmentSubmissions = async (
+  payload: SubjectAssignmentSubmissionsType
+): Promise<{
+  submissions: SubmissionDocument[];
+  totalCount: number;
+  totalPages: number;
+}> => {
+  try {
+    const { userId, assignment_id, page, limit, searchParams } = payload;
+
+    const assignmentId = Object(assignment_id);
+
+    const teacherExist = await Teacher.findById({
+      _id: userId,
+    });
+
+    if (!teacherExist) {
+      throw new AppError('Teacher not found.', 404);
+    }
+
+    const assignmentExist = await Assignment.findById({
+      _id: assignmentId,
+    });
+
+    if (!assignmentExist) {
+      throw new AppError('Assignment not found.', 404);
+    }
+
+    let query = AssignmentSubmission.find({
+      assignment_id: assignmentExist._id,
+    });
+
+    if (searchParams?.trim()) {
+      const regex = new RegExp(searchParams, 'i');
+
+      query = query.where({
+        $or: [{ 'answers.text_response': { $regex: regex } }],
+      });
+    }
+
+    const count = await query.clone().countDocuments();
+    let pages = 1;
+
+    if (page && limit && count !== 0) {
+      const offset = (page - 1) * limit;
+      query = query.skip(offset).limit(limit);
+      pages = Math.ceil(count / limit);
+
+      if (page > pages) {
+        throw new AppError('Page can not be found.', 404);
+      }
+    }
+
+    const submissions = await query
+      .sort({ createdAt: -1 })
+      .populate([{ path: 'student_id', select: 'first_name last_name' }]);
+
+    if (!submissions || submissions.length === 0) {
+      throw new AppError('Submissions not found.', 404);
+    }
+
+    const classExist = await Class.findById({
+      _id: assignmentExist.class,
+    });
+
+    if (!classExist) {
+      throw new AppError('Class not found.', 404);
+    }
+
+    const actualSubjectTeacher = classExist.teacher_subject_assignments.find(
+      (a) =>
+        a.teacher.toString() === teacherExist._id.toString() &&
+        a.subject.toString() === assignmentExist.subject_id.toString()
+    );
+
+    if (!actualSubjectTeacher) {
+      throw new AppError(
+        'This is not the teacher assigned to teach this subject in this class.',
+        400
+      );
+    }
+
+    return {
+      submissions,
+      totalCount: count,
+      totalPages: pages,
+    };
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw new AppError(error.message, error.statusCode);
+    } else {
+      throw new Error('Something went wrong');
+    }
+  }
+};
+
+const fetchAllMySubjectAssignmentSubmissionsInASession = async (
+  payload: StudentSubjectAssignmentSubmissionsType
+): Promise<{
+  submissions: SubmissionDocument[];
+  totalCount: number;
+  totalPages: number;
+}> => {
+  try {
+    const { userId, subject_id, page, limit, searchParams } = payload;
+
+    const subjectId = Object(subject_id);
+
+    const studentExist = await Student.findById({
+      _id: userId,
+    });
+
+    if (!studentExist) {
+      throw new AppError('Student not found.', 404);
+    }
+
+    const subjectExist = await Subject.findById({
+      _id: subjectId,
+    });
+
+    if (!subjectExist) {
+      throw new AppError('Subject not found.', 404);
+    }
+
+    let query = AssignmentSubmission.find({
+      student_id: studentExist._id,
+      subject_id: subjectExist._id,
+    });
+
+    if (searchParams?.trim()) {
+      const regex = new RegExp(searchParams, 'i');
+
+      query = query.where({
+        $or: [{ 'answers.text_response': { $regex: regex } }],
+      });
+    }
+
+    const count = await query.clone().countDocuments();
+    let pages = 1;
+
+    if (page && limit && count !== 0) {
+      const offset = (page - 1) * limit;
+      query = query.skip(offset).limit(limit);
+      pages = Math.ceil(count / limit);
+
+      if (page > pages) {
+        throw new AppError('Page can not be found.', 404);
+      }
+    }
+
+    const submissions = await query
+      .sort({ createdAt: -1 })
+      .populate([{ path: 'student_id', select: 'first_name last_name' }]);
+
+    if (!submissions || submissions.length === 0) {
+      throw new AppError('Submissions not found.', 404);
+    }
+
+    return {
+      submissions,
+      totalCount: count,
+      totalPages: pages,
+    };
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw new AppError(error.message, error.statusCode);
+    } else {
+      throw new Error('Something went wrong');
+    }
+  }
+};
+
 const assignmentSubmission = async (payload: AssignmentSubmissionType) => {
   try {
     const { userId, assignment_id, answers_array } = payload;
@@ -380,6 +555,7 @@ const assignmentSubmission = async (payload: AssignmentSubmissionType) => {
     const newSubmission = new AssignmentSubmission({
       assignment_id: assignmentExist._id,
       student_id: studentExist._id,
+      subject_id: assignmentExist.subject_id,
       answers: answers_array,
     });
 
@@ -397,6 +573,8 @@ const assignmentSubmission = async (payload: AssignmentSubmissionType) => {
 export {
   assignmentCreation,
   assignmentSubmission,
+  fetchAllMySubjectAssignmentSubmissionsInASession,
   fetchAllSubjectAssignmentsInClass,
   fetchAssignmentById,
+  fetchSubjectAssignmentSubmissions,
 };

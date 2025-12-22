@@ -24,6 +24,11 @@ const submissionSchema = new mongoose.Schema<SubmissionDocument>(
       ref: 'Student',
       required: true,
     },
+    subject_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Subject',
+      required: true,
+    },
     answers: [answerSchema],
     total_score: { type: Number },
     graded: { type: Boolean, default: false },

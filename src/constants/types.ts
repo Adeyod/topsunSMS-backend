@@ -1937,6 +1937,7 @@ type AnswerSubmissionType = {
 type SubmissionDocument = Document & {
   assignment_id: mongoose.Types.ObjectId;
   student_id: mongoose.Types.ObjectId;
+  subject_id: mongoose.Types.ObjectId;
   answers: AnswerSubmissionType[];
   text_response?: string;
   attachments?: string[];
@@ -2065,6 +2066,7 @@ type AnswerSubmissionObject = {
   question_number: number;
   text_response: string;
   attachment?: string;
+  mark?: number;
 };
 
 type JoiValidateAssignmentSubmissionType = {
@@ -2075,6 +2077,22 @@ type AssignmentSubmissionType = {
   assignment_id: string;
   answers_array: AnswerSubmissionObject[];
   userId: mongoose.Types.ObjectId;
+};
+
+type SubjectAssignmentSubmissionsType = {
+  userId: mongoose.Types.ObjectId;
+  assignment_id: string;
+  page?: number;
+  limit?: number;
+  searchParams?: string;
+};
+
+type StudentSubjectAssignmentSubmissionsType = {
+  userId: mongoose.Types.ObjectId;
+  subject_id: string;
+  page?: number;
+  limit?: number;
+  searchParams?: string;
 };
 
 export {
@@ -2258,6 +2276,7 @@ export {
   StudentSchoolBusSubType,
   StudentSessionSubscriptionType,
   StudentSpecificResultPayloadType,
+  StudentSubjectAssignmentSubmissionsType,
   StudentSubjectPositionType,
   StudentSubjectType,
   StudentUpdateDetailsReturnType,
@@ -2266,6 +2285,7 @@ export {
   StudentWalletObjType,
   StudentWithPaymentType,
   SubjectAdditionType,
+  SubjectAssignmentSubmissionsType,
   SubjectCreationType,
   SubjectCumScoreJobData,
   SubjectDocument,

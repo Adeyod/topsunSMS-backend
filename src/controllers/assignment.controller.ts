@@ -1,8 +1,10 @@
 import {
   assignmentCreation,
   assignmentSubmission,
+  fetchAllMySubjectAssignmentSubmissionsInASession,
   fetchAllSubjectAssignmentsInClass,
   fetchAssignmentById,
+  fetchSubjectAssignmentSubmissions,
 } from '../services/assignment.service';
 import { AppError } from '../utils/app.error';
 import catchErrors from '../utils/tryCatch';
@@ -162,11 +164,6 @@ const getAllSubjectAssignmentsInClass = catchErrors(async (req, res) => {
   });
 });
 
-const getAllAssignments = catchErrors(async (req, res) => {});
-
-const getAllSubjectAssignmentForStudentsThatOfferTheSubject = catchErrors(
-  async (req, res) => {}
-);
 const submitAssignment = catchErrors(async (req, res) => {
   const { assignment_id } = req.params;
   const { answers_array } = req.body;
@@ -213,14 +210,113 @@ const submitAssignment = catchErrors(async (req, res) => {
     status: 200,
   });
 });
+
+const getSubjectAssignmentSubmissions = catchErrors(async (req, res) => {
+  const { assignment_id } = req.params;
+
+  const userId = req.user?.userId;
+
+  if (!assignment_id) {
+    throw new AppError('Assignment ID is required.', 400);
+  }
+
+  const page = req.query.page ? Number(req.query.page) : undefined;
+  const limit = req.query.limit ? Number(req.query.limit) : undefined;
+
+  const searchQuery =
+    typeof req.query.searchParams === 'string' ? req.query.searchParams : '';
+
+  if (!userId) {
+    throw new AppError('Please login to continue.', 400);
+  }
+  const payload = {
+    userId,
+    assignment_id,
+    page,
+    limit,
+    searchQuery,
+  };
+
+  const result = await fetchSubjectAssignmentSubmissions(payload);
+
+  if (!result) {
+    throw new AppError(
+      'Unable to fetch assignment submission for this assignment.',
+      400
+    );
+  }
+
+  return res.status(200).json({
+    message: 'Assignment submission fetched successfully.',
+    status: 200,
+    success: true,
+    submissions: result,
+  });
+});
+
+const getAllMySubjectAssignmentSubmissionsInASession = catchErrors(
+  async (req, res) => {
+    const { subject_id } = req.params;
+
+    const userId = req.user?.userId;
+
+    if (!subject_id) {
+      throw new AppError('Subject ID is required.', 400);
+    }
+
+    const page = req.query.page ? Number(req.query.page) : undefined;
+    const limit = req.query.limit ? Number(req.query.limit) : undefined;
+
+    const searchQuery =
+      typeof req.query.searchParams === 'string' ? req.query.searchParams : '';
+
+    if (!userId) {
+      throw new AppError('Please login to continue.', 400);
+    }
+    const payload = {
+      userId,
+      subject_id,
+      page,
+      limit,
+      searchQuery,
+    };
+
+    const result = await fetchAllMySubjectAssignmentSubmissionsInASession(
+      payload
+    );
+
+    if (!result) {
+      throw new AppError(
+        'Unable to fetch assignment submission for this subject.',
+        400
+      );
+    }
+
+    return res.status(200).json({
+      message: 'Assignment submission fetched successfully.',
+      status: 200,
+      success: true,
+      submissions: result,
+    });
+  }
+);
+
+const getAllAssignments = catchErrors(async (req, res) => {});
+
+const getAllSubjectAssignmentForStudentsThatOfferTheSubject = catchErrors(
+  async (req, res) => {}
+);
+
 const markAssignment = catchErrors(async (req, res) => {});
 
 export {
   createAssignment,
   getAllAssignments,
+  getAllMySubjectAssignmentSubmissionsInASession,
   getAllSubjectAssignmentForStudentsThatOfferTheSubject,
   getAllSubjectAssignmentsInClass,
   getAssignmentById,
+  getSubjectAssignmentSubmissions,
   markAssignment,
   submitAssignment,
 };

@@ -2,9 +2,11 @@ import express from 'express';
 import {
   createAssignment,
   getAllAssignments,
+  getAllMySubjectAssignmentSubmissionsInASession,
   getAllSubjectAssignmentForStudentsThatOfferTheSubject,
   getAllSubjectAssignmentsInClass,
   getAssignmentById,
+  getSubjectAssignmentSubmissions,
   markAssignment,
   submitAssignment,
 } from '../controllers/assignment.controller';
@@ -26,11 +28,25 @@ router.post(
   permission(['student']),
   submitAssignment
 );
+
+router.get(
+  '/get-subject-assignment-submissions/:assignment_id',
+  permission(['teacher']),
+  getSubjectAssignmentSubmissions
+);
+
 router.get(
   '/get-assignment-by-id/:assignment_id',
   permission(['super_admin', 'admin', 'student', 'teacher']),
   getAssignmentById
 );
+
+router.get(
+  '/get-all-my-subject-assignment-submissions/:subject_id',
+  permission(['student']),
+  getAllMySubjectAssignmentSubmissionsInASession
+);
+
 router.get(
   '/mark-assignment/:assignment_id/:student_id',
   permission(['teacher']),
