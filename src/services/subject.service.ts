@@ -405,9 +405,18 @@ const fetchAllSubjectsThatStudentOffersInATerm = async (
       );
     }
 
-    console.log('classEnrolment:', classEnrolment);
+    const actualStudentEnrollmentDetails = classEnrolment.students.find(
+      (a) => a.student.toString() === userId.toString()
+    );
 
-    return classEnrolment;
+    if (!actualStudentEnrollmentDetails) {
+      throw new AppError(
+        `This student is not enrolled into any class in ${sessionExist.academic_session} session.`,
+        404
+      );
+    }
+
+    return actualStudentEnrollmentDetails.subjects_offered;
   } catch (error) {
     if (error instanceof AppError) {
       throw error;

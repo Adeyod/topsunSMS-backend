@@ -58,7 +58,7 @@ router.get(
 );
 
 router.get(
-  '/get-all-subjects-that student-offer-in-a-session/:session_id/:class_id',
+  '/get-all-subjects-that-student-offer-in-a-session/:session_id/:class_id',
   permission(['student']),
   getAllSubjectsThatStudentOffersInATerm
 );
