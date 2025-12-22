@@ -4,12 +4,12 @@ import { AssignmentDocument } from '../constants/types';
 const questionSchema = new mongoose.Schema({
   question_number: { type: Number, required: true },
   question_text: { type: String, required: true },
-  // attachments: [
+  // attachment:
   //   {
   //     url: { type: String },
   //     public_url: { type: String },
   //   },
-  // ], // image URLs, PDFs, etc.
+  //  // image URLs, PDFs, etc.
 });
 
 const assignmentSchema = new mongoose.Schema<AssignmentDocument>(

@@ -1,10 +1,12 @@
 import {
   assignmentCreation,
+  assignmentSubmission,
   fetchAllSubjectAssignmentsInClass,
   fetchAssignmentById,
 } from '../services/assignment.service';
 import { AppError } from '../utils/app.error';
 import catchErrors from '../utils/tryCatch';
+import { joiValidateAssignmentSubmission } from '../utils/validation';
 
 const createAssignment = catchErrors(async (req, res) => {
   const { class_id, subject_id, session_id } = req.params;
@@ -161,18 +163,64 @@ const getAllSubjectAssignmentsInClass = catchErrors(async (req, res) => {
 });
 
 const getAllAssignments = catchErrors(async (req, res) => {});
+
 const getAllSubjectAssignmentForStudentsThatOfferTheSubject = catchErrors(
   async (req, res) => {}
 );
-const assignmentSubmission = catchErrors(async (req, res) => {});
+const submitAssignment = catchErrors(async (req, res) => {
+  const { assignment_id } = req.params;
+  const { answers_array } = req.body;
+
+  const userId = req.user?.userId;
+
+  if (!userId) {
+    throw new AppError('Please login to proceed.', 400);
+  }
+  if (!assignment_id) {
+    throw new AppError('Assignment ID is required.', 400);
+  }
+
+  if (!answers_array || answers_array.length === 0) {
+    throw new AppError(
+      'Please provide answers to the assignment questions.',
+      400
+    );
+  }
+
+  const validateInput = joiValidateAssignmentSubmission({ answers_array });
+  console.log('validateInput:', validateInput);
+
+  if (validateInput.error) {
+    throw new AppError(validateInput.error, 400);
+  }
+
+  const { value } = validateInput;
+
+  const payload = {
+    assignment_id,
+    answers_array: value.answers_array,
+    userId,
+  };
+  const result = await assignmentSubmission(payload);
+
+  if (!result) {
+    throw new AppError('unable to submit assignment for this student.', 400);
+  }
+
+  return res.status(200).json({
+    message: 'Assignment submitted successfully.',
+    success: true,
+    status: 200,
+  });
+});
 const markAssignment = catchErrors(async (req, res) => {});
 
 export {
-  assignmentSubmission,
   createAssignment,
   getAllAssignments,
   getAllSubjectAssignmentForStudentsThatOfferTheSubject,
   getAllSubjectAssignmentsInClass,
   getAssignmentById,
   markAssignment,
+  submitAssignment,
 };

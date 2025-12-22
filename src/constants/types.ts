@@ -1903,7 +1903,7 @@ type AssignmentCreationPayloadType = {
 type QuestionObject = {
   question_number: number;
   question_text: string;
-  // attachments: {
+  // attachment: {
   //   url: string;
   //   public_url: string;
   // }
@@ -1922,16 +1922,16 @@ type AssignmentDocument = Document & {
   class_enrolment: mongoose.Types.ObjectId;
   teacher_id: mongoose.Types.ObjectId;
   session_id: mongoose.Types.ObjectId;
-  attachments?: string[]; // file URLs (optional)
+  attachment?: string; // file URLs (optional)
 };
 
 type AnswerSubmissionType = {
   question_number: number;
   text_response: string;
-  attachments: {
+  attachment: {
     url: string;
     public_url: string;
-  }[];
+  };
   mark: number;
 };
 type SubmissionDocument = Document & {
@@ -2061,6 +2061,22 @@ type EnrolledStudentSubjects = {
   userId: mongoose.Types.ObjectId;
 };
 
+type AnswerSubmissionObject = {
+  question_number: number;
+  text_response: string;
+  attachment?: string;
+};
+
+type JoiValidateAssignmentSubmissionType = {
+  answers_array: AnswerSubmissionObject[];
+};
+
+type AssignmentSubmissionType = {
+  assignment_id: string;
+  answers_array: AnswerSubmissionObject[];
+  userId: mongoose.Types.ObjectId;
+};
+
 export {
   AccessModeType,
   AccountCreationReturnType,
@@ -2073,11 +2089,13 @@ export {
   AddressValidationType,
   AdmissionValidationType,
   AllStudentResultsPayloadType,
+  AnswerSubmissionObject,
   AnswerSubmissionType,
   ApproveStudentPayloadType,
   AssessmentDocumentType,
   AssignmentCreationPayloadType,
   AssignmentDocument,
+  AssignmentSubmissionType,
   AsyncHandler,
   AttendanceDocument,
   AttendanceMarkingType,
@@ -2158,6 +2176,7 @@ export {
   GetTeacherByIdType,
   GradingAndRemarkType,
   ImageType,
+  JoiValidateAssignmentSubmissionType,
   LinkStudentType,
   LogDocument,
   LoginResponseType,

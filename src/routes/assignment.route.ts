@@ -1,12 +1,12 @@
 import express from 'express';
 import {
-  assignmentSubmission,
   createAssignment,
   getAllAssignments,
   getAllSubjectAssignmentForStudentsThatOfferTheSubject,
   getAllSubjectAssignmentsInClass,
   getAssignmentById,
   markAssignment,
+  submitAssignment,
 } from '../controllers/assignment.controller';
 import { permission } from '../middleware/authorization';
 import { verifyAccessToken } from '../middleware/jwtAuth';
@@ -21,10 +21,10 @@ router.post(
   createAssignment
 );
 
-router.put(
+router.post(
   '/assignment-submission/:assignment_id',
   permission(['student']),
-  assignmentSubmission
+  submitAssignment
 );
 router.get(
   '/get-assignment-by-id/:assignment_id',

@@ -4,12 +4,11 @@ import { AnswerSubmissionType, SubmissionDocument } from '../constants/types';
 const answerSchema = new mongoose.Schema<AnswerSubmissionType>({
   question_number: { type: Number, required: true },
   text_response: { type: String },
-  attachments: [
-    {
-      url: { type: String },
-      public_url: { type: String },
-    },
-  ], // image URLs, PDFs, etc.
+  attachment: {
+    url: { type: String },
+    public_url: { type: String },
+  },
+
   mark: { type: Number },
 });
 

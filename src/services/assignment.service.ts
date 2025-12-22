@@ -1,12 +1,15 @@
 import {
   AssignmentCreationPayloadType,
+  AssignmentSubmissionType,
   GetAllSubjectPayloadType,
   GetAssignmentPayloadType,
 } from '../constants/types';
 import Assignment from '../models/assignment.model';
+import AssignmentSubmission from '../models/assignment_submission.model';
 import Class from '../models/class.model';
 import ClassEnrolment from '../models/classes_enrolment.model';
 import Session from '../models/session.model';
+import Student from '../models/students.model';
 import Subject from '../models/subject.model';
 import Teacher from '../models/teachers.model';
 import { AppError } from '../utils/app.error';
@@ -328,8 +331,72 @@ const fetchAllSubjectAssignmentsInClass = async (
   }
 };
 
+const assignmentSubmission = async (payload: AssignmentSubmissionType) => {
+  try {
+    const { userId, assignment_id, answers_array } = payload;
+
+    const assignmentId = Object(assignment_id);
+
+    const assignmentExist = await Assignment.findById({
+      _id: assignmentId,
+    });
+
+    if (!assignmentExist) {
+      throw new AppError(
+        `Assignment with ${assignment_id} does not exist.`,
+        404
+      );
+    }
+
+    const studentExist = await Student.findById({
+      _id: userId,
+    });
+
+    if (!studentExist) {
+      throw new AppError(`Student not found.`, 404);
+    }
+
+    const classEnrolmentExist = await ClassEnrolment.findById({
+      _id: assignmentExist.class_enrolment,
+    });
+
+    if (!classEnrolmentExist) {
+      throw new AppError('Class Enrollment not found.', 404);
+    }
+
+    const actualStudentInEnrolment = classEnrolmentExist.students.find(
+      (a) =>
+        a.student.toString() === studentExist._id.toString() &&
+        a.subjects_offered.includes(assignmentExist.subject_id)
+    );
+
+    if (!actualStudentInEnrolment) {
+      throw new AppError(
+        `This student is not enrolled to take this subject in this class.`,
+        400
+      );
+    }
+
+    const newSubmission = new AssignmentSubmission({
+      assignment_id: assignmentExist._id,
+      student_id: studentExist._id,
+      answers: answers_array,
+    });
+
+    await newSubmission.save();
+
+    return newSubmission;
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw new AppError(error.message, error.statusCode);
+    }
+    throw new Error('Something went wrong.');
+  }
+};
+
 export {
   assignmentCreation,
+  assignmentSubmission,
   fetchAllSubjectAssignmentsInClass,
   fetchAssignmentById,
 };
