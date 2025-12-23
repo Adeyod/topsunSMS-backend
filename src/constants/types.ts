@@ -2046,6 +2046,12 @@ type GetAssignmentPayloadType = {
   userRole: string;
 };
 
+type GetAssignmentSubmissionPayloadType = {
+  assignment_submission_id: string;
+  userId: mongoose.Types.ObjectId;
+  userRole: string;
+};
+
 type GetAllSubjectPayloadType = {
   subject_id: string;
   session_id: string;
@@ -2091,6 +2097,12 @@ type StudentSubjectAssignmentSubmissionsType = {
   page?: number;
   limit?: number;
   searchParams?: string;
+};
+
+type FindOneAssignmentPayload = {
+  assignment_id: mongoose.Types.ObjectId;
+  student_id: mongoose.Types.ObjectId;
+  subject_id: mongoose.Types.ObjectId;
 };
 
 export {
@@ -2181,10 +2193,12 @@ export {
   FeePayloadType,
   FetchAttendanceType,
   FilePath,
+  FindOneAssignmentPayload,
   FolderName,
   GenerateBankReferenceType,
   GetAllSubjectPayloadType,
   GetAssignmentPayloadType,
+  GetAssignmentSubmissionPayloadType,
   GetClassCbtAssessmentTimetablePayloadType,
   GetClassPayloadType,
   GetClassStudentsType,

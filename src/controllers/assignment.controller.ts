@@ -4,6 +4,7 @@ import {
   fetchAllMySubjectAssignmentSubmissionsInASession,
   fetchAllSubjectAssignmentsInClass,
   fetchAssignmentById,
+  fetchSubjectAssignmentSubmissionById,
   fetchSubjectAssignmentSubmissions,
 } from '../services/assignment.service';
 import { AppError } from '../utils/app.error';
@@ -301,6 +302,40 @@ const getAllMySubjectAssignmentSubmissionsInASession = catchErrors(
   }
 );
 
+const getSubjectAssignmentSubmissionById = catchErrors(async (req, res) => {
+  const { assignment_submission_id } = req.params;
+
+  if (!assignment_submission_id) {
+    throw new AppError('Assignment submission ID is required.', 400);
+  }
+
+  const userId = req.user?.userId;
+  const userRole = req.user?.userRole;
+
+  if (!userId || !userRole) {
+    throw new AppError('Please login to continue.', 400);
+  }
+
+  const payload = {
+    userRole,
+    userId,
+    assignment_submission_id,
+  };
+
+  const result = await fetchSubjectAssignmentSubmissionById(payload);
+
+  if (!result) {
+    throw new AppError('Unable to fetch assignment submission.', 400);
+  }
+
+  return res.status(200).json({
+    message: 'Assignment submission fetched successfully.',
+    success: true,
+    status: 200,
+    assignment_submission: result,
+  });
+});
+
 const getAllAssignments = catchErrors(async (req, res) => {});
 
 const getAllSubjectAssignmentForStudentsThatOfferTheSubject = catchErrors(
@@ -316,6 +351,7 @@ export {
   getAllSubjectAssignmentForStudentsThatOfferTheSubject,
   getAllSubjectAssignmentsInClass,
   getAssignmentById,
+  getSubjectAssignmentSubmissionById,
   getSubjectAssignmentSubmissions,
   markAssignment,
   submitAssignment,

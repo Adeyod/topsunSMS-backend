@@ -2,8 +2,10 @@ import mongoose from 'mongoose';
 import {
   AssignmentCreationPayloadType,
   AssignmentSubmissionType,
+  FindOneAssignmentPayload,
   GetAllSubjectPayloadType,
   GetAssignmentPayloadType,
+  GetAssignmentSubmissionPayloadType,
   StudentSubjectAssignmentSubmissionsType,
   SubjectAssignmentSubmissionsType,
   SubmissionDocument,
@@ -16,6 +18,10 @@ import Session from '../models/session.model';
 import Student from '../models/students.model';
 import Subject from '../models/subject.model';
 import Teacher from '../models/teachers.model';
+import {
+  findAssignmentById,
+  findOneAssignmentSubmission,
+} from '../repository/assignment.repository';
 import { AppError } from '../utils/app.error';
 
 const assignmentCreation = async (payload: AssignmentCreationPayloadType) => {
@@ -208,6 +214,87 @@ const fetchAssignmentById = async (payload: GetAssignmentPayloadType) => {
     }
 
     return assignmentExist;
+  } catch (error) {
+    console.log('error in main catch:', error);
+    if (error instanceof AppError) {
+      throw new AppError(error.message, error.statusCode);
+    } else {
+      throw new Error('Something went wrong');
+    }
+  }
+};
+
+const fetchSubjectAssignmentSubmissionById = async (
+  payload: GetAssignmentSubmissionPayloadType
+) => {
+  try {
+    const { assignment_submission_id, userId, userRole } = payload;
+
+    const assignmentId = Object(assignment_submission_id);
+
+    const submissionExist = await AssignmentSubmission.findById({
+      _id: assignmentId,
+    });
+
+    if (!submissionExist) {
+      throw new AppError('Assignment submission not found.', 404);
+    }
+
+    const assignmentExist = await Assignment.findById({
+      _id: submissionExist.assignment_id,
+    });
+
+    if (!assignmentExist) {
+      throw new AppError('Assignment not found.', 404);
+    }
+
+    if (userRole === 'teacher') {
+      // Check if the teacher is the one taking the subject in the class
+      const classDetails = await Class.findById({
+        _id: assignmentExist.class,
+      });
+
+      if (!classDetails) {
+        throw new AppError('Class does not exist for this assignment.', 404);
+      }
+
+      const subjectTeacher = classDetails.teacher_subject_assignments.find(
+        (a) =>
+          a.subject.toString() === assignmentExist.subject_id.toString() &&
+          a.teacher.toString() === userId.toString()
+      );
+
+      if (!subjectTeacher) {
+        throw new AppError(
+          'You are not the teacher assigned to teach this subject.',
+          400
+        );
+      }
+    } else if (userRole === 'student') {
+      // check if the student is enrolled to take the subject in the class this session
+      const classEnrolmentExist = await ClassEnrolment.findById({
+        _id: assignmentExist.class_enrolment,
+      });
+
+      if (!classEnrolmentExist) {
+        throw new AppError(`There is no enrolment found for class.`, 404);
+      }
+
+      const offeredSubject = classEnrolmentExist.students.find(
+        (a) =>
+          a.student.toString() === userId.toString() &&
+          a.subjects_offered.includes(assignmentExist.subject_id)
+      );
+
+      if (!offeredSubject) {
+        throw new AppError(
+          'You are not enrolled to study this subject in this session.',
+          400
+        );
+      }
+    }
+
+    return submissionExist;
   } catch (error) {
     console.log('error in main catch:', error);
     if (error instanceof AppError) {
@@ -512,11 +599,9 @@ const assignmentSubmission = async (payload: AssignmentSubmissionType) => {
   try {
     const { userId, assignment_id, answers_array } = payload;
 
-    const assignmentId = Object(assignment_id);
+    const assignmentId = new mongoose.Types.ObjectId(assignment_id);
 
-    const assignmentExist = await Assignment.findById({
-      _id: assignmentId,
-    });
+    const assignmentExist = await findAssignmentById(assignmentId);
 
     if (!assignmentExist) {
       throw new AppError(
@@ -554,6 +639,18 @@ const assignmentSubmission = async (payload: AssignmentSubmissionType) => {
       );
     }
 
+    const input: FindOneAssignmentPayload = {
+      student_id: studentExist._id,
+      subject_id: assignmentExist.subject_id,
+      assignment_id: assignmentExist._id as mongoose.Types.ObjectId,
+    };
+
+    const hasSubmitted = await findOneAssignmentSubmission(input);
+
+    if (hasSubmitted) {
+      throw new AppError('You have already submitted this assignment.', 400);
+    }
+
     const newSubmission = new AssignmentSubmission({
       assignment_id: assignmentExist._id,
       student_id: studentExist._id,
@@ -578,5 +675,6 @@ export {
   fetchAllMySubjectAssignmentSubmissionsInASession,
   fetchAllSubjectAssignmentsInClass,
   fetchAssignmentById,
+  fetchSubjectAssignmentSubmissionById,
   fetchSubjectAssignmentSubmissions,
 };

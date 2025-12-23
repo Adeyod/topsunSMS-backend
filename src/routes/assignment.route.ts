@@ -6,6 +6,7 @@ import {
   getAllSubjectAssignmentForStudentsThatOfferTheSubject,
   getAllSubjectAssignmentsInClass,
   getAssignmentById,
+  getSubjectAssignmentSubmissionById,
   getSubjectAssignmentSubmissions,
   markAssignment,
   submitAssignment,
@@ -62,6 +63,12 @@ router.get(
   '/get-all-subject-assignments-in-class/:class_id/:session_id/:subject_id',
   permission(['teacher', 'student']),
   getAllSubjectAssignmentsInClass
+);
+
+router.get(
+  '/get-subject-assignment-submission-by-id/:assignment_submission_id',
+  permission(['teacher', 'student']),
+  getSubjectAssignmentSubmissionById
 );
 
 router.get(
