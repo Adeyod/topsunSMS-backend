@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import {
   AssignmentCreationPayloadType,
+  AssignmentMarkingPayloadType,
   AssignmentSubmissionType,
   FindOneAssignmentPayload,
   GetAllSubjectPayloadType,
@@ -20,8 +21,10 @@ import Subject from '../models/subject.model';
 import Teacher from '../models/teachers.model';
 import {
   findAssignmentById,
+  findAssignmentSubmissionById,
   findOneAssignmentSubmission,
 } from '../repository/assignment.repository';
+import { getAStudentById } from '../repository/student.repository';
 import { AppError } from '../utils/app.error';
 
 const assignmentCreation = async (payload: AssignmentCreationPayloadType) => {
@@ -659,6 +662,7 @@ const assignmentSubmission = async (payload: AssignmentSubmissionType) => {
     });
 
     await newSubmission.save();
+    assignmentExist.students_that_submits.push(studentExist._id);
 
     return newSubmission;
   } catch (error) {
@@ -669,8 +673,115 @@ const assignmentSubmission = async (payload: AssignmentSubmissionType) => {
   }
 };
 
+const assignmentMarking = async (payload: AssignmentMarkingPayloadType) => {
+  try {
+    const { assignment_submission_id, student_id, submission_doc, userId } =
+      payload;
+
+    const atLeastOneMarked = submission_doc.answers.some(
+      (a) => a.mark !== undefined
+    );
+
+    if (atLeastOneMarked) {
+      const missingMark = submission_doc.answers.find(
+        (a) => a.mark === undefined
+      );
+
+      if (missingMark) {
+        throw new AppError(
+          `All questions must be marked. Missing mark for question ${missingMark.question_number}.`,
+          400
+        );
+      }
+
+      const calTotal = submission_doc.answers.reduce(
+        (a, b) => a + (b.mark ?? 0),
+        0
+      );
+
+      if (calTotal !== submission_doc.total_score) {
+        throw new AppError(
+          'Total sum does not tally with summation of the question marks.',
+          400
+        );
+      }
+    }
+
+    const input = {
+      student_id,
+    };
+
+    const studentExist = await getAStudentById(input);
+
+    if (!studentExist) {
+      throw new AppError('Student not found.', 404);
+    }
+
+    const assignmentSubmissionId = new mongoose.Types.ObjectId(
+      assignment_submission_id
+    );
+
+    const assignmentSubmissionExist = await findAssignmentSubmissionById(
+      assignmentSubmissionId
+    );
+
+    if (!assignmentSubmissionExist) {
+      throw new AppError('Submission not found.', 404);
+    }
+
+    if (assignmentSubmissionExist.graded === true) {
+      throw new AppError(
+        'This submission has been marked by the teacher.',
+        400
+      );
+    }
+
+    const assignmentExist = await findAssignmentById(
+      assignmentSubmissionExist.assignment_id
+    );
+
+    if (!assignmentExist) {
+      throw new AppError('Assignment not found.', 404);
+    }
+
+    const classExist = await Class.findById(assignmentExist.class);
+
+    if (!classExist) {
+      throw new AppError('Class not found.', 404);
+    }
+
+    const subjectTeacher = classExist.teacher_subject_assignments.find(
+      (a) =>
+        a.subject.toString() === assignmentExist.subject_id.toString() &&
+        a.teacher.toString() === userId.toString()
+    );
+
+    if (!subjectTeacher) {
+      throw new AppError(
+        'You are the teacher assigned to teach this subject.',
+        400
+      );
+    }
+
+    assignmentSubmissionExist.answers = submission_doc.answers;
+    assignmentSubmissionExist.graded = true;
+    assignmentSubmissionExist.total_score = submission_doc.total_score;
+
+    assignmentSubmissionExist.markModified('answers');
+    await assignmentSubmissionExist.save();
+
+    return assignmentSubmissionExist;
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw new AppError(error.message, error.statusCode);
+    }
+    throw new Error('Something went wrong.');
+  }
+};
+
 export {
   assignmentCreation,
+  assignmentMarking,
   assignmentSubmission,
   fetchAllMySubjectAssignmentSubmissionsInASession,
   fetchAllSubjectAssignmentsInClass,

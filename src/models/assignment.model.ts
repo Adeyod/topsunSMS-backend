@@ -24,6 +24,9 @@ const assignmentSchema = new mongoose.Schema<AssignmentDocument>(
     },
     title: { type: String, required: true },
     term: { type: String, required: true },
+    students_that_submits: [
+      { type: mongoose.Schema.Types.ObjectId, ref: 'Student' },
+    ],
     questions: [questionSchema],
     due_date: { type: Date, required: true },
     submission_type: {

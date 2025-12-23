@@ -48,8 +48,8 @@ router.get(
   getAllMySubjectAssignmentSubmissionsInASession
 );
 
-router.get(
-  '/mark-assignment/:assignment_id/:student_id',
+router.put(
+  '/mark-assignment/:assignment_submission_id/:student_id',
   permission(['teacher']),
   markAssignment
 );

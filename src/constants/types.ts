@@ -1916,6 +1916,7 @@ type AssignmentDocument = Document & {
   subject: string;
   term: string;
   class: mongoose.Types.ObjectId;
+  students_that_submits: mongoose.Types.ObjectId[];
   subject_id: mongoose.Types.ObjectId;
   class_enrolment: mongoose.Types.ObjectId;
   teacher_id: mongoose.Types.ObjectId;
@@ -1930,7 +1931,7 @@ type AnswerSubmissionType = {
     url: string;
     public_url: string;
   };
-  mark: number;
+  mark?: number;
 };
 type SubmissionDocument = Document & {
   assignment_id: mongoose.Types.ObjectId;
@@ -2105,6 +2106,13 @@ type FindOneAssignmentPayload = {
   subject_id: mongoose.Types.ObjectId;
 };
 
+type AssignmentMarkingPayloadType = {
+  assignment_submission_id: string;
+  student_id: string;
+  submission_doc: SubmissionDocument;
+  userId: mongoose.Types.ObjectId;
+};
+
 export {
   AccessModeType,
   AccountCreationReturnType,
@@ -2123,6 +2131,7 @@ export {
   AssessmentDocumentType,
   AssignmentCreationPayloadType,
   AssignmentDocument,
+  AssignmentMarkingPayloadType,
   AssignmentSubmissionType,
   AsyncHandler,
   AttendanceDocument,

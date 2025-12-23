@@ -174,10 +174,10 @@
 
 ///////////////////////////////////////////////////////////////////////
 import mongoose from 'mongoose';
+import { GetStudentByIdType } from '../constants/types';
 import Payment from '../models/payment.model';
 import Student from '../models/students.model';
 import { AppError } from '../utils/app.error';
-import { GetStudentByIdType } from '../constants/types';
 
 const calculateOutStandingPerTerm = async (
   session: mongoose.ClientSession,

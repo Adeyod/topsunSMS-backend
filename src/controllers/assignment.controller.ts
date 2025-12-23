@@ -1,5 +1,6 @@
 import {
   assignmentCreation,
+  assignmentMarking,
   assignmentSubmission,
   fetchAllMySubjectAssignmentSubmissionsInASession,
   fetchAllSubjectAssignmentsInClass,
@@ -336,13 +337,56 @@ const getSubjectAssignmentSubmissionById = catchErrors(async (req, res) => {
   });
 });
 
+const markAssignment = catchErrors(async (req, res) => {
+  const { assignment_submission_id, student_id } = req.params;
+  const { submission_doc } = req.body;
+
+  if (!assignment_submission_id) {
+    throw new AppError('Assignment submission ID is required.', 400);
+  }
+
+  if (!student_id) {
+    throw new AppError('Student ID is required.', 400);
+  }
+
+  if (!submission_doc) {
+    throw new AppError(
+      'Please provide the marked document of the student.',
+      400
+    );
+  }
+
+  const userId = req.user?.userId;
+
+  if (!userId) {
+    throw new AppError('Please login to continue.', 400);
+  }
+
+  const payload = {
+    assignment_submission_id,
+    student_id,
+    submission_doc,
+    userId,
+  };
+
+  const result = await assignmentMarking(payload);
+
+  if (!result) {
+    throw new AppError('Unable to mark assignment submission', 400);
+  }
+
+  return res.status(200).json({
+    message: 'Assignment marked successfully.',
+    success: true,
+    status: 200,
+  });
+});
+
 const getAllAssignments = catchErrors(async (req, res) => {});
 
 const getAllSubjectAssignmentForStudentsThatOfferTheSubject = catchErrors(
   async (req, res) => {}
 );
-
-const markAssignment = catchErrors(async (req, res) => {});
 
 export {
   createAssignment,
