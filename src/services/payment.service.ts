@@ -2317,6 +2317,8 @@ const studentBankFeePayment = async (
       (s) => s.transaction_id === teller_number
     );
 
+    console.log('transactionIdExists:');
+
     if (transactionIdExists) {
       throw new AppError(
         `Teller number ${teller_number} has already being submitted for this student before.`,
@@ -2524,7 +2526,10 @@ const fetchAllPaymentsNeedingApproval = async (
   try {
     let query = Payment.find({
       'waiting_for_confirmation.0': { $exists: true },
-    });
+    }).populate([
+      { path: 'student', select: 'first_name last_name' },
+      { path: 'class', select: 'name level' },
+    ]);
 
     if (searchParams) {
       const regex = new RegExp(searchParams, 'i');
@@ -2593,6 +2598,32 @@ const fetchAllPaymentsNeedingApproval = async (
     }
 
     const expectedReturn = result
+      .map((payment) => {
+        const filtered = payment.waiting_for_confirmation.filter(
+          (p) => p.payment_method === 'bank'
+        );
+
+        const filteredResponse = filtered.map(
+          (item) => {
+            const docObject = item.toObject();
+            return {
+              student: payment.student,
+              class: payment.class,
+              ...docObject,
+            };
+          }
+
+          //   ({
+          //   student: payment.student,
+          //   class: payment.class,
+          //   ...item,
+          // })
+        );
+
+        return filteredResponse;
+      })
+      .flat();
+    const expectedReturn2 = result
       .map(
         (payment) => (
           payment._id,
