@@ -2434,7 +2434,7 @@ const approveStudentBankPayment = async (
       },
     });
 
-    console.log('findPayment:', findPayment);
+    // console.log('findPayment:', findPayment);
 
     if (!findPayment) {
       throw new AppError('Payment not found.', 404);
@@ -2448,8 +2448,8 @@ const approveStudentBankPayment = async (
       (p) => p._id?.toString() === payment_id
     );
 
-    console.log('actualTransaction:', actualTransaction);
-    console.log('actualTransaction2:', actualTransaction2);
+    // console.log('actualTransaction:', actualTransaction);
+    // console.log('actualTransaction2:', actualTransaction2);
 
     if (!actualTransaction || !actualTransaction._id) {
       throw new AppError(`Transaction not found`, 404);

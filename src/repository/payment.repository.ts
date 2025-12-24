@@ -506,8 +506,6 @@ const calculateAndUpdateStudentPaymentDocuments = async (
       ],
     });
 
-    console.log('overduePayments 1:', overduePayments);
-
     // Sort overdue payments by session and term
     overduePayments.sort((a, b) => {
       // Sort by session first
@@ -517,9 +515,6 @@ const calculateAndUpdateStudentPaymentDocuments = async (
       // Then sort by term order
       return termOrder.indexOf(a.term) - termOrder.indexOf(b.term);
     });
-
-    console.log('overduePayments:', overduePayments);
-    console.log('overduePayments.length:', overduePayments.length);
 
     let remainingAmountToPay = payload.amount_paying;
 
@@ -534,12 +529,10 @@ const calculateAndUpdateStudentPaymentDocuments = async (
     }
 
     const paymentObjToPull = currentTermPayment.waiting_for_confirmation.find(
-      (p) => p?._id === payload?.payment_id
+      (p) => p?._id?.toString() === payload?.payment_id?.toString()
     );
-    console.log('currentTermPayment:', currentTermPayment);
-    if (overduePayments.length === 0) {
-      console.log('There is no overdue payment');
 
+    if (overduePayments.length === 0) {
       if (currentTermPayment.is_payment_complete) {
         throw new AppError(
           'Payment for this term has already been completed.',
@@ -576,6 +569,7 @@ const calculateAndUpdateStudentPaymentDocuments = async (
 
       if (payment_type === 'bank') {
         if (paymentObjToPull?.payment_evidence_image.url) {
+          console.log('I am running delete 1');
           await cloudinaryDestroy(
             paymentObjToPull.payment_evidence_image.public_url
           );
@@ -599,7 +593,6 @@ const calculateAndUpdateStudentPaymentDocuments = async (
 
     if (overduePayments.length > 0) {
       for (const payment of overduePayments) {
-        console.log('i an running overdue payment');
         if (remainingAmountToPay <= 0) break;
 
         // Ensure remaining_amount is defined
@@ -624,6 +617,13 @@ const calculateAndUpdateStudentPaymentDocuments = async (
               staff_who_approve:
                 payload.staff_who_approve && payload.staff_who_approve,
             };
+
+            if (paymentObjToPull?.payment_evidence_image.url) {
+              await cloudinaryDestroy(
+                paymentObjToPull.payment_evidence_image.public_url
+              );
+            }
+
             payment.payment_summary.push(doc);
             payment.is_payment_complete = true;
           } else {
@@ -642,6 +642,13 @@ const calculateAndUpdateStudentPaymentDocuments = async (
               staff_who_approve:
                 payload.staff_who_approve && payload.staff_who_approve,
             };
+
+            if (paymentObjToPull?.payment_evidence_image.url) {
+              await cloudinaryDestroy(
+                paymentObjToPull.payment_evidence_image.public_url
+              );
+            }
+
             payment.payment_summary.push(doc);
 
             // payment.remaining_amount -= remainingAmountToPay;
@@ -669,7 +676,6 @@ const calculateAndUpdateStudentPaymentDocuments = async (
     }
 
     // Handle payment for the current term if there's remaining amount
-    console.log('remainingAmountToPay:', remainingAmountToPay);
     if (remainingAmountToPay > 0) {
       if (currentTermPayment.is_payment_complete) {
         throw new AppError(
@@ -727,11 +733,9 @@ const calculateAndUpdateStudentPaymentDocuments = async (
       await currentTermPayment.save();
       lastProcessedPayment = currentTermPayment;
     }
-    console.log('overduePayments:', overduePayments);
 
     // Save the updated student document
     await studentDoc.save();
-    console.log('studentDoc:', studentDoc);
 
     return lastProcessedPayment;
   } catch (error) {
