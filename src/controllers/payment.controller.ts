@@ -1321,7 +1321,7 @@ const getAPaymentNeedingApprovalById = catchErrors(async (req, res) => {
 
 const approveBankPaymentWithId = catchErrors(async (req, res) => {
   const { payment_id } = req.params;
-  const { amount_paid, transaction_id, bank_name } = req.body;
+  const { amount_paid, bank_name } = req.body;
   const bursar_id = req.user?.userId;
 
   if (!bursar_id) {
@@ -1334,7 +1334,6 @@ const approveBankPaymentWithId = catchErrors(async (req, res) => {
 
   const payload = {
     amount_paid,
-    transaction_id,
     bank_name,
   };
 
@@ -1343,7 +1342,7 @@ const approveBankPaymentWithId = catchErrors(async (req, res) => {
   const { success, value } = validateInput;
 
   const paymentPayload = {
-    transaction_id: value.transaction_id,
+    // transaction_id: value.transaction_id,
     bank_name: value.bank_name,
     payment_id,
     bursar_id,
@@ -1369,7 +1368,7 @@ const makeBankPayment = catchErrors(async (req, res) => {
     amount_paying,
     class_id,
     payment_method,
-    teller_number,
+    // teller_number,
     bank_name,
   } = req.body;
 
@@ -1382,7 +1381,7 @@ const makeBankPayment = catchErrors(async (req, res) => {
     term,
     amount_paying,
     class_id,
-    teller_number,
+    // teller_number,
     bank_name,
   };
   const missingField = Object.entries(requiredFields).find(
@@ -1401,7 +1400,7 @@ const makeBankPayment = catchErrors(async (req, res) => {
     term,
     amount_paying,
     class_id,
-    teller_number,
+    // teller_number,
     bank_name,
   };
 
@@ -1419,14 +1418,14 @@ const makeBankPayment = catchErrors(async (req, res) => {
     term: value.term,
     amount_paying: value.amount_paying,
     class_id: value.class_id,
-    teller_number: value.teller_number,
+    // teller_number: value.teller_number,
     bank_name: value.bank_name,
     userId,
     payment_method: payment_method,
     userRole,
   };
 
-  const result = await studentBankFeePayment(paymentInput);
+  const result = await studentBankFeePayment(req, paymentInput, res);
 
   if (!result) {
     throw new AppError('Unable to process payment request.', 400);

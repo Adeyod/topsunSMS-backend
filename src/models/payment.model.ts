@@ -1,10 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
-import {
-  busRouteEnum,
-  busTripEnum,
-  paymentEnum,
-  paymentStatusEnum,
-} from '../constants/enum';
+import { paymentEnum, paymentStatusEnum } from '../constants/enum';
 import { PaymentDocument } from '../constants/types';
 // get the document and take out the following data:
 const paymentSchema = new mongoose.Schema<PaymentDocument>(
@@ -30,8 +25,12 @@ const paymentSchema = new mongoose.Schema<PaymentDocument>(
         date_paid: { type: Date, default: Date.now },
         payment_method: { type: String, enum: paymentEnum },
         message: { type: String },
-        transaction_id: { type: String },
+        // transaction_id: { type: String },
         bank_name: { type: String },
+        payment_evidence_image: {
+          url: { type: String },
+          public_url: { type: String },
+        },
         fees_collection_breakdown: [
           {
             fee_name: { type: String, required: true },
@@ -52,7 +51,7 @@ const paymentSchema = new mongoose.Schema<PaymentDocument>(
         date_paid: { type: Date, default: Date.now },
         payment_method: { type: String, enum: paymentEnum },
         message: { type: String },
-        transaction_id: { type: String },
+        // transaction_id: { type: String },
         fees_collection_breakdown: [
           {
             fee_name: { type: String, required: true },

@@ -1452,6 +1452,7 @@
 // };
 
 ////////////////////////////////////////////////////////////////////////
+import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { paymentEnum, paymentStatusEnum } from '../constants/enum';
 import {
@@ -1475,6 +1476,7 @@ import {
   calculateAndUpdateStudentPaymentDocuments,
 } from '../repository/payment.repository';
 import { AppError } from '../utils/app.error';
+import { handleFileUpload } from '../utils/cloudinary';
 // import BusSubscription from '../models/bus_subscription.model';
 
 const createSchoolFeePaymentDocumentForStudents = async (
@@ -2244,7 +2246,9 @@ const fetchAllPaymentSummaryFailedAndSuccessful =
   };
 
 const studentBankFeePayment = async (
-  payload: StudentFeePaymentType
+  req: Request,
+  payload: StudentFeePaymentType,
+  res: Response
 ): Promise<PaymentDocument> => {
   try {
     const {
@@ -2252,7 +2256,7 @@ const studentBankFeePayment = async (
       session_id,
       term,
       amount_paying,
-      teller_number,
+      // teller_number,
       bank_name,
       userId,
       userRole,
@@ -2308,31 +2312,55 @@ const studentBankFeePayment = async (
       amount: amount_paying,
     };
 
-    const allTellers = [
-      ...findPaymentDocument.waiting_for_confirmation,
-      ...findPaymentDocument.payment_summary,
-    ];
+    // ************************************************
+    // const allTellers = [
+    //   ...findPaymentDocument.waiting_for_confirmation,
+    //   ...findPaymentDocument.payment_summary,
+    // ];
 
-    const transactionIdExists = allTellers.some(
-      (s) => s.transaction_id === teller_number
-    );
+    // const transactionIdExists = allTellers.some(
+    //   (s) => s.transaction_id === teller_number
+    // );
 
-    console.log('transactionIdExists:');
+    // console.log('transactionIdExists:');
 
-    if (transactionIdExists) {
-      throw new AppError(
-        `Teller number ${teller_number} has already being submitted for this student before.`,
-        400
-      );
+    // if (transactionIdExists) {
+    //   throw new AppError(
+    //     `Teller number ${teller_number} has already being submitted for this student before.`,
+    //     400
+    //   );
+    // }
+    // ************************************
+
+    const imageUpload = await handleFileUpload(req, res);
+
+    if (!imageUpload) {
+      throw new AppError('Unable to upload profile image.', 400);
+    }
+
+    let imageData: { url: string; public_url: string } | undefined;
+
+    if (Array.isArray(imageUpload)) {
+      imageData = imageUpload[0];
+    } else {
+      imageData = imageUpload;
+    }
+
+    if (!imageData) {
+      throw new AppError('This is not a valid cloudinary image upload.', 400);
     }
 
     const paymentPayload = {
       amount_paid: amount_paying,
       date_paid: new Date(),
       payment_method: paymentEnum[1],
-      transaction_id: teller_number,
+      // transaction_id: teller_number,
       bank_name: bank_name,
       status: paymentStatusEnum[0],
+      payment_evidence_image: {
+        url: imageData.url,
+        public_url: imageData.public_url,
+      },
     };
 
     findPaymentDocument.waiting_for_confirmation.push(paymentPayload);
@@ -2396,8 +2424,7 @@ const studentCashFeePayment = async (payload: StudentFeePaymentType) => {
 const approveStudentBankPayment = async (
   payload: ApproveStudentPayloadType
 ) => {
-  const { transaction_id, bank_name, payment_id, bursar_id, amount_paid } =
-    payload;
+  const { bank_name, payment_id, bursar_id, amount_paid } = payload;
   try {
     const findPayment = await Payment.findOne({
       waiting_for_confirmation: {
@@ -2407,16 +2434,25 @@ const approveStudentBankPayment = async (
       },
     });
 
+    console.log('findPayment:', findPayment);
+
     if (!findPayment) {
       throw new AppError('Payment not found.', 404);
     }
 
     const actualTransaction = findPayment.waiting_for_confirmation.find(
-      (p) => p.transaction_id === transaction_id
+      (p) => p._id?.toString() === payment_id
     );
 
-    if (!actualTransaction) {
-      throw new AppError(`Transaction with ${transaction_id} not found`, 404);
+    const actualTransaction2 = findPayment.waiting_for_confirmation.find(
+      (p) => p._id?.toString() === payment_id
+    );
+
+    console.log('actualTransaction:', actualTransaction);
+    console.log('actualTransaction2:', actualTransaction2);
+
+    if (!actualTransaction || !actualTransaction._id) {
+      throw new AppError(`Transaction not found`, 404);
     }
 
     if (!actualTransaction.amount_paid) {
@@ -2431,15 +2467,15 @@ const approveStudentBankPayment = async (
       throw new AppError('Bank name does not match.', 400);
     }
 
-    if (!actualTransaction.transaction_id) {
-      throw new AppError('Transaction ID not present.', 400);
-    }
+    // if (!actualTransaction.transaction_id) {
+    //   throw new AppError('Transaction ID not present.', 400);
+    // }
 
     const receipt = {
       amount_paid: actualTransaction.amount_paid,
       date_paid: actualTransaction.date_paid,
       payment_method: actualTransaction.payment_method,
-      transaction_id: actualTransaction.transaction_id,
+      // transaction_id: actualTransaction.transaction_id,
       bank_name: actualTransaction.bank_name,
       status: paymentStatusEnum[1],
       _id: actualTransaction._id,
@@ -2451,7 +2487,8 @@ const approveStudentBankPayment = async (
       term: findPayment.term,
       amount_paying: actualTransaction?.amount_paid,
       bank_name,
-      teller_number: actualTransaction.transaction_id,
+      // teller_number: actualTransaction.transaction_id,
+      payment_id: actualTransaction._id,
       staff_who_approve: bursar_id,
       payment_method: 'bank',
     };
@@ -2460,6 +2497,8 @@ const approveStudentBankPayment = async (
       payload,
       'bank'
     );
+
+    // const result = payload;
 
     if (!result) {
       throw new AppError('Unable to update student payment.', 400);
@@ -2479,6 +2518,17 @@ const approveStudentBankPayment = async (
     }
   }
 };
+
+const userThatApproveId = '68e5127390fd7987ee863330';
+const payload = {
+  transaction_id: 'WB-394857',
+  bank_name: 'Wema Bank',
+  payment_id: '694c1434e4d6bb65f2009c48',
+  bursar_id: Object(userThatApproveId),
+  amount_paid: 11000,
+};
+
+// approveStudentBankPayment(payload);
 
 const fetchAPaymentNeedingApprovalById = async (
   payment_id: string

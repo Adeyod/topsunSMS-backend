@@ -538,6 +538,7 @@ import ClassEnrolment from '../models/classes_enrolment.model';
 import Session from '../models/session.model';
 import Student from '../models/students.model';
 import TermSettings from '../models/term_settings.model';
+import { calculateOutStandingPerTerm } from '../repository/student.repository';
 import { AppError } from '../utils/app.error';
 
 const createSession = async (): Promise<SessionDocument> => {
@@ -814,12 +815,11 @@ const termEndingInSessionUsingTermId = async (
     };
 
     // CALCULATE TERM OUTSTANDING PAYMENT HERE
-    // await calculateOutStandingPerTerm(
-    //   session,
-    //   session_id,
-    //   responseObject.term_name,
-    //   school
-    // );
+    await calculateOutStandingPerTerm(
+      session,
+      session_id,
+      responseObject.term_name
+    );
 
     // NOTIFICATION MAIL AND IN-APP NOTIFICATION CAN BE SENT TO STUDENT AND PARENTS HERE
 

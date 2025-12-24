@@ -321,18 +321,18 @@
 
 // export { calculateAndUpdateStudentPaymentDocuments, commonPaystackFunction };
 
-import mongoose, { ObjectId } from 'mongoose';
-import ClassEnrolment from '../models/classes_enrolment.model';
+import { paymentStatusEnum } from '../constants/enum';
 import {
   AddFeeToStudentPaymentDocType,
   PaymentPayloadMandatoryFeeType,
   PaymentPayloadOptionalFeeType,
   StudentFeePaymentType,
 } from '../constants/types';
+import ClassEnrolment from '../models/classes_enrolment.model';
 import Payment from '../models/payment.model';
-import { AppError } from '../utils/app.error';
 import Student from '../models/students.model';
-import { paymentStatusEnum } from '../constants/enum';
+import { AppError } from '../utils/app.error';
+import { cloudinaryDestroy } from '../utils/cloudinary';
 
 // use to add optional fee to payment document when the fee is needed to be added during the term
 const optionalFeeAdditionToPaymentDocuments = async (
@@ -506,6 +506,8 @@ const calculateAndUpdateStudentPaymentDocuments = async (
       ],
     });
 
+    console.log('overduePayments 1:', overduePayments);
+
     // Sort overdue payments by session and term
     overduePayments.sort((a, b) => {
       // Sort by session first
@@ -516,6 +518,9 @@ const calculateAndUpdateStudentPaymentDocuments = async (
       return termOrder.indexOf(a.term) - termOrder.indexOf(b.term);
     });
 
+    console.log('overduePayments:', overduePayments);
+    console.log('overduePayments.length:', overduePayments.length);
+
     let remainingAmountToPay = payload.amount_paying;
 
     const currentTermPayment = await Payment.findOne({
@@ -524,13 +529,16 @@ const calculateAndUpdateStudentPaymentDocuments = async (
       term: payload.term,
     });
 
+    if (!currentTermPayment) {
+      throw new AppError('No payment record found for the current term.', 404);
+    }
+
+    const paymentObjToPull = currentTermPayment.waiting_for_confirmation.find(
+      (p) => p?._id === payload?.payment_id
+    );
+    console.log('currentTermPayment:', currentTermPayment);
     if (overduePayments.length === 0) {
-      if (!currentTermPayment) {
-        throw new AppError(
-          'No payment record found for the current term.',
-          404
-        );
-      }
+      console.log('There is no overdue payment');
 
       if (currentTermPayment.is_payment_complete) {
         throw new AppError(
@@ -556,21 +564,23 @@ const calculateAndUpdateStudentPaymentDocuments = async (
       const doc = {
         amount_paid: remainingAmountToPay,
         date_paid: new Date(),
-        transaction_id: payload.teller_number ? payload.teller_number : '',
+        // transaction_id: payload.teller_number ? payload.teller_number : '',
         bank_name: payload.bank_name && payload.bank_name,
         staff_who_approve:
           payload.staff_who_approve && payload.staff_who_approve,
         status: paymentStatusEnum[1],
         payment_method: payload.payment_method,
       };
+
       currentTermPayment.payment_summary.push(doc);
 
       if (payment_type === 'bank') {
-        currentTermPayment.waiting_for_confirmation.pull(
-          currentTermPayment.waiting_for_confirmation.find(
-            (p) => p.transaction_id === payload.teller_number
-          )
-        );
+        if (paymentObjToPull?.payment_evidence_image.url) {
+          await cloudinaryDestroy(
+            paymentObjToPull.payment_evidence_image.public_url
+          );
+        }
+        currentTermPayment.waiting_for_confirmation.pull(paymentObjToPull);
       }
 
       if (currentTermPayment.remaining_amount <= 0) {
@@ -587,90 +597,80 @@ const calculateAndUpdateStudentPaymentDocuments = async (
     // Process overdue payments
     let lastProcessedPayment = null;
 
-    for (const payment of overduePayments) {
-      if (remainingAmountToPay <= 0) break;
+    if (overduePayments.length > 0) {
+      for (const payment of overduePayments) {
+        console.log('i an running overdue payment');
+        if (remainingAmountToPay <= 0) break;
 
-      // Ensure remaining_amount is defined
-      const remainingAmount = payment.remaining_amount ?? 0;
+        // Ensure remaining_amount is defined
+        const remainingAmount = payment.remaining_amount ?? 0;
 
-      if (remainingAmount > 0) {
-        if (remainingAmountToPay >= remainingAmount) {
-          // Pay off this term fully
-          remainingAmountToPay -= remainingAmount;
-          studentDoc.outstanding_balance -= remainingAmount;
-          payment.remaining_amount = 0;
+        if (remainingAmount > 0) {
+          if (remainingAmountToPay >= remainingAmount) {
+            // Pay off this term fully
+            remainingAmountToPay -= remainingAmount;
+            studentDoc.outstanding_balance -= remainingAmount;
+            payment.remaining_amount = 0;
 
-          const doc = {
-            amount_paid: remainingAmount,
-            date_paid: new Date(),
-            transaction_id: payload.teller_number ? payload.teller_number : '',
-            status: paymentStatusEnum[1],
-            payment_method: payload.payment_method,
-            bank_name: payload.bank_name && payload.bank_name,
-            staff_who_approve:
-              payload.staff_who_approve && payload.staff_who_approve,
-          };
-          payment.payment_summary.push(doc);
-          payment.is_payment_complete = true;
-        } else {
-          // Partially pay this term
-          payment.remaining_amount = remainingAmount - remainingAmountToPay;
+            const doc = {
+              amount_paid: remainingAmount,
+              date_paid: new Date(),
+              // transaction_id: payload.teller_number
+              //   ? payload.teller_number
+              //   : '',
+              status: paymentStatusEnum[1],
+              payment_method: payload.payment_method,
+              bank_name: payload.bank_name && payload.bank_name,
+              staff_who_approve:
+                payload.staff_who_approve && payload.staff_who_approve,
+            };
+            payment.payment_summary.push(doc);
+            payment.is_payment_complete = true;
+          } else {
+            // Partially pay this term
+            payment.remaining_amount = remainingAmount - remainingAmountToPay;
 
-          const doc = {
-            amount_paid: remainingAmountToPay,
-            date_paid: new Date(),
-            transaction_id: payload.teller_number ? payload.teller_number : '',
-            status: paymentStatusEnum[1],
-            payment_method: payload.payment_method,
-            bank_name: payload.bank_name && payload.bank_name,
-            staff_who_approve:
-              payload.staff_who_approve && payload.staff_who_approve,
-          };
-          payment.payment_summary.push(doc);
+            const doc = {
+              amount_paid: remainingAmountToPay,
+              date_paid: new Date(),
+              // transaction_id: payload.teller_number
+              //   ? payload.teller_number
+              //   : '',
+              status: paymentStatusEnum[1],
+              payment_method: payload.payment_method,
+              bank_name: payload.bank_name && payload.bank_name,
+              staff_who_approve:
+                payload.staff_who_approve && payload.staff_who_approve,
+            };
+            payment.payment_summary.push(doc);
 
-          // payment.remaining_amount -= remainingAmountToPay;
-          studentDoc.outstanding_balance -= remainingAmountToPay;
-          remainingAmountToPay = 0; // Fully utilized
-        }
-
-        // Save payment after update
-        await payment.save();
-        lastProcessedPayment = payment;
-        if (payment_type === 'bank') {
-          // FETCH THE PAYMENT info from waiting_for_approval and remove it
-          if (!currentTermPayment) {
-            throw new AppError(
-              'No payment record found for the current term.',
-              404
-            );
+            // payment.remaining_amount -= remainingAmountToPay;
+            studentDoc.outstanding_balance -= remainingAmountToPay;
+            remainingAmountToPay = 0; // Fully utilized
           }
 
-          currentTermPayment.waiting_for_confirmation.pull(
-            currentTermPayment.waiting_for_confirmation.find(
-              (p) => p.transaction_id === payload.teller_number
-            )
-          );
+          // Save payment after update
+          await payment.save();
+          lastProcessedPayment = payment;
+          if (payment_type === 'bank') {
+            // FETCH THE PAYMENT info from waiting_for_approval and remove it
 
-          await currentTermPayment.save();
+            if (paymentObjToPull?.payment_evidence_image.url) {
+              await cloudinaryDestroy(
+                paymentObjToPull.payment_evidence_image.public_url
+              );
+            }
+            currentTermPayment.waiting_for_confirmation.pull(paymentObjToPull);
+
+            await currentTermPayment.save();
+          }
         }
       }
     }
 
     // Handle payment for the current term if there's remaining amount
+    console.log('remainingAmountToPay:', remainingAmountToPay);
     if (remainingAmountToPay > 0) {
-      const currentTermPayment = await Payment.findOne({
-        student: payload.student_id,
-        session: payload.session_id,
-        term: payload.term,
-      });
-
-      if (!currentTermPayment) {
-        throw new AppError(
-          'No payment record found for the current term.',
-          404
-        );
-      }
-
       if (currentTermPayment.is_payment_complete) {
         throw new AppError(
           'Payment for this term has already been completed.',
@@ -692,14 +692,14 @@ const calculateAndUpdateStudentPaymentDocuments = async (
       // Deduct from the current term payment
       currentTermPayment.remaining_amount -= remainingAmountToPay;
 
-      if (!payload.teller_number) {
-        throw new AppError('Transaction ID is required.', 400);
-      }
+      // if (!payload.teller_number) {
+      //   throw new AppError('Transaction ID is required.', 400);
+      // }
 
       const doc = {
         amount_paid: remainingAmountToPay,
         date_paid: new Date(),
-        transaction_id: payload.teller_number && payload.teller_number,
+        // transaction_id: payload.teller_number && payload.teller_number,
         status: paymentStatusEnum[1],
         payment_method: payload.payment_method,
         bank_name: payload.bank_name && payload.bank_name,
@@ -708,11 +708,12 @@ const calculateAndUpdateStudentPaymentDocuments = async (
       };
 
       if (payment_type === 'bank') {
-        currentTermPayment.waiting_for_confirmation.pull(
-          currentTermPayment.waiting_for_confirmation.find(
-            (p) => p?.transaction_id === payload?.teller_number
-          )
-        );
+        if (paymentObjToPull?.payment_evidence_image.url) {
+          await cloudinaryDestroy(
+            paymentObjToPull.payment_evidence_image.public_url
+          );
+        }
+        currentTermPayment.waiting_for_confirmation.pull(paymentObjToPull);
       }
 
       currentTermPayment.payment_summary.push(doc);
@@ -726,9 +727,11 @@ const calculateAndUpdateStudentPaymentDocuments = async (
       await currentTermPayment.save();
       lastProcessedPayment = currentTermPayment;
     }
+    console.log('overduePayments:', overduePayments);
 
     // Save the updated student document
     await studentDoc.save();
+    console.log('studentDoc:', studentDoc);
 
     return lastProcessedPayment;
   } catch (error) {
@@ -741,10 +744,29 @@ const calculateAndUpdateStudentPaymentDocuments = async (
   }
 };
 
+const userThatApproveId = '68e5127390fd7987ee863330';
+const paymentId = '694c1434e4d6bb65f2009c48';
+
+const payload = {
+  student_id: '68ee6cab8d28802fc7a03109',
+  session_id: '68ee6b758d28802fc7a03077',
+  staff_who_approve: Object(userThatApproveId),
+  term: 'second_term',
+  payment_id: Object(paymentId),
+  amount_paying: 11000,
+  // teller_number: 'WB-953948',
+  bank_name: 'Wema Bank',
+  payment_method: 'bank',
+  userId: Object(userThatApproveId),
+  userRole: 'super_admin',
+};
+
+// calculateAndUpdateStudentPaymentDocuments(payload, 'bank');
+
 export {
+  addFeeToStudentPaymentDoc,
   calculateAndUpdateStudentPaymentDocuments,
-  processFeePayment,
   mandatoryFeeAdditionToPaymentDocuments,
   optionalFeeAdditionToPaymentDocuments,
-  addFeeToStudentPaymentDoc,
+  processFeePayment,
 };

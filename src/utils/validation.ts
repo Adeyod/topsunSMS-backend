@@ -1160,7 +1160,7 @@ const bankApprovalValidation = <T extends BankApprovalType>(
   const validationSchema = Joi.object({
     bank_name: commonRules.bank_name,
     amount_paid: commonRules.amount_paying,
-    transaction_id: commonRules.teller_number,
+    // transaction_id: commonRules.teller_number,
   });
 
   const { error, value } = validationSchema.validate(payload);
@@ -1181,7 +1181,7 @@ const bankPaymentValidation = <T extends BankPaymentType>(
     amount_paying: commonRules.amount_paying,
     class_id: commonRules.class_id,
     bank_name: commonRules.bank_name,
-    teller_number: commonRules.teller_number,
+    // teller_number: commonRules.teller_number,
   });
 
   const { error, value } = validationSchema.validate(payload);

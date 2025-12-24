@@ -1,26 +1,25 @@
 import express from 'express';
 import {
-  createPaymentDocumentForAllStudent,
-  getAllStudentPaymentDocumentsByStudentId,
+  addFeeToStudentPaymentDocument,
   approveBankPaymentWithId,
-  getAllPaymentDocuments,
-  getAllOutstandingPaymentDocumentsOfStudent,
-  getCurrentTermPaymentDocuments,
-  getPaymentTransactionHistoryByStudentId,
-  getPaymentDetailsByPaymentId,
+  createPaymentDocumentForAllStudent,
   getAPaymentDocumentOfStudentByStudentIdAndPaymentId,
-  getAllPaymentSummaryFailedAndSuccessful,
   getAPaymentNeedingApprovalById,
-  getAllPaymentsNeedingApproval,
+  getAllOutstandingPaymentDocumentsOfStudent,
+  getAllPaymentDocuments,
+  getAllPaymentSummaryFailedAndSuccessful,
   getAllPaymentsApprovedByBursarId,
+  getAllPaymentsNeedingApproval,
+  getAllStudentPaymentDocumentsByStudentId,
+  getCurrentTermPaymentDocuments,
+  getPaymentDetailsByPaymentId,
+  getPaymentTransactionHistoryByStudentId,
   makeBankPayment,
   makeCashPayment,
-  addFeeToStudentPaymentDocument,
-
-  ////////////////////////////////////
 } from '../controllers/payment.controller';
-import { verifyAccessToken } from '../middleware/jwtAuth';
 import { permission } from '../middleware/authorization';
+import { verifyAccessToken } from '../middleware/jwtAuth';
+import uploadFile from '../middleware/multer';
 
 const router = express.Router();
 
@@ -128,6 +127,7 @@ router.put(
 router.post(
   '/make-bank-payment/:session_id/:student_id',
   permission(['parent', 'student']),
+  uploadFile.single('image'),
   makeBankPayment
 );
 
