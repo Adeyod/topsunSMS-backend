@@ -3,6 +3,7 @@ import {
   addFeeToStudentPaymentDocument,
   approveBankPaymentWithId,
   createPaymentDocumentForAllStudent,
+  declineBankPaymentWithId,
   getAPaymentDocumentOfStudentByStudentIdAndPaymentId,
   getAPaymentNeedingApprovalById,
   getAllOutstandingPaymentDocumentsOfStudent,
@@ -122,6 +123,12 @@ router.put(
   '/approve-bank-payment/:payment_id',
   permission(['super_admin', 'admin']),
   approveBankPaymentWithId
+);
+
+router.delete(
+  '/decline-bank-payment/:student_id/:payment_id',
+  permission(['super_admin', 'admin']),
+  declineBankPaymentWithId
 );
 
 router.post(

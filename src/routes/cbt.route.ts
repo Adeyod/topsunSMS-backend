@@ -1,30 +1,30 @@
 import express from 'express';
 import {
-  getCbtAssessmentDocumentById,
+  classTeacherAuthorizeStudentsToWriteSubjectCbt,
+  createTermCbtAssessmentDocument,
+  createTermClassCbtAssessmentTimetable,
+  endAllActiveTermCbtAssessmentDocumentsInATerm,
+  endTakingASubjectInATimetableForATerm,
+  endTermCbtAssessmentDocument,
+  getAllCbtAssessmentDocument,
   getAllClassCbtAssessmentTimetables,
-  getTermClassCbtAssessmentTimetables,
+  getCbtAssessmentDocumentById,
   getTermCbtAssessmentDocument,
+  getTermClassCbtAssessmentTimetables,
+  setSubjectCbtObjQuestionsForAClass,
+  setSubjectCbtTheroyQuestionsForAClass,
+  startSubjectCbtObjCbtAssessmentForAClass,
   submitSubjectCbtObjCbtAssessmentForAClass,
   updateSubjectCbtObjCbtAssessmentAnswersForAClass,
   updateSubjectCbtObjCbtAssessmentRemainingTimeForAClass,
-  classTeacherAuthorizeStudentsToWriteSubjectCbt,
-  createTermClassCbtAssessmentTimetable,
   updateTermClassCbtAssessmentTimetableToChangeSubjectDate,
-  startSubjectCbtObjCbtAssessmentForAClass,
-  setSubjectCbtObjQuestionsForAClass,
-  createTermCbtAssessmentDocument,
-  endTermCbtAssessmentDocument,
-  setSubjectCbtTheroyQuestionsForAClass,
-  getAllCbtAssessmentDocument,
-  endTakingASubjectInATimetableForATerm,
-  endAllActiveTermCbtAssessmentDocumentsInATerm,
 } from '../controllers/cbt.controller';
 // import requireFeatureAccess from '../middleware/featureAccess';
 import { permission } from '../middleware/authorization';
 // import getSchoolId from '../middleware/getSchoolId';
 // import schoolSubDomain from '../middleware/subDomain';
-import { verifyAccessToken } from '../middleware/jwtAuth';
 import { developerProtected } from '../middleware/developerProtected';
+import { verifyAccessToken } from '../middleware/jwtAuth';
 
 const router = express.Router();
 

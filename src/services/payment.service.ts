@@ -1459,6 +1459,7 @@ import {
   AddFeeToStudentPaymentDocType,
   AddingFeeToPaymentPayload,
   ApproveStudentPayloadType,
+  DeclineStudentPayloadType,
   PaymentDataType,
   PaymentDocument,
   PaymentHistoryDataType,
@@ -1476,7 +1477,7 @@ import {
   calculateAndUpdateStudentPaymentDocuments,
 } from '../repository/payment.repository';
 import { AppError } from '../utils/app.error';
-import { handleFileUpload } from '../utils/cloudinary';
+import { cloudinaryDestroy, handleFileUpload } from '../utils/cloudinary';
 // import BusSubscription from '../models/bus_subscription.model';
 
 const createSchoolFeePaymentDocumentForStudents = async (
@@ -2061,15 +2062,41 @@ const fetchPaymentTransactionHistoryByStudentId = async (
   }
 };
 
+// const payload = {
+//   payment_id: '694c57163676750d46a01e05',
+//   userId:
+// }
 const fetchPaymentDetailsByPaymentId = async (
   payload: PaymentDataType
 ): Promise<PaymentDocument> => {
   try {
     const { payment_id, userId, userRole } = payload;
 
-    const paymentDetails = await Payment.findOne({
-      _id: payment_id,
-    });
+    const paymentDetails = await Payment.findOne(
+      {
+        $or: [
+          { 'payment_summary._id': payment_id },
+          { 'waiting_for_confirmation._id': payment_id },
+        ],
+      },
+      {
+        _id: 1,
+        student: 1,
+        class: 1,
+        class_level: 1,
+        session: 1,
+        term: 1,
+        fees_breakdown: 1,
+        is_submit_response: 1,
+        total_amount: 1,
+        is_payment_complete: 1,
+        remaining_amount: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        payment_summary: { $elemMatch: { _id: payment_id } },
+        waiting_for_confirmation: { $elemMatch: { _id: payment_id } },
+      }
+    );
 
     if (!paymentDetails) {
       throw new AppError(
@@ -2079,7 +2106,9 @@ const fetchPaymentDetailsByPaymentId = async (
     }
 
     if (userRole === 'student') {
-      if (paymentDetails.student !== userId) {
+      console.log('paymentDetails.student:', paymentDetails.student);
+      console.log('userId:', userId);
+      if (paymentDetails.student.toString() !== userId.toString()) {
         throw new AppError(
           `Payment document with ID: ${payment_id} does not belong to you.`,
           403
@@ -2090,7 +2119,18 @@ const fetchPaymentDetailsByPaymentId = async (
         _id: paymentDetails.student,
       });
 
-      if (!student?.parent_id?.includes(userId)) {
+      if (!student?.parent_id || student.parent_id.length === 0) {
+        throw new AppError(
+          'You are not a parent to the student that owns this payment document.',
+          403
+        );
+      }
+
+      const parentExist = new mongoose.Types.ObjectId(String(userId));
+
+      const exists = student?.parent_id.some((id) => id.equals(parentExist));
+
+      if (!exists) {
         throw new AppError(
           `You are not a parent to the student that owns this payment document.`,
           403
@@ -2421,6 +2461,59 @@ const studentCashFeePayment = async (payload: StudentFeePaymentType) => {
   }
 };
 
+const declineStudentBankPayment = async (
+  payload: DeclineStudentPayloadType
+) => {
+  const { payment_id, bursar_id } = payload;
+  try {
+    const findPayment = await Payment.findOne({
+      waiting_for_confirmation: {
+        $elemMatch: {
+          _id: payment_id,
+        },
+      },
+    });
+
+    // console.log('findPayment:', findPayment);
+
+    if (!findPayment) {
+      throw new AppError('Payment not found.', 404);
+    }
+
+    const actualTransaction = findPayment.waiting_for_confirmation.find(
+      (p) => p._id?.toString() === payment_id
+    );
+
+    // console.log('actualTransaction:', actualTransaction);
+    // console.log('actualTransaction2:', actualTransaction2);
+
+    if (!actualTransaction || !actualTransaction._id) {
+      throw new AppError(`Transaction not found`, 404);
+    }
+
+    if (actualTransaction.payment_evidence_image.url) {
+      await cloudinaryDestroy(
+        actualTransaction.payment_evidence_image.public_url
+      );
+    }
+
+    const result = findPayment.waiting_for_confirmation.pull(actualTransaction);
+
+    if (!result) {
+      throw new AppError('Unable to decline student payment.', 400);
+    }
+
+    return result;
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw new AppError(error.message, error.statusCode);
+    } else {
+      console.error(error);
+      throw new Error('Something happened');
+    }
+  }
+};
+
 const approveStudentBankPayment = async (
   payload: ApproveStudentPayloadType
 ) => {
@@ -2441,10 +2534,6 @@ const approveStudentBankPayment = async (
     }
 
     const actualTransaction = findPayment.waiting_for_confirmation.find(
-      (p) => p._id?.toString() === payment_id
-    );
-
-    const actualTransaction2 = findPayment.waiting_for_confirmation.find(
       (p) => p._id?.toString() === payment_id
     );
 
@@ -2773,6 +2862,7 @@ export {
   addingFeeToStudentPaymentDocument,
   approveStudentBankPayment,
   createSchoolFeePaymentDocumentForStudents,
+  declineStudentBankPayment,
   fetchAllPaymentDocuments,
   fetchAllPaymentsApprovedByBursarId,
   fetchAllPaymentsNeedingApproval,

@@ -718,6 +718,7 @@ import {
   addingFeeToStudentPaymentDocument,
   approveStudentBankPayment,
   createSchoolFeePaymentDocumentForStudents,
+  declineStudentBankPayment,
   fetchAPaymentNeedingApprovalById,
   fetchAllPaymentDocuments,
   fetchAllPaymentSummaryFailedAndSuccessful,
@@ -1150,7 +1151,6 @@ const getPaymentTransactionHistoryByStudentId = catchErrors(
 
 const getPaymentDetailsByPaymentId = catchErrors(async (req, res) => {
   // const start = Date.now();
-
   const { payment_id } = req.params;
   const userId = req.user?.userId;
   const userRole = req.user?.userRole;
@@ -1361,6 +1361,36 @@ const approveBankPaymentWithId = catchErrors(async (req, res) => {
   });
 });
 
+const declineBankPaymentWithId = catchErrors(async (req, res) => {
+  const { student_id, payment_id } = req.params;
+  const bursar_id = req.user?.userId;
+
+  if (!bursar_id) {
+    throw new AppError('Please login to continue.', 400);
+  }
+
+  if (!payment_id) {
+    throw new AppError('Payment ID is required to proceed.', 400);
+  }
+
+  const payload = {
+    student_id,
+    payment_id,
+    bursar_id,
+  };
+
+  const result = await declineStudentBankPayment(payload);
+  if (!result) {
+    throw new AppError('Unable to decline student bank payment.', 400);
+  }
+
+  return res.status(200).json({
+    message: 'Student payment was successfully declined.',
+    status: 200,
+    success: true,
+  });
+});
+
 const makeBankPayment = catchErrors(async (req, res) => {
   const { student_id, session_id } = req.params;
   const {
@@ -1556,6 +1586,7 @@ export {
   ////////////////////////////////////////////////////
   approveBankPaymentWithId,
   createPaymentDocumentForAllStudent,
+  declineBankPaymentWithId,
   getAPaymentDocumentOfStudentByStudentIdAndPaymentId,
   getAPaymentNeedingApprovalById,
   getAllOutstandingPaymentDocumentsOfStudent,

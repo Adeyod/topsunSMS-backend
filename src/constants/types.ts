@@ -2118,6 +2118,12 @@ type AssignmentMarkingPayloadType = {
   userId: mongoose.Types.ObjectId;
 };
 
+type DeclineStudentPayloadType = {
+  payment_id: string;
+  student_id: string;
+  bursar_id: mongoose.Types.ObjectId;
+};
+
 export {
   AccessModeType,
   AccountCreationReturnType,
@@ -2193,6 +2199,7 @@ export {
   CumScoreParamType,
   CustomerCreationPayloadType,
   CutoffMinutesCreationPayload,
+  DeclineStudentPayloadType,
   EffectiveAreasPayloadType,
   EffectiveAreasValidationType,
   EmailJobData,

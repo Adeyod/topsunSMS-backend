@@ -569,7 +569,6 @@ const calculateAndUpdateStudentPaymentDocuments = async (
 
       if (payment_type === 'bank') {
         if (paymentObjToPull?.payment_evidence_image.url) {
-          console.log('I am running delete 1');
           await cloudinaryDestroy(
             paymentObjToPull.payment_evidence_image.public_url
           );
