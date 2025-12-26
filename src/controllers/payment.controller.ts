@@ -1323,8 +1323,9 @@ const approveBankPaymentWithId = catchErrors(async (req, res) => {
   const { payment_id } = req.params;
   const { amount_paid, bank_name } = req.body;
   const bursar_id = req.user?.userId;
+  const bursarRole = req.user?.userRole;
 
-  if (!bursar_id) {
+  if (!bursar_id || !bursarRole) {
     throw new AppError('Please login to continue.', 400);
   }
 
@@ -1347,6 +1348,7 @@ const approveBankPaymentWithId = catchErrors(async (req, res) => {
     payment_id,
     bursar_id,
     amount_paid,
+    bursarRole,
   };
   const result = await approveStudentBankPayment(paymentPayload);
   if (!result) {
@@ -1364,8 +1366,9 @@ const approveBankPaymentWithId = catchErrors(async (req, res) => {
 const declineBankPaymentWithId = catchErrors(async (req, res) => {
   const { student_id, payment_id } = req.params;
   const bursar_id = req.user?.userId;
+  const bursarRole = req.user?.userRole;
 
-  if (!bursar_id) {
+  if (!bursar_id || !bursarRole) {
     throw new AppError('Please login to continue.', 400);
   }
 
@@ -1377,6 +1380,7 @@ const declineBankPaymentWithId = catchErrors(async (req, res) => {
     student_id,
     payment_id,
     bursar_id,
+    bursarRole,
   };
 
   const result = await declineStudentBankPayment(payload);
@@ -1388,6 +1392,7 @@ const declineBankPaymentWithId = catchErrors(async (req, res) => {
     message: 'Student payment was successfully declined.',
     status: 200,
     success: true,
+    result,
   });
 });
 
@@ -1497,6 +1502,13 @@ const makeCashPayment = catchErrors(async (req, res) => {
 
   const { success, value } = validateInput;
 
+  const bursar_id = req.user?.userId;
+  const bursarRole = req.user?.userRole;
+
+  if (!bursarRole || !bursar_id) {
+    throw new AppError('Please login to continue.', 400);
+  }
+
   const paymentInput = {
     student_id: value.student_id,
     session_id: value.session_id,
@@ -1504,6 +1516,8 @@ const makeCashPayment = catchErrors(async (req, res) => {
     amount_paying: value.amount_paying,
     class_id: value.class_id,
     payment_method,
+    bursar_id,
+    bursarRole,
   };
 
   const result = await studentCashFeePayment(paymentInput);

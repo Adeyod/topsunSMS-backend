@@ -326,7 +326,7 @@ import {
   AddFeeToStudentPaymentDocType,
   PaymentPayloadMandatoryFeeType,
   PaymentPayloadOptionalFeeType,
-  StudentFeePaymentType,
+  StudentFeePaymentTypeWithBursarRole,
 } from '../constants/types';
 import ClassEnrolment from '../models/classes_enrolment.model';
 import Payment from '../models/payment.model';
@@ -479,7 +479,7 @@ const processFeePayment = async (studentPaymentObj: string) => {
 };
 
 const calculateAndUpdateStudentPaymentDocuments = async (
-  payload: StudentFeePaymentType,
+  payload: StudentFeePaymentTypeWithBursarRole,
   payment_type: 'cash' | 'bank'
 ) => {
   try {
@@ -557,10 +557,11 @@ const calculateAndUpdateStudentPaymentDocuments = async (
       const doc = {
         amount_paid: remainingAmountToPay,
         date_paid: new Date(),
-        // transaction_id: payload.teller_number ? payload.teller_number : '',
         bank_name: payload.bank_name && payload.bank_name,
         staff_who_approve:
           payload.staff_who_approve && payload.staff_who_approve,
+        approved_by_model:
+          payload.bursarRole === 'super_admin' ? 'SuperAdmin' : 'Admin',
         status: paymentStatusEnum[1],
         payment_method: payload.payment_method,
       };
@@ -615,6 +616,8 @@ const calculateAndUpdateStudentPaymentDocuments = async (
               bank_name: payload.bank_name && payload.bank_name,
               staff_who_approve:
                 payload.staff_who_approve && payload.staff_who_approve,
+              approved_by_model:
+                payload.bursarRole === 'super_admin' ? 'SuperAdmin' : 'Admin',
             };
 
             if (paymentObjToPull?.payment_evidence_image.url) {
@@ -640,6 +643,8 @@ const calculateAndUpdateStudentPaymentDocuments = async (
               bank_name: payload.bank_name && payload.bank_name,
               staff_who_approve:
                 payload.staff_who_approve && payload.staff_who_approve,
+              approved_by_model:
+                payload.bursarRole === 'super_admin' ? 'SuperAdmin' : 'Admin',
             };
 
             if (paymentObjToPull?.payment_evidence_image.url) {
@@ -710,6 +715,8 @@ const calculateAndUpdateStudentPaymentDocuments = async (
         bank_name: payload.bank_name && payload.bank_name,
         staff_who_approve:
           payload.staff_who_approve && payload.staff_who_approve,
+        approved_by_model:
+          payload.bursarRole === 'super_admin' ? 'SuperAdmin' : 'Admin',
       };
 
       if (payment_type === 'bank') {

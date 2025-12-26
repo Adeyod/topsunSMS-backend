@@ -1464,6 +1464,7 @@ import {
   PaymentDocument,
   PaymentHistoryDataType,
   StudentFeePaymentType,
+  StudentFeePaymentTypeWithBursarRole,
   StudentPaymentHistoryType,
   UserDocument,
   WaitingForConfirmationType,
@@ -2417,7 +2418,9 @@ const studentBankFeePayment = async (
   }
 };
 
-const studentCashFeePayment = async (payload: StudentFeePaymentType) => {
+const studentCashFeePayment = async (
+  payload: StudentFeePaymentTypeWithBursarRole
+) => {
   try {
     const { student_id, session_id, term, amount_paying, payment_method } =
       payload;
@@ -2464,7 +2467,7 @@ const studentCashFeePayment = async (payload: StudentFeePaymentType) => {
 const declineStudentBankPayment = async (
   payload: DeclineStudentPayloadType
 ) => {
-  const { payment_id, bursar_id } = payload;
+  const { payment_id, bursar_id, bursarRole } = payload;
   try {
     const findPayment = await Payment.findOne({
       waiting_for_confirmation: {
@@ -2497,7 +2500,20 @@ const declineStudentBankPayment = async (
       );
     }
 
+    const doc = {
+      amount_paid: actualTransaction.amount_paid,
+      date_paid: actualTransaction.date_paid,
+      bank_name: actualTransaction.bank_name,
+      staff_who_disapprove: bursar_id,
+      approved_by_model: bursarRole === 'super_admin' ? 'SuperAdmin' : 'Admin',
+      status: paymentStatusEnum[2],
+      payment_method: actualTransaction.payment_method,
+    };
+
+    findPayment.declined_payment_summary.push(doc);
+
     const result = findPayment.waiting_for_confirmation.pull(actualTransaction);
+    await findPayment.save();
 
     if (!result) {
       throw new AppError('Unable to decline student payment.', 400);
@@ -2517,7 +2533,7 @@ const declineStudentBankPayment = async (
 const approveStudentBankPayment = async (
   payload: ApproveStudentPayloadType
 ) => {
-  const { bank_name, payment_id, bursar_id, amount_paid } = payload;
+  const { bank_name, payment_id, bursar_id, amount_paid, bursarRole } = payload;
   try {
     const findPayment = await Payment.findOne({
       waiting_for_confirmation: {
@@ -2579,6 +2595,7 @@ const approveStudentBankPayment = async (
       // teller_number: actualTransaction.transaction_id,
       payment_id: actualTransaction._id,
       staff_who_approve: bursar_id,
+      bursarRole: bursarRole,
       payment_method: 'bank',
     };
 

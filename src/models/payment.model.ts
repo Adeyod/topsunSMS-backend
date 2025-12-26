@@ -37,7 +37,14 @@ const paymentSchema = new mongoose.Schema<PaymentDocument>(
             amount: { type: Number, required: true },
           },
         ],
-        staff_who_approve: { type: Schema.Types.ObjectId, ref: 'NonTeaching' },
+        staff_who_approve: {
+          type: Schema.Types.ObjectId,
+          refPath: 'approved_by_model',
+        },
+        approved_by_model: {
+          type: String,
+          enum: ['SuperAdmin', 'Admin'],
+        },
         status: {
           type: String,
           enum: paymentStatusEnum,
@@ -59,7 +66,36 @@ const paymentSchema = new mongoose.Schema<PaymentDocument>(
           },
         ],
         bank_name: { type: String },
-        staff_who_approve: { type: Schema.Types.ObjectId, ref: 'NonTeaching' },
+        staff_who_approve: {
+          type: Schema.Types.ObjectId,
+          refPath: 'approved_by_model',
+        },
+        approved_by_model: {
+          type: String,
+          enum: ['SuperAdmin', 'Admin'],
+        },
+        status: {
+          type: String,
+          enum: paymentStatusEnum,
+          default: paymentStatusEnum[0],
+        },
+      },
+    ],
+    declined_payment_summary: [
+      {
+        amount_paid: { type: Number },
+        date_paid: { type: Date, default: Date.now },
+        payment_method: { type: String, enum: paymentEnum },
+        message: { type: String },
+        bank_name: { type: String },
+        staff_who_disapprove: {
+          type: Schema.Types.ObjectId,
+          refPath: 'approved_by_model',
+        },
+        approved_by_model: {
+          type: String,
+          enum: ['SuperAdmin', 'Admin'],
+        },
         status: {
           type: String,
           enum: paymentStatusEnum,

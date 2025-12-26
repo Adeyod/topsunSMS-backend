@@ -729,7 +729,9 @@ type PaymentSummaryType = {
   payment_method: string;
   // transaction_id: string;
   status: string;
+  approved_by_model: string;
   staff_who_approve?: mongoose.Types.ObjectId;
+  staff_who_disapprove?: mongoose.Types.ObjectId;
   // fees_payment_breakdown: FeeBreakdownType[];
 };
 
@@ -751,6 +753,7 @@ type PaymentDocument = Document & {
   is_submit_response: boolean;
   remaining_amount: number;
   payment_summary: PaymentSummaryType[];
+  declined_payment_summary: PaymentSummaryType[];
   waiting_for_confirmation: mongoose.Types.DocumentArray<WaitingForConfirmationType>;
 };
 
@@ -1960,12 +1963,17 @@ type StudentFeePaymentType = {
   userRole?: string;
 };
 
+type StudentFeePaymentTypeWithBursarRole = StudentFeePaymentType & {
+  bursarRole: string;
+};
+
 type ApproveStudentPayloadType = {
   amount_paid: number;
   // transaction_id: string;
   bank_name: string;
   payment_id: string;
   bursar_id: mongoose.Types.ObjectId;
+  bursarRole: string;
 };
 
 type WaitingForConfirmationType = {
@@ -1981,6 +1989,7 @@ type WaitingForConfirmationType = {
   // fees_payment_breakdown: FeeBreakdownType[];
   status: string;
   staff_who_approve?: mongoose.Types.ObjectId;
+  approved_by_model: string;
   _id?: mongoose.Types.ObjectId;
 };
 
@@ -2121,6 +2130,7 @@ type AssignmentMarkingPayloadType = {
 type DeclineStudentPayloadType = {
   payment_id: string;
   student_id: string;
+  bursarRole: string;
   bursar_id: mongoose.Types.ObjectId;
 };
 
@@ -2298,6 +2308,7 @@ export {
   StudentDocument,
   StudentEnrolmentType,
   StudentFeePaymentType,
+  StudentFeePaymentTypeWithBursarRole,
   StudentLinkingType,
   StudentNotificationType,
   StudentPaymentHistoryType,
