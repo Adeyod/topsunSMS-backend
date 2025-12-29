@@ -365,6 +365,8 @@ const fetchTermClassCbtAssessmentTimetable = async (
   try {
     const { academic_session_id, class_id, term } = payload;
 
+    console.log('payload:', payload);
+
     const classId = Object(class_id);
     const academicSessionId = Object(academic_session_id);
 

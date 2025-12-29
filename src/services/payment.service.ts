@@ -2779,16 +2779,6 @@ const fetchAllPaymentsNeedingApproval = async (
         return filteredResponse;
       })
       .flat();
-    const expectedReturn2 = result
-      .map(
-        (payment) => (
-          payment._id,
-          payment.waiting_for_confirmation.filter(
-            (p) => p.payment_method === 'bank'
-          )
-        )
-      )
-      .flat();
 
     const paymentDoc = expectedReturn as WaitingForConfirmationType[];
 

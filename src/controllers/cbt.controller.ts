@@ -1,36 +1,31 @@
-import mongoose from 'mongoose';
 import { triggerTypeEnum } from '../constants/enum';
 import {
-  subjectCbtObjCbtAssessmentRemainingTimeUpdate,
+  allActiveTermCbtAssessmentDocumentsInATermEnding,
+  endSubjectInATimetable,
+  fetchAllCbtAssessmentDocument,
+  fetchAllClassCbtAssessmentTimetables,
+  fetchCbtAssessmentDocumentById,
+  fetchTermCbtAssessmentDocument,
   fetchTermClassCbtAssessmentTimetable,
+  objQestionSetting,
+  studentCbtSubjectCbtAssessmentAuthorization,
+  subjectCbtObjCbtAssessmentRemainingTimeUpdate,
+  subjectCbtObjCbtAssessmentStarting,
   subjectCbtObjCbtAssessmentSubmission,
   subjectCbtObjCbtAssessmentUpdate,
-  studentCbtSubjectCbtAssessmentAuthorization,
-  termClassCbtAssessmentTimetableCreation,
-  subjectCbtObjCbtAssessmentStarting,
   termCbtAssessmentDocumentCreation,
-  objQestionSetting,
-  theoryQestionSetting,
-  fetchTermCbtAssessmentDocument,
-  fetchCbtAssessmentDocumentById,
-  fetchAllClassCbtAssessmentTimetables,
-  fetchAllCbtAssessmentDocument,
-  endSubjectInATimetable,
   termCbtAssessmentDocumentEnding,
-  allActiveTermCbtAssessmentDocumentsInATermEnding,
+  termClassCbtAssessmentTimetableCreation,
   termClassCbtAssessmentTimetableToChangeSubjectDateUpdating,
 } from '../services/cbt.service';
 import { AppError } from '../utils/app.error';
 import catchErrors from '../utils/tryCatch';
 import {
-  joiValidateQuestionArray,
-  joiValidateExamInputFields,
-  joiValidateTimetableArray,
   joiValidateAssessmentDocumentArray,
   joiValidateNewDateTimetable,
+  joiValidateQuestionArray,
+  joiValidateTimetableArray,
 } from '../utils/validation';
-import { studentResultQueue } from '../utils/queue';
-import { QueueEvents } from 'bullmq';
 // import { saveLog } from '../logs/log.service';
 
 const getCbtAssessmentDocumentById = catchErrors(async (req, res) => {
@@ -263,6 +258,8 @@ const getTermCbtAssessmentDocument = catchErrors(async (req, res) => {
 const getTermClassCbtAssessmentTimetables = catchErrors(async (req, res) => {
   const { academic_session_id, class_id, term } = req.params;
 
+  console.log('req.params:', req.params);
+
   const requiredFields = {
     academic_session_id,
     class_id,
@@ -285,6 +282,8 @@ const getTermClassCbtAssessmentTimetables = catchErrors(async (req, res) => {
     class_id,
     term,
   };
+
+  console.log('req.params:', req.params);
 
   const result = await fetchTermClassCbtAssessmentTimetable(payload);
 
@@ -923,22 +922,22 @@ const setSubjectCbtTheroyQuestionsForAClass = catchErrors(async (req, res) => {
 });
 
 export {
+  classTeacherAuthorizeStudentsToWriteSubjectCbt,
+  createTermCbtAssessmentDocument,
+  createTermClassCbtAssessmentTimetable,
+  endAllActiveTermCbtAssessmentDocumentsInATerm,
   endTakingASubjectInATimetableForATerm,
-  getCbtAssessmentDocumentById,
-  updateTermClassCbtAssessmentTimetableToChangeSubjectDate,
+  endTermCbtAssessmentDocument,
+  getAllCbtAssessmentDocument,
   getAllClassCbtAssessmentTimetables,
-  getTermClassCbtAssessmentTimetables,
+  getCbtAssessmentDocumentById,
   getTermCbtAssessmentDocument,
+  getTermClassCbtAssessmentTimetables,
+  setSubjectCbtObjQuestionsForAClass,
+  setSubjectCbtTheroyQuestionsForAClass,
+  startSubjectCbtObjCbtAssessmentForAClass,
   submitSubjectCbtObjCbtAssessmentForAClass,
   updateSubjectCbtObjCbtAssessmentAnswersForAClass,
   updateSubjectCbtObjCbtAssessmentRemainingTimeForAClass,
-  classTeacherAuthorizeStudentsToWriteSubjectCbt,
-  createTermClassCbtAssessmentTimetable,
-  startSubjectCbtObjCbtAssessmentForAClass,
-  setSubjectCbtObjQuestionsForAClass,
-  createTermCbtAssessmentDocument,
-  setSubjectCbtTheroyQuestionsForAClass,
-  getAllCbtAssessmentDocument,
-  endAllActiveTermCbtAssessmentDocumentsInATerm,
-  endTermCbtAssessmentDocument,
+  updateTermClassCbtAssessmentTimetableToChangeSubjectDate,
 };

@@ -97,7 +97,7 @@ router.get(
 
 router.get(
   '/get-all-payments-needing-approval',
-  permission(['super_admin', 'admin']),
+  permission(['super_admin', 'admin', 'student']),
   getAllPaymentsNeedingApproval
 );
 

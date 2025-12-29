@@ -1,4 +1,3 @@
-import mongoose from 'mongoose';
 import {
   classLevelsCreation,
   cutoffMinutesCreation,
@@ -9,8 +8,6 @@ import { AppError } from '../utils/app.error';
 import { validateGradingArray } from '../utils/functions';
 import catchErrors from '../utils/tryCatch';
 import {
-  joiValidation,
-  schoolCreationValidation,
   joiValidateClassLevelArray,
   joiValidateCutoffs,
 } from '../utils/validation';
@@ -56,6 +53,8 @@ const createClassLevels = catchErrors(async (req, res) => {
 const createResultSetting = catchErrors(async (req, res) => {
   const { name_percent_array, grading_array, exam_components } = req.body;
   const { level } = req.params;
+
+  console.log('req.body:', req.body);
 
   if (name_percent_array.length === 0) {
     throw new AppError(
@@ -139,11 +138,4 @@ const createCutoffMinutes = catchErrors(async (req, res) => {
   });
 });
 
-export {
-  createResultSetting,
-  createCutoffMinutes,
-  createClassLevels,
-  // addPrincipalSignAndDate,
-  // addLogo,
-  // addSchoolImage,
-};
+export { createClassLevels, createCutoffMinutes, createResultSetting };

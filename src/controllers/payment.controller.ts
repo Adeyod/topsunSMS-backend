@@ -1392,7 +1392,6 @@ const declineBankPaymentWithId = catchErrors(async (req, res) => {
     message: 'Student payment was successfully declined.',
     status: 200,
     success: true,
-    result,
   });
 });
 
