@@ -258,8 +258,6 @@ const getTermCbtAssessmentDocument = catchErrors(async (req, res) => {
 const getTermClassCbtAssessmentTimetables = catchErrors(async (req, res) => {
   const { academic_session_id, class_id, term } = req.params;
 
-  console.log('req.params:', req.params);
-
   const requiredFields = {
     academic_session_id,
     class_id,
@@ -282,8 +280,6 @@ const getTermClassCbtAssessmentTimetables = catchErrors(async (req, res) => {
     class_id,
     term,
   };
-
-  console.log('req.params:', req.params);
 
   const result = await fetchTermClassCbtAssessmentTimetable(payload);
 

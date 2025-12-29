@@ -365,8 +365,6 @@ const fetchTermClassCbtAssessmentTimetable = async (
   try {
     const { academic_session_id, class_id, term } = payload;
 
-    console.log('payload:', payload);
-
     const classId = Object(class_id);
     const academicSessionId = Object(academic_session_id);
 
@@ -422,8 +420,6 @@ const fetchTermClassCbtAssessmentTimetable = async (
     );
 
     timetableExists.scheduled_subjects = formattedTimeTable;
-
-    console.log('timetableExists:', timetableExists);
 
     return timetableExists;
   } catch (error) {
