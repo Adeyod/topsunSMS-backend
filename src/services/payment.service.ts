@@ -2375,6 +2375,8 @@ const studentBankFeePayment = async (
 
     const imageUpload = await handleFileUpload(req, res);
 
+    console.log('imageUpload:', imageUpload);
+
     if (!imageUpload) {
       throw new AppError('Unable to upload profile image.', 400);
     }

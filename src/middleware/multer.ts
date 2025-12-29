@@ -1,6 +1,6 @@
-import multer, { FileFilterCallback } from 'multer';
-import fs from 'fs';
 import { Request } from 'express';
+import fs from 'fs';
+import multer, { FileFilterCallback } from 'multer';
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -17,7 +17,7 @@ const storage = multer.diskStorage({
   },
 });
 
-const maxLimit = 200000;
+const maxLimit = 1024 * 1024 * 1024 * 2;
 
 const fileFilter = (
   req: Request,
@@ -30,9 +30,6 @@ const fileFilter = (
     file.mimetype === 'image/jpg'
   ) {
     cb(null, true);
-  } else if (file.size > maxLimit) {
-    console.error('Max limit exceeded');
-    cb(new Error('File size exceeded.'));
   } else {
     cb(new Error('File format not supported.'));
   }
