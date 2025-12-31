@@ -723,6 +723,7 @@ type StudentUpdateType = {
 };
 
 type PaymentSummaryType = {
+  _id?: mongoose.Types.ObjectId;
   amount_paid: number;
   date_paid: Date;
   payment_method: string;
@@ -1992,6 +1993,15 @@ type WaitingForConfirmationType = {
   _id?: mongoose.Types.ObjectId;
 };
 
+type AggregatedPayment = {
+  _id: mongoose.Types.ObjectId;
+  payment_summary: WaitingForConfirmationType[];
+  waiting_for_confirmation: WaitingForConfirmationType[];
+  transaction_history: WaitingForConfirmationType[];
+  student: UserDocument;
+  class: ClassDocument;
+};
+
 type ChangeSubjectStartTimeType = {
   timetable_id: mongoose.Types.ObjectId;
   subject_id: mongoose.Types.ObjectId;
@@ -2144,6 +2154,7 @@ export {
   AddingNegotiatedChargesType,
   AddressValidationType,
   AdmissionValidationType,
+  AggregatedPayment,
   AllStudentResultsPayloadType,
   AnswerSubmissionObject,
   AnswerSubmissionType,

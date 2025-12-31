@@ -1711,7 +1711,7 @@ const getStudentSpecificResult = catchErrors(async (req, res) => {
   // await saveLog(savelogPayload);
 
   return res.status(200).json({
-    message: 'Subject results total calculated successfully.',
+    message: 'Subject result fetched successfully.',
     success: true,
     status: 200,
     result,

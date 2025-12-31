@@ -1102,7 +1102,7 @@ const getPaymentTransactionHistoryByStudentId = catchErrors(
     const payload = {
       student_id,
       userRole,
-      userId: Object(userId),
+      userId: userId,
     };
 
     const result = await fetchPaymentTransactionHistoryByStudentId(
@@ -1207,7 +1207,6 @@ const getPaymentDetailsByPaymentId = catchErrors(async (req, res) => {
 const getAPaymentDocumentOfStudentByStudentIdAndPaymentId = catchErrors(
   async (req, res) => {
     // const start = Date.now();
-
     const { student_id, payment_id } = req.params;
 
     if (!student_id || !payment_id) {

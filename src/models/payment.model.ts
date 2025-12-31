@@ -2,6 +2,42 @@ import mongoose, { Schema } from 'mongoose';
 import { paymentEnum, paymentStatusEnum } from '../constants/enum';
 import { PaymentDocument } from '../constants/types';
 // get the document and take out the following data:
+
+const staffActionSchema = new Schema(
+  {
+    amount_paid: { type: Number },
+    date_paid: { type: Date, default: Date.now },
+    payment_method: { type: String, enum: paymentEnum },
+    message: { type: String },
+    // transaction_id: { type: String },
+    bank_name: { type: String },
+    payment_evidence_image: {
+      url: { type: String },
+      public_url: { type: String },
+    },
+    fees_collection_breakdown: [
+      {
+        fee_name: { type: String },
+        amount: { type: Number },
+      },
+    ],
+    staff_who_approve: {
+      type: Schema.Types.ObjectId,
+      refPath: 'approved_by_model',
+    },
+    approved_by_model: {
+      type: String,
+      enum: ['SuperAdmin', 'Admin'],
+    },
+    status: {
+      type: String,
+      enum: paymentStatusEnum,
+      default: paymentStatusEnum[0],
+    },
+  },
+  { _id: false }
+);
+
 const paymentSchema = new mongoose.Schema<PaymentDocument>(
   {
     student: { type: Schema.Types.ObjectId, ref: 'Student', required: true },
@@ -19,90 +55,94 @@ const paymentSchema = new mongoose.Schema<PaymentDocument>(
     total_amount: { type: Number, required: true, default: 0 },
     is_payment_complete: { type: Boolean, default: false },
     remaining_amount: { type: Number, default: 0 },
-    waiting_for_confirmation: [
-      {
-        amount_paid: { type: Number },
-        date_paid: { type: Date, default: Date.now },
-        payment_method: { type: String, enum: paymentEnum },
-        message: { type: String },
-        // transaction_id: { type: String },
-        bank_name: { type: String },
-        payment_evidence_image: {
-          url: { type: String },
-          public_url: { type: String },
-        },
-        fees_collection_breakdown: [
-          {
-            fee_name: { type: String, required: true },
-            amount: { type: Number, required: true },
-          },
-        ],
-        staff_who_approve: {
-          type: Schema.Types.ObjectId,
-          refPath: 'approved_by_model',
-        },
-        approved_by_model: {
-          type: String,
-          enum: ['SuperAdmin', 'Admin'],
-        },
-        status: {
-          type: String,
-          enum: paymentStatusEnum,
-          default: paymentStatusEnum[0],
-        },
-      },
-    ],
-    payment_summary: [
-      {
-        amount_paid: { type: Number },
-        date_paid: { type: Date, default: Date.now },
-        payment_method: { type: String, enum: paymentEnum },
-        message: { type: String },
-        // transaction_id: { type: String },
-        fees_collection_breakdown: [
-          {
-            fee_name: { type: String, required: true },
-            amount: { type: Number, required: true },
-          },
-        ],
-        bank_name: { type: String },
-        staff_who_approve: {
-          type: Schema.Types.ObjectId,
-          refPath: 'approved_by_model',
-        },
-        approved_by_model: {
-          type: String,
-          enum: ['SuperAdmin', 'Admin'],
-        },
-        status: {
-          type: String,
-          enum: paymentStatusEnum,
-          default: paymentStatusEnum[0],
-        },
-      },
-    ],
-    declined_payment_summary: [
-      {
-        amount_paid: { type: Number },
-        date_paid: { type: Date, default: Date.now },
-        payment_method: { type: String, enum: paymentEnum },
-        message: { type: String },
-        bank_name: { type: String },
-        staff_who_disapprove: {
-          type: Schema.Types.ObjectId,
-          refPath: 'approved_by_model',
-        },
-        approved_by_model: {
-          type: String,
-          enum: ['SuperAdmin', 'Admin'],
-        },
-        status: {
-          type: String,
-          enum: paymentStatusEnum,
-          default: paymentStatusEnum[0],
-        },
-      },
-    ],
+    // waiting_for_confirmation: [
+    //   {
+    //     amount_paid: { type: Number },
+    //     date_paid: { type: Date, default: Date.now },
+    //     payment_method: { type: String, enum: paymentEnum },
+    //     message: { type: String },
+    //     // transaction_id: { type: String },
+    //     bank_name: { type: String },
+    //     payment_evidence_image: {
+    //       url: { type: String },
+    //       public_url: { type: String },
+    //     },
+    //     fees_collection_breakdown: [
+    //       {
+    //         fee_name: { type: String, required: true },
+    //         amount: { type: Number, required: true },
+    //       },
+    //     ],
+    //     staff_who_approve: {
+    //       type: Schema.Types.ObjectId,
+    //       refPath: 'waiting_for_confirmation.approved_by_model',
+    //     },
+    //     approved_by_model: {
+    //       type: String,
+    //       enum: ['SuperAdmin', 'Admin'],
+    //     },
+    //     status: {
+    //       type: String,
+    //       enum: paymentStatusEnum,
+    //       default: paymentStatusEnum[0],
+    //     },
+    //   },
+    // ],
+    // payment_summary: [
+    //   {
+    //     amount_paid: { type: Number },
+    //     date_paid: { type: Date, default: Date.now },
+    //     payment_method: { type: String, enum: paymentEnum },
+    //     message: { type: String },
+    //     // transaction_id: { type: String },
+    //     fees_collection_breakdown: [
+    //       {
+    //         fee_name: { type: String, required: true },
+    //         amount: { type: Number, required: true },
+    //       },
+    //     ],
+    //     bank_name: { type: String },
+    //     staff_who_approve: {
+    //       type: Schema.Types.ObjectId,
+    //       refPath: 'payment_summary.approved_by_model',
+    //     },
+    //     approved_by_model: {
+    //       type: String,
+    //       enum: ['SuperAdmin', 'Admin'],
+    //     },
+    //     status: {
+    //       type: String,
+    //       enum: paymentStatusEnum,
+    //       default: paymentStatusEnum[0],
+    //     },
+    //   },
+    // ],
+    // declined_payment_summary: [
+    //   {
+    //     amount_paid: { type: Number },
+    //     date_paid: { type: Date, default: Date.now },
+    //     payment_method: { type: String, enum: paymentEnum },
+    //     message: { type: String },
+    //     bank_name: { type: String },
+    //     staff_who_disapprove: {
+    //       type: Schema.Types.ObjectId,
+    //       refPath: 'declined_payment_summary.approved_by_model',
+    //     },
+    //     approved_by_model: {
+    //       type: String,
+    //       enum: ['SuperAdmin', 'Admin'],
+    //     },
+    //     status: {
+    //       type: String,
+    //       enum: paymentStatusEnum,
+    //       default: paymentStatusEnum[0],
+    //     },
+    //   },
+    // ],
+
+    waiting_for_confirmation: [staffActionSchema],
+    payment_summary: [staffActionSchema],
+    declined_payment_summary: [staffActionSchema],
   },
   { timestamps: true }
 );

@@ -1458,6 +1458,7 @@ import { paymentEnum, paymentStatusEnum } from '../constants/enum';
 import {
   AddFeeToStudentPaymentDocType,
   AddingFeeToPaymentPayload,
+  AggregatedPayment,
   ApproveStudentPayloadType,
   DeclineStudentPayloadType,
   PaymentDataType,
@@ -1995,10 +1996,11 @@ const fetchPaymentTransactionHistoryByStudentId = async (
   try {
     const { student_id, userId, userRole } = payload;
 
+    const studentId = new mongoose.Types.ObjectId(student_id);
     // Verify parent relationship if userRole is 'parent'
     if (student_id !== userId.toString() && userRole === 'parent') {
       const student = await Student.findOne({
-        _id: student_id,
+        _id: studentId,
       });
       if (student) {
         if (!student.parent_id?.includes(userId)) {
@@ -2012,7 +2014,7 @@ const fetchPaymentTransactionHistoryByStudentId = async (
 
     // Build the match stage
     const matchStage: any = {
-      student: new mongoose.Types.ObjectId(student_id),
+      student: studentId,
     };
 
     // Count total documents
@@ -2038,8 +2040,16 @@ const fetchPaymentTransactionHistoryByStudentId = async (
     // Run aggregation
     const [countResult, payments] = await Promise.all([
       countPromise,
-      Payment.aggregate(pipeline),
+      Payment.aggregate(pipeline).sort({ createdAt: -1 }),
     ]);
+
+    const populatedPayment = await Payment.populate(
+      payments as AggregatedPayment[],
+      [
+        { path: 'student', select: 'first_name last_name' },
+        { path: 'class', select: 'name level' },
+      ]
+    );
 
     const objPay = payments
       .flatMap((p) => p.transaction_history)
@@ -2048,10 +2058,11 @@ const fetchPaymentTransactionHistoryByStudentId = async (
           new Date(b.date_paid).getTime() - new Date(a.date_paid).getTime()
       );
 
+    console.log('objPay:', objPay);
     // const totalCount = countResult[0]?.totalCount || 0;
 
     return {
-      paymentObj: objPay as PaymentHistoryDataType[],
+      paymentObj: populatedPayment as unknown as PaymentHistoryDataType[],
       // totalCount,
     };
   } catch (error) {
@@ -2073,11 +2084,14 @@ const fetchPaymentDetailsByPaymentId = async (
   try {
     const { payment_id, userId, userRole } = payload;
 
+    console.log('payment_id:', payment_id);
+
+    const paymentId = new mongoose.Types.ObjectId(payment_id);
     const paymentDetails = await Payment.findOne(
       {
         $or: [
-          { 'payment_summary._id': payment_id },
-          { 'waiting_for_confirmation._id': payment_id },
+          { 'payment_summary._id': paymentId },
+          { 'waiting_for_confirmation._id': paymentId },
         ],
       },
       {
@@ -2094,10 +2108,13 @@ const fetchPaymentDetailsByPaymentId = async (
         remaining_amount: 1,
         createdAt: 1,
         updatedAt: 1,
-        payment_summary: { $elemMatch: { _id: payment_id } },
-        waiting_for_confirmation: { $elemMatch: { _id: payment_id } },
+        payment_summary: { $elemMatch: { _id: paymentId } },
+        waiting_for_confirmation: { $elemMatch: { _id: paymentId } },
       }
-    );
+    ).populate([
+      { path: 'student', select: 'first_name last_name' },
+      { path: 'class', select: 'name level' },
+    ]);
 
     if (!paymentDetails) {
       throw new AppError(
@@ -2154,10 +2171,19 @@ const fetchStudentSinglePaymentDoc = async (
   payment_id: string
 ) => {
   try {
+    const paymentId = new mongoose.Types.ObjectId(payment_id);
+    const studentId = new mongoose.Types.ObjectId(student_id);
+
     const response = await Payment.findOne({
-      _id: payment_id,
-      student: student_id,
-    });
+      _id: paymentId,
+      student: studentId,
+    }).populate([
+      {
+        path: 'student',
+        select: 'first_name last_name',
+      },
+      { path: 'class', select: 'name level' },
+    ]);
 
     if (!response) {
       throw new AppError('Payment not found', 404);
@@ -2252,6 +2278,8 @@ const fetchAllPaymentSummaryFailedAndSuccessful =
         $project: {
           _id: 1,
           payment_summary: 1,
+          student: 1,
+          class: 1,
           waiting_for_confirmation: 1,
           transaction_history: {
             $setUnion: [
@@ -2262,18 +2290,81 @@ const fetchAllPaymentSummaryFailedAndSuccessful =
         },
       });
 
-      const payments = await Payment.aggregate(pipeline);
+      // pipeline.push(
+      //   {
+      //     $unwind: {
+      //       path: '$payment_summary',
+      //       preserveNullAndEmptyArrays: true,
+      //     },
+      //   },
+      //   {
+      //     $lookup: {
+      //       from: 'admins', // Mongo collection name of Admin
+      //       localField: 'payment_summary.staff_who_approve',
+      //       foreignField: '_id',
+      //       as: 'payment_summary.staff_who_approve_admin',
+      //     },
+      //   },
+      //   {
+      //     $lookup: {
+      //       from: 'superadmins', // Mongo collection name of SuperAdmin
+      //       localField: 'payment_summary.staff_who_approve',
+      //       foreignField: '_id',
+      //       as: 'payment_summary.staff_who_approve_superadmin',
+      //     },
+      //   },
+      //   {
+      //     $addFields: {
+      //       'payment_summary.staff_who_approve': {
+      //         $concatArrays: [
+      //           '$payment_summary.staff_who_approve_admin',
+      //           '$payment_summary.staff_who_approve_superadmin',
+      //         ],
+      //       },
+      //     },
+      //   },
+      //   {
+      //     $group: {
+      //       _id: '$_id',
+      //       student: { $first: '$student' },
+      //       class: { $first: '$class' },
+      //       payment_summary: { $push: '$payment_summary' },
+      //       waiting_for_confirmation: { $first: '$waiting_for_confirmation' },
+      //     },
+      //   }
+      // );
 
-      const objPay = payments
+      // 68e5127390fd7987ee863330
+      const payments = await Payment.aggregate(pipeline).sort({
+        createdAt: -1,
+      });
+
+      const populatedPayment = await Payment.populate(
+        payments as AggregatedPayment[],
+        [
+          { path: 'student', select: 'first_name last_name' },
+          { path: 'class', select: 'name level' },
+        ]
+      );
+      // console.log('populatedPayment:', populatedPayment);
+
+      const objPay = (populatedPayment as any[])
         .flatMap((p) => p.transaction_history || [])
         .filter((t) => t && t.date_paid)
         .sort(
           (a, b) =>
             new Date(b.date_paid).getTime() - new Date(a.date_paid).getTime()
         );
+      // const objPay = (populatedPayment as any[])
+      //   .flatMap((p) => p.transaction_history || [])
+      //   .filter((t) => t && t.date_paid)
+      //   .sort(
+      //     (a, b) =>
+      //       new Date(b.date_paid).getTime() - new Date(a.date_paid).getTime()
+      //   );
 
       return {
-        paymentObj: objPay as PaymentHistoryDataType[],
+        paymentObj: populatedPayment as unknown as PaymentHistoryDataType[],
         // totalCount: count,
         // totalPages: pages,
       };
@@ -2624,17 +2715,6 @@ const approveStudentBankPayment = async (
     }
   }
 };
-
-const userThatApproveId = '68e5127390fd7987ee863330';
-const payload = {
-  transaction_id: 'WB-394857',
-  bank_name: 'Wema Bank',
-  payment_id: '694c1434e4d6bb65f2009c48',
-  bursar_id: Object(userThatApproveId),
-  amount_paid: 11000,
-};
-
-// approveStudentBankPayment(payload);
 
 const fetchAPaymentNeedingApprovalById = async (
   payment_id: string
