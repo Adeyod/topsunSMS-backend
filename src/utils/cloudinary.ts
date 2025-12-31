@@ -29,8 +29,6 @@ const cloudinaryUploads = async (
       options,
       (error: any, result: UploadApiResponse | undefined) => {
         if (error) {
-          console.log('cloudinary error:', error);
-
           return reject(
             new Error(`Cloudinary upload error: ${error.message || error}`)
           );
@@ -39,7 +37,6 @@ const cloudinaryUploads = async (
             url: result.secure_url,
             public_url: result.public_id,
           });
-          console.log('cloudinary result:', result);
         } else {
           reject(
             new Error('Unknown error occurred during the upload process.')
@@ -60,7 +57,6 @@ const singleFileUpload = async (
 ): Promise<CloudinaryType> => {
   const { path } = file;
   try {
-    console.log('path:', path);
     const newPath = await uploader(path);
     fs.unlinkSync(path);
     return newPath;

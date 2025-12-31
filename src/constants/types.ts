@@ -389,12 +389,6 @@ type UserInJwt = {
   exp: number;
 };
 
-type ResultSettingComponentType = {
-  name: string;
-  percentage: number;
-  column: number;
-};
-
 // type ExamComponentType = {
 //   exam_name: string;
 //   component: {
@@ -423,13 +417,18 @@ type ExamComponentType = {
 
 type ResultSettingDocument = {
   _id: mongoose.Types.ObjectId;
-  // school: mongoose.Types.ObjectId;
   components: ResultSettingComponentType[];
   exam_components: ExamComponentType;
   grading_and_remark: GradingAndRemarkType[];
   level: string;
   allow_cbt: boolean;
   exam_split: boolean;
+};
+
+type ResultSettingComponentType = {
+  name: string;
+  percentage: number;
+  column: number;
 };
 
 type ScoreType = {

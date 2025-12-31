@@ -662,6 +662,7 @@ const assignmentSubmission = async (payload: AssignmentSubmissionType) => {
     });
 
     assignmentExist.students_that_submits.push(studentExist._id);
+    await assignmentExist.save();
     await newSubmission.save();
 
     return newSubmission;

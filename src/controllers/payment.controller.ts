@@ -1459,9 +1459,9 @@ const makeBankPayment = catchErrors(async (req, res) => {
     userRole,
   };
 
-  console.log('req.file:', req.file);
-  console.log('req.body:', req.body);
-  console.log('req.files:', req.files);
+  // console.log('req.file:', req.file);
+  // console.log('req.body:', req.body);
+  // console.log('req.files:', req.files);
 
   const result = await studentBankFeePayment(req, paymentInput, res);
 
