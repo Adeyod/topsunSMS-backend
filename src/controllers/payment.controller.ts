@@ -1311,6 +1311,7 @@ const getAllPaymentSummaryFailedAndSuccessfulWithLookup = catchErrors(
     const searchQuery =
       typeof req.query.searchParams === 'string' ? req.query.searchParams : '';
 
+    console.log('searchQuery:', searchQuery);
     const result = await fetchAllPaymentSummaryFailedAndSuccessfulWithLookup(
       page,
       limit,

@@ -968,9 +968,18 @@ type StudentPaymentHistoryType = JwtUserObjType & {
 
 type PaymentHistoryDataType = {
   _id: mongoose.Types.ObjectId;
-  // payment_summary: PaymentSummaryType[];
-  // waiting_for_confirmation: WaitingForConfirmationType[];
   transaction_history: WaitingForConfirmationType[];
+};
+
+type PaymentHistoryDataTypeFlat = WaitingForConfirmationType & {
+  student: {
+    first_name: string;
+    last_name: string;
+  };
+  class: {
+    name: string;
+    level: string;
+  };
 };
 
 type PaymentDataType = JwtUserObjType & {
@@ -2282,6 +2291,7 @@ export {
   PaymentDataType,
   PaymentDocument,
   PaymentHistoryDataType,
+  PaymentHistoryDataTypeFlat,
   PaymentPayloadMandatoryFeeType,
   PaymentPayloadOptionalFeeType,
   PaymentPayloadType,

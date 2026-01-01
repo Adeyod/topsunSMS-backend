@@ -10,7 +10,7 @@ import {
   PaymentDataType,
   PaymentDocument,
   PaymentHistoryDataType,
-  PaymentSummaryType,
+  PaymentHistoryDataTypeFlat,
   StudentFeePaymentType,
   StudentFeePaymentTypeWithBursarRole,
   StudentPaymentHistoryType,
@@ -573,7 +573,11 @@ const fetchPaymentTransactionHistoryByStudentId = async (
         $project: {
           _id: 1,
           transaction_history: {
-            $setUnion: ['$payment_summary', '$waiting_for_confirmation'],
+            $setUnion: [
+              '$payment_summary',
+              '$declined_payment_summary',
+              '$waiting_for_confirmation',
+            ],
           },
         },
       },
@@ -745,6 +749,7 @@ const fetchAllPaymentSummaryFailedAndSuccessful = async (): Promise<{
     let query = Payment.find({
       $or: [
         { 'payment_summary.0': { $exists: true } },
+        { 'declined_payment_summary.0': { $exists: true } },
         { 'waiting_for_confirmation.0': { $exists: true } },
       ],
     }).populate([
@@ -762,6 +767,7 @@ const fetchAllPaymentSummaryFailedAndSuccessful = async (): Promise<{
     const mergedHistory = payments.flatMap((payment) => {
       const history = [
         ...(payment.payment_summary || []),
+        ...(payment.declined_payment_summary || []),
         ...(payment.waiting_for_confirmation || []),
       ];
 
@@ -796,11 +802,15 @@ const fetchAllPaymentSummaryFailedAndSuccessfulWithLookup = async (
   limit?: number,
   searchParams?: string
 ): Promise<{
-  resultArray: PaymentHistoryDataType[];
+  resultArray: PaymentHistoryDataTypeFlat[];
   totalCount: number;
   totalPages: number;
 }> => {
   try {
+    console.log('page:', page);
+    console.log('limit:', limit);
+    console.log('searchParams:', searchParams);
+
     const matchArray: any[] = [];
 
     if (searchParams && searchParams.trim() !== '') {
@@ -810,11 +820,14 @@ const fetchAllPaymentSummaryFailedAndSuccessfulWithLookup = async (
       matchArray.push({
         $or: [
           { 'payment_summary.payment_method': { $regex: regex } },
-          { 'payment_summary.transaction_id': { $regex: regex } },
           { 'payment_summary.bank_name': { $regex: regex } },
           { 'payment_summary.status': { $regex: regex } },
+
+          { 'declined_payment_summary.payment_method': { $regex: regex } },
+          { 'declined_payment_summary.bank_name': { $regex: regex } },
+          { 'declined_payment_summary.status': { $regex: regex } },
+
           { 'waiting_for_confirmation.payment_method': { $regex: regex } },
-          { 'waiting_for_confirmation.transaction_id': { $regex: regex } },
           { 'waiting_for_confirmation.bank_name': { $regex: regex } },
           { 'waiting_for_confirmation.status': { $regex: regex } },
           { 'waiting_for_confirmation.message': { $regex: regex } },
@@ -873,6 +886,9 @@ const fetchAllPaymentSummaryFailedAndSuccessfulWithLookup = async (
     const countPipeline = [...pipeline, { $count: 'totalCount' }];
     const countResult = await Payment.aggregate(countPipeline);
 
+    page === undefined ? (page = 1) : page;
+    limit === undefined ? (limit = 10) : limit;
+
     if (page !== undefined && limit !== undefined) {
       const skip = (page - 1) * limit;
       pipeline.push({ $skip: skip });
@@ -881,36 +897,49 @@ const fetchAllPaymentSummaryFailedAndSuccessfulWithLookup = async (
 
     const payments = await Payment.aggregate(pipeline);
 
-    const resultArray: PaymentHistoryDataType[] = payments.flatMap(
+    const resultArray: PaymentHistoryDataTypeFlat[] = payments.flatMap(
       (payment) => {
-        const filteredPaymentSummary = (payment.payment_summary || []).filter(
-          (item: PaymentSummaryType) =>
-            !searchParams ||
-            new RegExp(searchParams, 'i').test(item.status) ||
-            new RegExp(searchParams, 'i').test(item.payment_method) ||
-            new RegExp(searchParams, 'i').test(item.bank_name || '')
-        );
-
-        const filteredWaiting = (payment.waiting_for_confirmation || []).filter(
-          (item: WaitingForConfirmationType) =>
-            !searchParams ||
-            new RegExp(searchParams, 'i').test(item.status) ||
-            new RegExp(searchParams, 'i').test(item.payment_method) ||
-            new RegExp(searchParams, 'i').test(item.bank_name)
-        );
-
-        return [
-          ...filteredPaymentSummary.map((item: PaymentSummaryType) => ({
-            student: payment.student,
-            class: payment.class,
-            ...item,
-          })),
-          ...filteredWaiting.map((item: WaitingForConfirmationType) => ({
-            student: payment.student,
-            class: payment.class,
-            ...item,
-          })),
+        // Combine payment_summary and waiting_for_confirmation
+        const transaction_history: WaitingForConfirmationType[] = [
+          ...(payment.payment_summary || []),
+          ...(payment.declined_payment_summary || []),
+          ...(payment.waiting_for_confirmation || []),
         ];
+
+        return transaction_history
+          .filter((item) => {
+            if (!searchParams || searchParams.trim() === '') return true;
+
+            const regex = new RegExp(searchParams, 'i');
+
+            const itemMatch =
+              regex.test(item.status || '') ||
+              regex.test(item.payment_method || '') ||
+              regex.test(item.bank_name || '') ||
+              ('message' in item && regex.test((item as any).message || ''));
+
+            const student = payment.student as {
+              first_name?: string;
+              last_name?: string;
+            };
+            const classData = payment.class as {
+              name?: string;
+              level?: string;
+            };
+
+            const lookupMatch =
+              regex.test(student?.first_name || '') ||
+              regex.test(student?.last_name || '') ||
+              regex.test(classData?.name || '') ||
+              regex.test(classData?.level || '');
+
+            return itemMatch || lookupMatch;
+          })
+          .map((item) => ({
+            ...item,
+            student: payment.student,
+            class: payment.class,
+          }));
       }
     );
 
@@ -926,8 +955,10 @@ const fetchAllPaymentSummaryFailedAndSuccessfulWithLookup = async (
       paginatedResultArray = resultArray.slice(startIndex, endIndex);
     }
 
+    console.log('resultArray:', resultArray);
+    console.log('paginatedResultArray:', paginatedResultArray);
     return {
-      resultArray,
+      resultArray: paginatedResultArray,
       totalCount,
       totalPages,
     };
