@@ -729,6 +729,7 @@ type PaymentSummaryType = {
   payment_method: string;
   // transaction_id: string;
   status: string;
+  bank_name?: string;
   approved_by_model: string;
   staff_who_approve?: mongoose.Types.ObjectId;
   staff_who_disapprove?: mongoose.Types.ObjectId;
@@ -2285,6 +2286,7 @@ export {
   PaymentPayloadOptionalFeeType,
   PaymentPayloadType,
   PaymentPriorityType,
+  PaymentSummaryType,
   PaystackPayloadType,
   PaystackSchoolPaymentType,
   RefreshTokenType,

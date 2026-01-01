@@ -9,6 +9,7 @@ import {
   getAllOutstandingPaymentDocumentsOfStudent,
   getAllPaymentDocuments,
   getAllPaymentSummaryFailedAndSuccessful,
+  getAllPaymentSummaryFailedAndSuccessfulWithLookup,
   getAllPaymentsApprovedByBursarId,
   getAllPaymentsNeedingApproval,
   getAllStudentPaymentDocumentsByStudentId,
@@ -105,6 +106,12 @@ router.get(
   '/get-all-payment-summary-fail-and-success',
   permission(['super_admin', 'admin']),
   getAllPaymentSummaryFailedAndSuccessful
+);
+
+router.get(
+  '/get-all-payment-summary-fail-and-success-with-search',
+  permission(['super_admin', 'admin']),
+  getAllPaymentSummaryFailedAndSuccessfulWithLookup
 );
 
 router.get(

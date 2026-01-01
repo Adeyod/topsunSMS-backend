@@ -722,6 +722,7 @@ import {
   fetchAPaymentNeedingApprovalById,
   fetchAllPaymentDocuments,
   fetchAllPaymentSummaryFailedAndSuccessful,
+  fetchAllPaymentSummaryFailedAndSuccessfulWithLookup,
   fetchAllPaymentsApprovedByBursarId,
   fetchAllPaymentsNeedingApproval,
   fetchAllStudentPaymentDocumentsByStudentId,
@@ -1251,6 +1252,8 @@ const getAPaymentDocumentOfStudentByStudentIdAndPaymentId = catchErrors(
 
 const getAllPaymentSummaryFailedAndSuccessful = catchErrors(
   async (req, res) => {
+    console.log('I want to fetch all payment documents on the application');
+
     // const start = Date.now();
 
     // const page = req.query.page ? Number(req.query.page) : undefined;
@@ -1262,6 +1265,57 @@ const getAllPaymentSummaryFailedAndSuccessful = catchErrors(
     // page,
     // limit,
     // searchQuery
+
+    if (!result) {
+      throw new AppError('Unable to fetch all payment summary.', 400);
+    }
+
+    // const duration = Date.now() - start;
+
+    // const savelogPayload = {
+    //   level: 'info',
+    //   message: 'Payment summary was fetched successfully.',
+    //   service: 'klazik schools',
+    //   method: req.method,
+    //   route: req.originalUrl,
+    //   status_code: 200,
+    //   user_id: req.user?.userId,
+    //   user_role: req.user?.userRole,
+    //   ip: req.ip || 'unknown',
+    //   duration_ms: duration,
+    //   stack: undefined,
+    //   school_id: req.user?.school_id
+    //     ? new mongoose.Types.ObjectId(req.user.school_id)
+    //     : undefined,
+    // };
+
+    // await saveLog(savelogPayload);
+
+    return res.status(200).json({
+      message: 'Payment summary was fetched successfully.',
+      success: true,
+      status: 200,
+      payment_summary: result,
+    });
+  }
+);
+
+const getAllPaymentSummaryFailedAndSuccessfulWithLookup = catchErrors(
+  async (req, res) => {
+    console.log('I want to fetch all payment documents on the application');
+
+    // const start = Date.now();
+
+    const page = req.query.page ? Number(req.query.page) : undefined;
+    const limit = req.query.limit ? Number(req.query.limit) : undefined;
+    const searchQuery =
+      typeof req.query.searchParams === 'string' ? req.query.searchParams : '';
+
+    const result = await fetchAllPaymentSummaryFailedAndSuccessfulWithLookup(
+      page,
+      limit,
+      searchQuery
+    );
 
     if (!result) {
       throw new AppError('Unable to fetch all payment summary.', 400);
@@ -1608,6 +1662,7 @@ export {
   getAllOutstandingPaymentDocumentsOfStudent,
   getAllPaymentDocuments,
   getAllPaymentSummaryFailedAndSuccessful,
+  getAllPaymentSummaryFailedAndSuccessfulWithLookup,
   getAllPaymentsApprovedByBursarId,
   getAllPaymentsNeedingApproval,
   getAllStudentPaymentDocumentsByStudentId,
