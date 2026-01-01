@@ -807,10 +807,6 @@ const fetchAllPaymentSummaryFailedAndSuccessfulWithLookup = async (
   totalPages: number;
 }> => {
   try {
-    console.log('page:', page);
-    console.log('limit:', limit);
-    console.log('searchParams:', searchParams);
-
     const matchArray: any[] = [];
 
     if (searchParams && searchParams.trim() !== '') {
