@@ -4,7 +4,6 @@ import { paymentEnum, paymentStatusEnum } from '../constants/enum';
 import {
   AddFeeToStudentPaymentDocType,
   AddingFeeToPaymentPayload,
-  AggregatedPayment,
   ApproveStudentPayloadType,
   DeclineStudentPayloadType,
   PaymentDataType,
@@ -565,20 +564,81 @@ const fetchPaymentTransactionHistoryByStudentId = async (
       { $count: 'totalCount' },
     ]);
 
-    // Remove pagination and sorting for fetching all documents
     const pipeline: any[] = [
       { $match: matchStage },
-      { $sort: { createdAt: -1 } }, // Sort by creation date descending
+
       {
         $project: {
-          _id: 1,
+          student: 1,
+          class: 1,
           transaction_history: {
             $setUnion: [
-              '$payment_summary',
-              '$declined_payment_summary',
-              '$waiting_for_confirmation',
+              { $ifNull: ['$payment_summary', []] },
+              { $ifNull: ['$declined_payment_summary', []] },
+              { $ifNull: ['$waiting_for_confirmation', []] },
             ],
           },
+        },
+      },
+
+      {
+        $lookup: {
+          from: 'students',
+          localField: 'student',
+          foreignField: '_id',
+          as: 'student',
+        },
+      },
+
+      { $unwind: '$student' },
+
+      {
+        $lookup: {
+          from: 'classes',
+          localField: 'class',
+          foreignField: '_id',
+          as: 'class',
+        },
+      },
+      { $unwind: '$class' },
+
+      { $unwind: '$transaction_history' },
+
+      {
+        $project: {
+          transaction: {
+            $mergeObjects: [
+              '$transaction_history',
+              {
+                student: {
+                  _id: '$student._id',
+                  first_name: '$student.first_name',
+                  last_name: '$student.last_name',
+                },
+                class: {
+                  _id: '$class._id',
+                  name: '$class.name',
+                  level: '$class.level',
+                },
+              },
+            ],
+          },
+        },
+      },
+
+      { $sort: { 'transaction.date_paid': -1 } },
+
+      {
+        $group: {
+          _id: null,
+          transaction_history: { $push: '$transaction' },
+        },
+      },
+
+      {
+        $project: {
+          _id: 0,
+          transaction_history: 1,
         },
       },
     ];
@@ -589,26 +649,8 @@ const fetchPaymentTransactionHistoryByStudentId = async (
       Payment.aggregate(pipeline).sort({ createdAt: -1 }),
     ]);
 
-    const populatedPayment = await Payment.populate(
-      payments as AggregatedPayment[],
-      [
-        { path: 'student', select: 'first_name last_name' },
-        { path: 'class', select: 'name level' },
-      ]
-    );
-
-    const objPay = payments
-      .flatMap((p) => p.transaction_history)
-      .sort(
-        (a, b) =>
-          new Date(b.date_paid).getTime() - new Date(a.date_paid).getTime()
-      );
-
-    console.log('objPay:', objPay);
-    // const totalCount = countResult[0]?.totalCount || 0;
-
     return {
-      paymentObj: populatedPayment as unknown as PaymentHistoryDataType[],
+      paymentObj: payments as unknown as PaymentHistoryDataType[],
       // totalCount,
     };
   } catch (error) {
