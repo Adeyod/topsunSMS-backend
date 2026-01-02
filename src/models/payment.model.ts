@@ -3,40 +3,37 @@ import { paymentEnum, paymentStatusEnum } from '../constants/enum';
 import { PaymentDocument } from '../constants/types';
 // get the document and take out the following data:
 
-const staffActionSchema = new Schema(
-  {
-    amount_paid: { type: Number },
-    date_paid: { type: Date, default: Date.now },
-    payment_method: { type: String, enum: paymentEnum },
-    message: { type: String },
-    // transaction_id: { type: String },
-    bank_name: { type: String },
-    payment_evidence_image: {
-      url: { type: String },
-      public_url: { type: String },
-    },
-    fees_collection_breakdown: [
-      {
-        fee_name: { type: String },
-        amount: { type: Number },
-      },
-    ],
-    staff_who_approve: {
-      type: Schema.Types.ObjectId,
-      refPath: 'approved_by_model',
-    },
-    approved_by_model: {
-      type: String,
-      enum: ['SuperAdmin', 'Admin'],
-    },
-    status: {
-      type: String,
-      enum: paymentStatusEnum,
-      default: paymentStatusEnum[0],
-    },
+const staffActionSchema = new Schema({
+  amount_paid: { type: Number },
+  date_paid: { type: Date, default: Date.now },
+  payment_method: { type: String, enum: paymentEnum },
+  message: { type: String },
+  // transaction_id: { type: String },
+  bank_name: { type: String },
+  payment_evidence_image: {
+    url: { type: String },
+    public_url: { type: String },
   },
-  { _id: false }
-);
+  fees_collection_breakdown: [
+    {
+      fee_name: { type: String },
+      amount: { type: Number },
+    },
+  ],
+  staff_who_approve: {
+    type: Schema.Types.ObjectId,
+    refPath: 'approved_by_model',
+  },
+  approved_by_model: {
+    type: String,
+    enum: ['SuperAdmin', 'Admin'],
+  },
+  status: {
+    type: String,
+    enum: paymentStatusEnum,
+    default: paymentStatusEnum[0],
+  },
+});
 
 const paymentSchema = new mongoose.Schema<PaymentDocument>(
   {

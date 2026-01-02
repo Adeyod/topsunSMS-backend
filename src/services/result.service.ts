@@ -1309,7 +1309,7 @@ import {
 // NOT HAVE CUMMULATIVE, USE THE TOTAL OF THE CURRENT TERM AS
 // CUMMULATIVE
 
-const fetchResultSetting = async () => {
+const fetchResultSettings = async () => {
   try {
     const resultSettingExist = await ResultSetting.find();
 
@@ -1319,6 +1319,8 @@ const fetchResultSetting = async () => {
         400
       );
     }
+
+    // console.log('resultSettingExist:', resultSettingExist);
 
     return resultSettingExist;
   } catch (error) {
@@ -1330,6 +1332,7 @@ const fetchResultSetting = async () => {
   }
 };
 
+fetchResultSettings();
 const fetchLevelResultSetting = async (level: string) => {
   try {
     const resultSettingExist = await ResultSetting.findOne({
@@ -4105,7 +4108,7 @@ export {
   fetchAllScoresPerSubject,
   fetchAllStudentResultsInClassForActiveTermByClassId,
   fetchLevelResultSetting,
-  fetchResultSetting,
+  fetchResultSettings,
   fetchStudentResultByResultId,
   fetchStudentSessionResults,
   fetchStudentSpecificResult,

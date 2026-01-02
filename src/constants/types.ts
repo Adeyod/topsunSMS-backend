@@ -2000,7 +2000,7 @@ type WaitingForConfirmationType = {
   status: string;
   staff_who_approve?: mongoose.Types.ObjectId;
   approved_by_model: string;
-  _id?: mongoose.Types.ObjectId;
+  _id: mongoose.Types.ObjectId;
 };
 
 type AggregatedPayment = {

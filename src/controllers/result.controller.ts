@@ -539,7 +539,7 @@ import {
   fetchAllScoresPerSubject,
   fetchAllStudentResultsInClassForActiveTermByClassId,
   fetchLevelResultSetting,
-  fetchResultSetting,
+  fetchResultSettings,
   fetchStudentResultByResultId,
   fetchStudentSessionResults,
   fetchStudentSpecificResult,
@@ -605,41 +605,56 @@ import { joiValidateEffectiveAreasSchema } from '../utils/validation';
 //   });
 // });
 
-const getResultSetting = catchErrors(async (req, res) => {
-  // const start = Date.now();
+// const getResultSetting = catchErrors(async (req, res) => {
+//   // const start = Date.now();
 
-  const result = await fetchResultSetting();
+//   const result = await fetchResultSettings();
+
+//   if (!result) {
+//     throw new AppError('Unable to fetch result setting.', 400);
+//   }
+
+//   // const duration = Date.now() - start;
+
+//   // const savelogPayload = {
+//   //   level: 'info',
+//   //   message: 'Result settings fetched successfully.',
+//   //   service: 'klazik schools',
+//   //   method: req.method,
+//   //   route: req.originalUrl,
+//   //   status_code: 200,
+//   //   user_id: req.user?.userId,
+//   //   user_role: req.user?.userRole,
+//   //   ip: req.ip || 'unknown',
+//   //   duration_ms: duration,
+//   //   stack: undefined,
+//   //   school_id: req.user?.school_id
+//   //     ? new mongoose.Types.ObjectId(req.user.school_id)
+//   //     : undefined,
+//   // };
+
+//   // await saveLog(savelogPayload);
+
+//   return res.status(200).json({
+//     message: 'Result settings fetched successfully.',
+//     success: true,
+//     status: 200,
+//     result_setting: result,
+//   });
+// });
+
+const getResultSettings = catchErrors(async (req, res) => {
+  const result = await fetchResultSettings();
 
   if (!result) {
     throw new AppError('Unable to fetch result setting.', 400);
   }
 
-  // const duration = Date.now() - start;
-
-  // const savelogPayload = {
-  //   level: 'info',
-  //   message: 'Result settings fetched successfully.',
-  //   service: 'klazik schools',
-  //   method: req.method,
-  //   route: req.originalUrl,
-  //   status_code: 200,
-  //   user_id: req.user?.userId,
-  //   user_role: req.user?.userRole,
-  //   ip: req.ip || 'unknown',
-  //   duration_ms: duration,
-  //   stack: undefined,
-  //   school_id: req.user?.school_id
-  //     ? new mongoose.Types.ObjectId(req.user.school_id)
-  //     : undefined,
-  // };
-
-  // await saveLog(savelogPayload);
-
   return res.status(200).json({
     message: 'Result settings fetched successfully.',
     success: true,
     status: 200,
-    result_setting: result,
+    result_settings: result,
   });
 });
 
@@ -2184,21 +2199,6 @@ const calculateStudentsClassPosition = catchErrors(async (req, res) => {
   });
 });
 
-const getResultSettings = catchErrors(async (req, res) => {
-  const result = await fetchResultSetting();
-
-  if (!result) {
-    throw new AppError('Unable to fetch result setting.', 400);
-  }
-
-  return res.status(200).json({
-    message: 'Result settings fetched successfully.',
-    success: true,
-    status: 200,
-    result_settings: result,
-  });
-});
-
 const getLevelResultSetting = catchErrors(async (req, res) => {
   const level = req.params.level;
 
@@ -2226,7 +2226,7 @@ export {
   getAllStudentResultsInClassForActiveTermByClassId,
   getAllSubjectResultOfStudentsInClass,
   getLevelResultSetting,
-  getResultSetting,
+  // getResultSetting,
   getResultSettings,
   getStudentResultByResultId,
   getStudentSessionResults,

@@ -754,25 +754,6 @@ const calculateAndUpdateStudentPaymentDocuments = async (
   }
 };
 
-const userThatApproveId = '68e5127390fd7987ee863330';
-const paymentId = '694c1434e4d6bb65f2009c48';
-
-const payload = {
-  student_id: '68ee6cab8d28802fc7a03109',
-  session_id: '68ee6b758d28802fc7a03077',
-  staff_who_approve: Object(userThatApproveId),
-  term: 'second_term',
-  payment_id: Object(paymentId),
-  amount_paying: 11000,
-  // teller_number: 'WB-953948',
-  bank_name: 'Wema Bank',
-  payment_method: 'bank',
-  userId: Object(userThatApproveId),
-  userRole: 'super_admin',
-};
-
-// calculateAndUpdateStudentPaymentDocuments(payload, 'bank');
-
 export {
   addFeeToStudentPaymentDoc,
   calculateAndUpdateStudentPaymentDocuments,

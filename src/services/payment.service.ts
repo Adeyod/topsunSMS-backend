@@ -1146,11 +1146,12 @@ const declineStudentBankPayment = async (
   payload: DeclineStudentPayloadType
 ) => {
   const { payment_id, bursar_id, bursarRole } = payload;
+  const paymentId = new mongoose.Types.ObjectId(payment_id);
   try {
     const findPayment = await Payment.findOne({
       waiting_for_confirmation: {
         $elemMatch: {
-          _id: payment_id,
+          _id: paymentId,
         },
       },
     });
@@ -1213,10 +1214,12 @@ const approveStudentBankPayment = async (
 ) => {
   const { bank_name, payment_id, bursar_id, amount_paid, bursarRole } = payload;
   try {
+    const paymentId = new mongoose.Types.ObjectId(payment_id);
+
     const findPayment = await Payment.findOne({
       waiting_for_confirmation: {
         $elemMatch: {
-          _id: payment_id,
+          _id: paymentId,
         },
       },
     });
