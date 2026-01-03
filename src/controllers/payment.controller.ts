@@ -1252,8 +1252,6 @@ const getAPaymentDocumentOfStudentByStudentIdAndPaymentId = catchErrors(
 
 const getAllPaymentSummaryFailedAndSuccessful = catchErrors(
   async (req, res) => {
-    console.log('I want to fetch all payment documents on the application');
-
     // const start = Date.now();
 
     // const page = req.query.page ? Number(req.query.page) : undefined;
@@ -1302,8 +1300,6 @@ const getAllPaymentSummaryFailedAndSuccessful = catchErrors(
 
 const getAllPaymentSummaryFailedAndSuccessfulWithLookup = catchErrors(
   async (req, res) => {
-    console.log('I want to fetch all payment documents on the application');
-
     // const start = Date.now();
 
     const page = req.query.page ? Number(req.query.page) : undefined;

@@ -1332,7 +1332,6 @@ const fetchResultSettings = async () => {
   }
 };
 
-fetchResultSettings();
 const fetchLevelResultSetting = async (level: string) => {
   try {
     const resultSettingExist = await ResultSetting.findOne({
