@@ -747,13 +747,29 @@ const termEndingInSessionUsingTermId = async (
       );
     }
 
+    const actualTermSettings = await TermSettings.findOne({
+      session: response._id,
+      term: activeTerm.name,
+    });
+
+    if (!actualTermSettings) {
+      throw new AppError(
+        'Vacation and New resumption dates has not been recorded.',
+        400
+      );
+    }
+
+    console.log('actualTermSettings:', actualTermSettings);
     console.log(
-      'activeTerm.date_of_resumption:',
-      activeTerm.date_of_resumption
+      'actualTermSettings.date_of_resumption:',
+      actualTermSettings.date_of_resumption
     );
     console.log('activeTerm.date_of_vacation:', activeTerm.date_of_vacation);
 
-    if (!activeTerm.date_of_resumption || !activeTerm.date_of_vacation) {
+    if (
+      !actualTermSettings.date_of_resumption ||
+      !actualTermSettings.date_of_vacation
+    ) {
       throw new AppError(
         'Please give us the vacation date and new term resumption date before ending the term.',
         400
