@@ -705,8 +705,11 @@ const termEndingInSessionUsingTermId = async (
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
+    const sessionId = new mongoose.Types.ObjectId(session_id);
+    const termId = new mongoose.Types.ObjectId(term_id);
+
     let response = await Session.findOne({
-      _id: session_id,
+      _id: sessionId,
       is_active: true,
     }).session(session);
 
@@ -715,7 +718,7 @@ const termEndingInSessionUsingTermId = async (
     }
 
     const activeTerm = response.terms.find(
-      (term) => term._id?.toString() === term_id
+      (term) => term._id?.toString() === termId.toString()
     );
 
     if (!activeTerm) {
