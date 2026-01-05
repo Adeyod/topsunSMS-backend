@@ -4117,13 +4117,10 @@ const fetchStudentSpecificResult = async (
     /**
      * first name, last name, image,
      */
-    if (!studentResult) {
+
+    if (!studentResult || !studentResult.term_results.length) {
       throw new AppError('Specific term result not found.', 404);
     }
-
-    // if (!studentResult || !studentResult.term_results.length) {
-    //   throw new AppError('Specific term result not found.', 404);
-    // }
 
     const studentType = studentResult.student as unknown as UserDocument;
 
