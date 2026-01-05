@@ -1676,10 +1676,18 @@ const studentsSubjectScoreInAClassUpdating = async (
       throw new AppError('Result setting not found.', 404);
     }
 
-    const actualScoreObj = resultSettings.components.find(
+    const exam_components = resultSettings.exam_components.component;
+    const test_components = resultSettings.components;
+
+    const flattenedComponents = [...exam_components, ...test_components];
+
+    console.log('flattenedComponents:', flattenedComponents);
+
+    const actualScoreObj = flattenedComponents.find(
       (comp) => comp.name.toLowerCase() === score_name.toLowerCase().trim()
     );
 
+    console.log('actualScoreObj:', actualScoreObj);
     if (!actualScoreObj) {
       throw new AppError(`Invalid score type: ${score_name}.`, 400);
     }
