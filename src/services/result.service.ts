@@ -1490,6 +1490,49 @@ const recordManyStudentScores = async (payload: MultipleScoreParamType) => {
       class_id,
     } = payload;
 
+    // ************************* New Addition
+    const classId = new mongoose.Types.ObjectId(class_id);
+
+    const classExist = await Class.findById({
+      _id: classId,
+    });
+    if (!classExist) {
+      throw new AppError('Class not found.', 404);
+    }
+
+    const resultSettings = await ResultSetting.findOne({
+      level: classExist.level,
+    });
+
+    if (!resultSettings) {
+      throw new AppError('Result setting not found.', 404);
+    }
+
+    const actualScoreObj = resultSettings.components.find(
+      (comp) => comp.name.toLowerCase() === score_name.toLowerCase().trim()
+    );
+
+    if (!actualScoreObj) {
+      throw new AppError(`Invalid score type: ${score_name}.`, 400);
+    }
+
+    for (const result of result_objs) {
+      if (result.score === undefined) {
+        console.log(
+          `Student with ID: ${result.student_id} has no score inputted from frontend`
+        );
+        continue;
+      }
+
+      if (result.score > actualScoreObj.percentage) {
+        throw new AppError(
+          `Score exceeds max of ${actualScoreObj.percentage}.`,
+          400
+        );
+      }
+    }
+    // *************************
+
     const recordPromises = result_objs.map((student) =>
       recordScore({
         term,
@@ -1614,6 +1657,49 @@ const studentsSubjectScoreInAClassUpdating = async (
       class_enrolment_id,
       class_id,
     } = payload;
+
+    // ************************* New Addition
+    const classId = new mongoose.Types.ObjectId(class_id);
+
+    const classExist = await Class.findById({
+      _id: classId,
+    });
+    if (!classExist) {
+      throw new AppError('Class not found.', 404);
+    }
+
+    const resultSettings = await ResultSetting.findOne({
+      level: classExist.level,
+    });
+
+    if (!resultSettings) {
+      throw new AppError('Result setting not found.', 404);
+    }
+
+    const actualScoreObj = resultSettings.components.find(
+      (comp) => comp.name.toLowerCase() === score_name.toLowerCase().trim()
+    );
+
+    if (!actualScoreObj) {
+      throw new AppError(`Invalid score type: ${score_name}.`, 400);
+    }
+
+    for (const result of result_objs) {
+      if (result.score === undefined) {
+        console.log(
+          `Student with ID: ${result.student_id} has no score inputted from frontend`
+        );
+        continue;
+      }
+
+      if (result.score > actualScoreObj.percentage) {
+        throw new AppError(
+          `Score exceeds max of ${actualScoreObj.percentage}.`,
+          400
+        );
+      }
+    }
+    // *************************
 
     // change here to update score
     const recordPromises = result_objs.map((student) =>
@@ -3358,8 +3444,10 @@ const recordManyStudentCbtExamScoresManually = async (
     } = payload;
     const subject = Object(subject_id);
 
+    const classId = new mongoose.Types.ObjectId(class_id);
+
     const classExist = await Class.findById({
-      _id: class_id,
+      _id: classId,
     });
     if (!classExist) {
       throw new AppError('Class not found.', 404);
