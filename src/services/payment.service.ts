@@ -123,7 +123,8 @@ const createSchoolFeePaymentDocumentForStudents = async (
 
       const feeForClassLevel = allSchoolFees.find(
         (fee) =>
-          fee.level.toString() === student.current_class_level?.toString()
+          fee.level.toString() === student.current_class_level?.toString() &&
+          fee.term === activeTermCheck.name
       );
 
       if (!feeForClassLevel) {

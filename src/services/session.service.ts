@@ -715,11 +715,6 @@ const termEndingInSessionUsingTermId = async (
       is_active: true,
     }).session(session);
 
-    console.log('term_id:', term_id);
-    console.log('session_id:', session_id);
-    console.log('sessionId:', sessionId);
-    console.log('termId:', termId);
-    console.log('response:', response);
     if (!response) {
       throw new AppError('Session can not be found', 404);
     }
@@ -758,13 +753,6 @@ const termEndingInSessionUsingTermId = async (
         400
       );
     }
-
-    console.log('actualTermSettings:', actualTermSettings);
-    console.log(
-      'actualTermSettings.date_of_resumption:',
-      actualTermSettings.date_of_resumption
-    );
-    console.log('activeTerm.date_of_vacation:', activeTerm.date_of_vacation);
 
     if (
       !actualTermSettings.date_of_resumption ||
