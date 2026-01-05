@@ -595,8 +595,10 @@ const creatingNewTerm = async (
   try {
     const { session_id, name, start_date, end_date } = payload;
 
+    const sessionId = new mongoose.Types.ObjectId(session_id);
+
     const response = await Session.findById({
-      _id: session_id,
+      _id: sessionId,
     }).session(session);
 
     if (!response) {
@@ -713,6 +715,11 @@ const termEndingInSessionUsingTermId = async (
       is_active: true,
     }).session(session);
 
+    console.log('term_id:', term_id);
+    console.log('session_id:', session_id);
+    console.log('sessionId:', sessionId);
+    console.log('termId:', termId);
+    console.log('response:', response);
     if (!response) {
       throw new AppError('Session can not be found', 404);
     }
@@ -720,6 +727,8 @@ const termEndingInSessionUsingTermId = async (
     const activeTerm = response.terms.find(
       (term) => term._id?.toString() === termId.toString()
     );
+
+    console.log('activeTerm:', activeTerm);
 
     if (!activeTerm) {
       throw new AppError('This term is not active or has already ended.', 400);
@@ -737,6 +746,12 @@ const termEndingInSessionUsingTermId = async (
         400
       );
     }
+
+    console.log(
+      'activeTerm.date_of_resumption:',
+      activeTerm.date_of_resumption
+    );
+    console.log('activeTerm.date_of_vacation:', activeTerm.date_of_vacation);
 
     if (!activeTerm.date_of_resumption || !activeTerm.date_of_vacation) {
       throw new AppError(
@@ -844,8 +859,10 @@ const termEndingInSessionUsingTermId = async (
 const fetchSessionBySessionId = async (
   session_id: string
 ): Promise<SessionDocument> => {
+  const sessionId = new mongoose.Types.ObjectId(session_id);
+
   const response = await Session.findById({
-    _id: session_id,
+    _id: sessionId,
   });
 
   if (!response) {
@@ -933,8 +950,9 @@ const sessionEndingBySessionId = async (
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
+    const sessionId = new mongoose.Types.ObjectId(session_id);
     let response = await Session.findOne({
-      _id: session_id,
+      _id: sessionId,
       is_active: true,
     }).session(session);
 
@@ -952,7 +970,7 @@ const sessionEndingBySessionId = async (
     } else {
       response = await Session.findByIdAndUpdate(
         {
-          _id: session_id,
+          _id: sessionId,
         },
         {
           $set: { is_active: false },
