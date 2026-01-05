@@ -2025,7 +2025,9 @@ type EndSubjectInATimetableType = {
 
 type EffectiveAreasPayloadType = EffectiveAreasValidationType & {
   student_id: string;
-  result_id: string;
+  // result_id: string;
+  session_id: string;
+  term: string;
   userId: mongoose.Types.ObjectId;
 };
 

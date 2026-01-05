@@ -2818,7 +2818,8 @@ const studentEffectiveAreasForActiveTermRecording = async (
   try {
     const {
       student_id,
-      result_id,
+      session_id,
+      term,
       punctuality,
       userId,
       neatness,
@@ -2834,7 +2835,7 @@ const studentEffectiveAreasForActiveTermRecording = async (
     } = payload;
 
     const student = Object(student_id);
-    const result = Object(result_id);
+    const session = Object(session_id);
 
     const teacher = await Teacher.findById({
       _id: userId,
@@ -2844,10 +2845,22 @@ const studentEffectiveAreasForActiveTermRecording = async (
       throw new AppError('This teacher does not exist.', 404);
     }
 
+    const activeSession = await Session.findById({
+      _id: session,
+    });
+
+    if (!activeSession) {
+      throw new AppError('Session not found.', 400);
+    }
+
+    if (activeSession.is_active !== true) {
+      throw new AppError('Session not active.', 400);
+    }
+
     const studentResult = await Result.findOne(
       {
         student: student,
-        'term_results._id': result,
+        academic_session_id: activeSession._id,
       }
       // {
       //   term_results: { $elemMatch: { _id: result } },
@@ -2861,6 +2874,19 @@ const studentEffectiveAreasForActiveTermRecording = async (
     //   throw new AppError('Specific term result not found.', 404);
     // }
 
+    const activeTerm = activeSession.terms.find((t) => t.is_active === true);
+
+    if (!activeTerm) {
+      throw new AppError(
+        'You can only perform this operation for the result of an active term.',
+        400
+      );
+    }
+
+    if (activeTerm.name !== term) {
+      throw new AppError('Invalid term', 400);
+    }
+
     if (!teacher.class_managing) {
       throw new AppError('You are not assigned to manage any class yet.', 400);
     }
@@ -2870,25 +2896,8 @@ const studentEffectiveAreasForActiveTermRecording = async (
     }
 
     const termResult = studentResult.term_results.find(
-      (a) => a._id?.toString() === result.toString()
+      (a) => a.term === activeTerm.name
     );
-
-    const sessionExist = await Session.findById({
-      _id: studentResult.academic_session_id,
-    });
-
-    if (!sessionExist) {
-      throw new AppError('Academic Session not found.', 404);
-    }
-
-    const getTerm = sessionExist.terms.find((t) => t.name === termResult?.term);
-
-    if (getTerm?.is_active !== true) {
-      throw new AppError(
-        'You can only perform this operation for the result of an active term.',
-        400
-      );
-    }
 
     if (!termResult) {
       throw new AppError('No result found for this term.', 404);

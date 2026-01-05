@@ -111,7 +111,7 @@ router.get(
 );
 
 router.put(
-  '/record-student-effective-areas-result/:student_id/:result_id',
+  '/record-student-effective-areas-result/:student_id/:session_id/:term',
   permission(['teacher']),
   recordStudentEffectiveAreasForActiveTerm
   // populate subject and subject teacher

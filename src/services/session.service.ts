@@ -764,9 +764,9 @@ const termEndingInSessionUsingTermId = async (
       );
     }
 
-    // if (currentTime < allowedStartDate) {
-    //   throw new AppError('It is not window period for term ending.', 400);
-    // }
+    if (currentTime < allowedStartDate) {
+      throw new AppError('It is not window period for term ending.', 400);
+    }
 
     response = await Session.findOneAndUpdate(
       { _id: session_id, 'terms._id': term_id },

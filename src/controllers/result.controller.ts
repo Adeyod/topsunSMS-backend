@@ -1737,7 +1737,7 @@ const recordStudentEffectiveAreasForActiveTerm = catchErrors(
   async (req, res) => {
     // const start = Date.now();
 
-    const { student_id, result_id } = req.params;
+    const { student_id, session_id, term } = req.params;
     const {
       punctuality,
       neatness,
@@ -1777,8 +1777,12 @@ const recordStudentEffectiveAreasForActiveTerm = catchErrors(
       );
     }
 
-    if (!result_id) {
-      throw new AppError('Result ID is required.', 400);
+    if (!session_id) {
+      throw new AppError('Session ID is required.', 400);
+    }
+
+    if (!term) {
+      throw new AppError('Term is required.', 400);
     }
 
     if (!student_id) {
@@ -1815,7 +1819,8 @@ const recordStudentEffectiveAreasForActiveTerm = catchErrors(
 
     const payload = {
       student_id,
-      result_id,
+      session_id,
+      term,
       userId,
       punctuality: value.punctuality,
       neatness: value.neatness,
