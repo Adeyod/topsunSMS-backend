@@ -128,6 +128,7 @@ const createResult = async (payload: ResultCreationType) => {
       );
     }
 
+    console.log('result:', result);
     return result;
   } catch (error) {
     if (error instanceof AppError) {

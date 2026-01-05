@@ -2895,17 +2895,17 @@ const studentEffectiveAreasForActiveTermRecording = async (
     }
 
     if (
-      !termResult.punctuality ||
-      !termResult.neatness ||
-      !termResult.politeness ||
-      !termResult.honesty ||
-      !termResult.relationshipWithOthers ||
-      !termResult.leadership ||
-      !termResult.emotionalStability ||
-      !termResult.health ||
-      !termResult.attitudeToSchoolWork ||
-      !termResult.attentiveness ||
-      !termResult.perseverance
+      termResult.punctuality === '' ||
+      termResult.neatness === '' ||
+      termResult.politeness === '' ||
+      termResult.honesty === '' ||
+      termResult.relationshipWithOthers === '' ||
+      termResult.leadership === '' ||
+      termResult.emotionalStability === '' ||
+      termResult.health === '' ||
+      termResult.attitudeToSchoolWork === '' ||
+      termResult.attentiveness === '' ||
+      termResult.perseverance === ''
     ) {
       termResult.punctuality = punctuality;
       termResult.neatness = neatness;
@@ -2918,6 +2918,8 @@ const studentEffectiveAreasForActiveTermRecording = async (
       termResult.attitudeToSchoolWork = attitudeToSchoolWork;
       termResult.attentiveness = attentiveness;
       termResult.perseverance = perseverance;
+    } else {
+      throw new AppError('This has already been recorded.', 400);
     }
 
     await studentResult.save();
@@ -4094,6 +4096,8 @@ const fetchStudentSpecificResult = async (
       class: classEnrolment?.class,
       subject: { $in: studentSubjectEnrolled },
     }).populate([{ path: 'subject' }]);
+
+    console.log('subjectResults:', subjectResults);
 
     if (!subjectResults || subjectResults.length === 0) {
       throw new AppError(
