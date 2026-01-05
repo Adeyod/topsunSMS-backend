@@ -2854,9 +2854,12 @@ const studentEffectiveAreasForActiveTermRecording = async (
       // }
     );
 
-    if (!studentResult || !studentResult.term_results.length) {
+    if (!studentResult) {
       throw new AppError('Specific term result not found.', 404);
     }
+    // if (!studentResult || !studentResult.term_results.length) {
+    //   throw new AppError('Specific term result not found.', 404);
+    // }
 
     if (!teacher.class_managing) {
       throw new AppError('You are not assigned to manage any class yet.', 400);
@@ -4114,9 +4117,13 @@ const fetchStudentSpecificResult = async (
     /**
      * first name, last name, image,
      */
-    if (!studentResult || !studentResult.term_results.length) {
+    if (!studentResult) {
       throw new AppError('Specific term result not found.', 404);
     }
+
+    // if (!studentResult || !studentResult.term_results.length) {
+    //   throw new AppError('Specific term result not found.', 404);
+    // }
 
     const studentType = studentResult.student as unknown as UserDocument;
 
