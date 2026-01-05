@@ -1490,7 +1490,6 @@ const recordManyStudentScores = async (payload: MultipleScoreParamType) => {
       class_id,
     } = payload;
 
-    // ************************* New Addition
     const classId = new mongoose.Types.ObjectId(class_id);
 
     const classExist = await Class.findById({
@@ -1531,7 +1530,6 @@ const recordManyStudentScores = async (payload: MultipleScoreParamType) => {
         );
       }
     }
-    // *************************
 
     const recordPromises = result_objs.map((student) =>
       recordScore({
@@ -1658,7 +1656,6 @@ const studentsSubjectScoreInAClassUpdating = async (
       class_id,
     } = payload;
 
-    // ************************* New Addition
     const classId = new mongoose.Types.ObjectId(class_id);
 
     const classExist = await Class.findById({
@@ -1681,13 +1678,10 @@ const studentsSubjectScoreInAClassUpdating = async (
 
     const flattenedComponents = [...exam_components, ...test_components];
 
-    console.log('flattenedComponents:', flattenedComponents);
-
     const actualScoreObj = flattenedComponents.find(
       (comp) => comp.name.toLowerCase() === score_name.toLowerCase().trim()
     );
 
-    console.log('actualScoreObj:', actualScoreObj);
     if (!actualScoreObj) {
       throw new AppError(`Invalid score type: ${score_name}.`, 400);
     }
@@ -1707,7 +1701,6 @@ const studentsSubjectScoreInAClassUpdating = async (
         );
       }
     }
-    // *************************
 
     // change here to update score
     const recordPromises = result_objs.map((student) =>
