@@ -160,7 +160,7 @@ const fetchTermCbtAssessmentDocument = async (
   try {
     const { academic_session_id, term } = payload;
 
-    const academicSessionId = Object(academic_session_id);
+    const academicSessionId = new mongoose.Types.ObjectId(academic_session_id);
 
     const academicSessionExist = await Session.findById(academicSessionId);
 
@@ -298,7 +298,7 @@ const fetchAllClassCbtAssessmentTimetables = async (
   searchParams = ''
 ) => {
   try {
-    const classId = Object(class_id);
+    const classId = new mongoose.Types.ObjectId(class_id);
 
     const classExist = await Class.findById(classId);
 
@@ -365,8 +365,8 @@ const fetchTermClassCbtAssessmentTimetable = async (
   try {
     const { academic_session_id, class_id, term } = payload;
 
-    const classId = Object(class_id);
-    const academicSessionId = Object(academic_session_id);
+    const classId = new mongoose.Types.ObjectId(class_id);
+    const academicSessionId = new mongoose.Types.ObjectId(academic_session_id);
 
     const academicSessionExist = await Session.findById(academicSessionId);
 
@@ -447,9 +447,9 @@ const termClassCbtAssessmentTimetableCreation = async (
       assessment_type,
     } = payload;
 
-    const classId = Object(class_id);
-    const academicSessionId = Object(academic_session_id);
-    const userId = Object(user_id);
+    const classId = new mongoose.Types.ObjectId(class_id);
+    const academicSessionId = new mongoose.Types.ObjectId(academic_session_id);
+    const userId = new mongoose.Types.ObjectId(user_id);
 
     const uniquesSubjectId = new Set();
     const duplicateSubjectId = new Set();
@@ -919,9 +919,9 @@ const objQestionSetting = async (
       assessment_type,
     } = payload;
 
-    const classId = Object(class_id);
-    const subjectId = Object(subject_id);
-    const academicSessionId = Object(academic_session_id);
+    const classId = new mongoose.Types.ObjectId(class_id);
+    const subjectId = new mongoose.Types.ObjectId(subject_id);
+    const academicSessionId = new mongoose.Types.ObjectId(academic_session_id);
 
     const academicSessionExist = await Session.findById(academicSessionId);
 
@@ -1199,9 +1199,9 @@ const studentCbtSubjectCbtAssessmentAuthorization = async (
       students_id_array,
     } = payload;
 
-    const subjectId = Object(subject_id);
-    const academicSessionId = Object(academic_session_id);
-    const classId = Object(class_id);
+    const subjectId = new mongoose.Types.ObjectId(subject_id);
+    const academicSessionId = new mongoose.Types.ObjectId(academic_session_id);
+    const classId = new mongoose.Types.ObjectId(class_id);
 
     const duplicateIds = new Set();
     const uniqueIds = new Set();
@@ -1437,10 +1437,10 @@ const subjectCbtObjCbtAssessmentStarting = async (
     const { academic_session_id, class_id, student_id, term, subject_id } =
       payload;
 
-    const classId = Object(class_id);
-    const studentId = Object(student_id);
-    const academicSessionId = Object(academic_session_id);
-    const subjectId = Object(subject_id);
+    const classId = new mongoose.Types.ObjectId(class_id);
+    const studentId = new mongoose.Types.ObjectId(student_id);
+    const academicSessionId = new mongoose.Types.ObjectId(academic_session_id);
+    const subjectId = new mongoose.Types.ObjectId(subject_id);
 
     const academicSessionExist = await Session.findById(
       academicSessionId
@@ -1743,9 +1743,9 @@ const subjectCbtObjCbtAssessmentUpdate = async (
   try {
     const { cbt_result_id, exam_id, result_doc, student_id } = payload;
 
-    const studentId = Object(student_id);
-    const examId = Object(exam_id);
-    const cbtResultId = Object(cbt_result_id);
+    const studentId = new mongoose.Types.ObjectId(student_id);
+    const examId = new mongoose.Types.ObjectId(exam_id);
+    const cbtResultId = new mongoose.Types.ObjectId(cbt_result_id);
 
     const studentExist = await Student.findById(studentId);
 
@@ -1850,9 +1850,9 @@ const subjectCbtObjCbtAssessmentRemainingTimeUpdate = async (
   try {
     const { cbt_result_id, exam_id, remaining_time, student_id } = payload;
 
-    const studentId = Object(student_id);
-    const examId = Object(exam_id);
-    const cbtResultId = Object(cbt_result_id);
+    const studentId = new mongoose.Types.ObjectId(student_id);
+    const examId = new mongoose.Types.ObjectId(exam_id);
+    const cbtResultId = new mongoose.Types.ObjectId(cbt_result_id);
 
     const studentExist = await Student.findById(studentId);
 
@@ -1935,9 +1935,9 @@ const subjectCbtObjCbtAssessmentRemainingTimeUpdate = async (
 //     const { cbt_result_id, exam_id, result_doc, student_id, trigger_type } =
 //       payload;
 
-//     const studentId = Object(student_id);
-//     const examId = Object(exam_id);
-//     const cbtResultId = Object(cbt_result_id);
+//     const studentId = new mongoose.Types.ObjectId(student_id);
+//     const examId = new mongoose.Types.ObjectId(exam_id);
+//     const cbtResultId = new mongoose.Types.ObjectId(cbt_result_id);
 
 //     const studentExist = await Student.findById(studentId).session(session);
 
@@ -2255,9 +2255,9 @@ const subjectCbtObjCbtAssessmentSubmission = async (
     const { cbt_result_id, exam_id, result_doc, student_id, trigger_type } =
       payload;
 
-    const studentId = Object(student_id);
-    const examId = Object(exam_id);
-    const cbtResultId = Object(cbt_result_id);
+    const studentId = new mongoose.Types.ObjectId(student_id);
+    const examId = new mongoose.Types.ObjectId(exam_id);
+    const cbtResultId = new mongoose.Types.ObjectId(cbt_result_id);
 
     const studentExist = await Student.findById(studentId).session(session);
 
@@ -2627,9 +2627,9 @@ const theoryQestionSetting = async (
       teacher_id,
     } = payload;
 
-    const classId = Object(class_id);
-    const subjectId = Object(subject_id);
-    const academicSessionId = Object(academic_session_id);
+    const classId = new mongoose.Types.ObjectId(class_id);
+    const subjectId = new mongoose.Types.ObjectId(subject_id);
+    const academicSessionId = new mongoose.Types.ObjectId(academic_session_id);
 
     const academicSessionExist = await Session.findById({
       _id: academicSessionId,

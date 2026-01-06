@@ -243,7 +243,7 @@ const addingFeeToStudentPaymentDocument = async (
   try {
     const { fee_name, amount, student_id } = payload;
 
-    const studentId = Object(student_id);
+    const studentId = new mongoose.Types.ObjectId(student_id);
 
     const schoolSession = await Session.findOne({
       is_active: true,

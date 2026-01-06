@@ -295,6 +295,7 @@
 // };
 
 /////////////////////////////////////////////////////////////////////
+import mongoose from 'mongoose';
 import {
   ClassSubjectFetchPayload,
   EnrolledStudentSubjects,
@@ -373,8 +374,8 @@ const fetchAllSubjectsThatStudentOffersInATerm = async (
   try {
     const { session_id, userId, class_id } = payload;
 
-    const sessionId = Object(session_id);
-    const classId = Object(class_id);
+    const sessionId = new mongoose.Types.ObjectId(session_id);
+    const classId = new mongoose.Types.ObjectId(class_id);
 
     const sessionExist = await Session.findById({
       _id: sessionId,

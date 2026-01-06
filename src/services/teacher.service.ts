@@ -2225,7 +2225,7 @@ const fetchStudentsInClassOfferingTeacherSubject = async (
 
     const subjectTeacherObj = classExist.teacher_subject_assignments.find(
       (s) =>
-        Object(s?.subject as any)?._id.toString() ===
+        new mongoose.Types.ObjectId(s?.subject as any)?._id.toString() ===
         subjectExist._id.toString()
     );
 
@@ -2252,7 +2252,7 @@ const fetchAllClassesTeacherTeachesByTeacherId = async (
   try {
     const { teacher_id, userRole, user_id } = payload;
 
-    const userId = Object(user_id);
+    const userId = new mongoose.Types.ObjectId(user_id);
 
     if (userRole === 'teacher') {
       if (teacher_id !== userId.toString()) {
@@ -2598,7 +2598,7 @@ const fetchClassTeacherManagesByTeacherId = async (
   try {
     const { teacher_id } = payload;
 
-    const teacher = Object(teacher_id);
+    const teacher = new mongoose.Types.ObjectId(teacher_id);
 
     const teacherExist = await Teacher.findById({
       _id: teacher,
@@ -2641,7 +2641,7 @@ const fetchClassTeacherManagesByTeacherId = async (
 
 const teacherDeletion = async (teacher_id: string) => {
   try {
-    const teacherId = Object(teacher_id);
+    const teacherId = new mongoose.Types.ObjectId(teacher_id);
     const teacher = await Teacher.findById(teacherId);
 
     if (!teacher) {

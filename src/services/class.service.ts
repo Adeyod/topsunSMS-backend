@@ -278,7 +278,7 @@ const subjectsAdditionToAClass = async (payload: SubjectAdditionType) => {
   try {
     const { class_id, subject_ids_array } = payload;
 
-    const classId = Object(class_id);
+    const classId = new mongoose.Types.ObjectId(class_id);
 
     const activeClassEnrollment = await ClassEnrolment.findOne({
       is_active: true,
@@ -366,7 +366,7 @@ const subjectsRemovalFromClass = async (payload: SubjectRemovalType) => {
   try {
     const { class_id, subject_ids_array } = payload;
 
-    const classId = Object(class_id);
+    const classId = new mongoose.Types.ObjectId(class_id);
 
     const activeClassEnrollment = await ClassEnrolment.findOne({
       is_active: true,
@@ -388,7 +388,7 @@ const subjectsRemovalFromClass = async (payload: SubjectRemovalType) => {
     }
 
     subject_ids_array.forEach((s) => {
-      const subject = Object(s);
+      const subject = new mongoose.Types.ObjectId(s);
       if (classExist.compulsory_subjects.includes(subject)) {
         classExist.compulsory_subjects.filter((s) => s !== subject);
       }
@@ -432,10 +432,10 @@ const fetchMySchoolClassLevel = async () => {
 };
 
 export {
-  fetchMySchoolClassLevel,
-  subjectsRemovalFromClass,
-  subjectsAdditionToAClass,
   classCreation,
   fetchAClassById,
   fetchAllClasses,
+  fetchMySchoolClassLevel,
+  subjectsAdditionToAClass,
+  subjectsRemovalFromClass,
 };

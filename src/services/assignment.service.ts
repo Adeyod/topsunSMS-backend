@@ -160,7 +160,7 @@ const fetchAssignmentById = async (payload: GetAssignmentPayloadType) => {
   try {
     const { assignment_id, userId, userRole } = payload;
 
-    const assignmentId = Object(assignment_id);
+    const assignmentId = new mongoose.Types.ObjectId(assignment_id);
 
     const assignmentExist = await Assignment.findById({
       _id: assignmentId,
@@ -233,7 +233,7 @@ const fetchSubjectAssignmentSubmissionById = async (
   try {
     const { assignment_submission_id, userId, userRole } = payload;
 
-    const assignmentId = Object(assignment_submission_id);
+    const assignmentId = new mongoose.Types.ObjectId(assignment_submission_id);
 
     const submissionExist = await AssignmentSubmission.findById({
       _id: assignmentId,
@@ -317,9 +317,9 @@ const fetchAllSubjectAssignmentsInClass = async (
   try {
     const { subject_id, session_id, class_id, userRole, userId } = payload;
 
-    const classId = Object(class_id);
-    const sessionId = Object(session_id);
-    const subjectId = Object(subject_id);
+    const classId = new mongoose.Types.ObjectId(class_id);
+    const sessionId = new mongoose.Types.ObjectId(session_id);
+    const subjectId = new mongoose.Types.ObjectId(subject_id);
 
     const [classEnrolmentExist, classExist, subjectExist] = await Promise.all([
       ClassEnrolment.findOne({
@@ -436,7 +436,7 @@ const fetchSubjectAssignmentSubmissions = async (
   try {
     const { userId, assignment_id, page, limit, searchParams } = payload;
 
-    const assignmentId = Object(assignment_id);
+    const assignmentId = new mongoose.Types.ObjectId(assignment_id);
 
     const teacherExist = await Teacher.findById({
       _id: userId,
@@ -532,7 +532,7 @@ const fetchAllMySubjectAssignmentSubmissionsInASession = async (
   try {
     const { userId, subject_id, page, limit, searchParams } = payload;
 
-    const subjectId = Object(subject_id);
+    const subjectId = new mongoose.Types.ObjectId(subject_id);
 
     const studentExist = await Student.findById({
       _id: userId,

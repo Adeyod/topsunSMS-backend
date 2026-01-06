@@ -1115,8 +1115,8 @@ const termVacationAndNewTermResumptionDates = async (
     const { date_of_resumption, date_of_vacation, term_id, session_id } =
       payload;
 
-    const session = Object(session_id);
-    const term = Object(term_id);
+    const session = new mongoose.Types.ObjectId(session_id);
+    const term = new mongoose.Types.ObjectId(term_id);
 
     const sessionExist = await Session.findById({
       _id: session,

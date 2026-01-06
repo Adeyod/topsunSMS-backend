@@ -10,7 +10,6 @@ import ClassEnrolment from '../models/classes_enrolment.model';
 import Session from '../models/session.model';
 import Student from '../models/students.model';
 import { AppError } from '../utils/app.error';
-import { createResult } from '../repository/result.repository';
 
 const enrolStudentToClass = async (
   payload: StudentEnrolmentType
@@ -258,7 +257,7 @@ const enrolManyStudentsToClass = async (
     );
 
     const studentsToEnrol = student_ids?.map((student_id) => ({
-      student: Object(student_id),
+      student: new mongoose.Types.ObjectId(student_id),
       term,
       subjects_offered: flattenedSubjects,
     }));
@@ -610,12 +609,12 @@ const fetchAllStudentsInAClassInActiveSession = async (
 };
 
 export {
-  fetchAllStudentsInAClassInActiveSession,
-  fetchAllStudentsInAClass,
-  fetchAllActiveClassEnrollments,
-  enrolStudentToClass,
-  fetchSingleEnrollment,
-  fetchAllEnrollments,
-  fetchEnrollmentsBySession,
   enrolManyStudentsToClass,
+  enrolStudentToClass,
+  fetchAllActiveClassEnrollments,
+  fetchAllEnrollments,
+  fetchAllStudentsInAClass,
+  fetchAllStudentsInAClassInActiveSession,
+  fetchEnrollmentsBySession,
+  fetchSingleEnrollment,
 };

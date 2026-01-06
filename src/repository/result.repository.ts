@@ -230,12 +230,12 @@ const recordScore = async (
       class_id,
     } = payload;
 
-    const subjectId = Object(subject_id);
-    const teacherId = Object(teacher_id);
-    const studentId = Object(student_id);
-    const sessionId = Object(session_id);
-    const classId = Object(class_id);
-    const classEnrolmentId = Object(class_enrolment_id);
+    const subjectId = new mongoose.Types.ObjectId(subject_id);
+    const teacherId = new mongoose.Types.ObjectId(teacher_id);
+    const studentId = new mongoose.Types.ObjectId(student_id);
+    const sessionId = new mongoose.Types.ObjectId(session_id);
+    const classId = new mongoose.Types.ObjectId(class_id);
+    const classEnrolmentId = new mongoose.Types.ObjectId(class_enrolment_id);
 
     const studentExist = await Student.findById({
       _id: studentId,
@@ -322,8 +322,8 @@ const recordScore = async (
     };
 
     const subjectObj = {
-      subject: Object(subject_id),
-      subject_teacher: Object(teacher_id),
+      subject: new mongoose.Types.ObjectId(subject_id),
+      subject_teacher: new mongoose.Types.ObjectId(teacher_id),
       total_score: 0,
       cumulative_average: 0,
       last_term_cumulative: 0,
@@ -416,12 +416,12 @@ const updateScore = async (
       class_id,
     } = payload;
 
-    const subjectId = Object(subject_id);
-    const teacherId = Object(teacher_id);
-    const studentId = Object(student_id);
-    const sessionId = Object(session_id);
-    const classId = Object(class_id);
-    const classEnrolmentId = Object(class_enrolment_id);
+    const subjectId = new mongoose.Types.ObjectId(subject_id);
+    const teacherId = new mongoose.Types.ObjectId(teacher_id);
+    const studentId = new mongoose.Types.ObjectId(student_id);
+    const sessionId = new mongoose.Types.ObjectId(session_id);
+    const classId = new mongoose.Types.ObjectId(class_id);
+    const classEnrolmentId = new mongoose.Types.ObjectId(class_enrolment_id);
 
     const studentExist = await Student.findById({
       _id: studentId,
@@ -637,12 +637,12 @@ const recordCbtScore = async (
       class_id,
     } = payload;
 
-    const subjectId = Object(subject_id);
-    const teacherId = Object(teacher_id);
-    const studentId = Object(student_id);
-    const sessionId = Object(session_id);
-    const classId = Object(class_id);
-    const classEnrolmentId = Object(class_enrolment_id);
+    const subjectId = new mongoose.Types.ObjectId(subject_id);
+    const teacherId = new mongoose.Types.ObjectId(teacher_id);
+    const studentId = new mongoose.Types.ObjectId(student_id);
+    const sessionId = new mongoose.Types.ObjectId(session_id);
+    const classId = new mongoose.Types.ObjectId(class_id);
+    const classEnrolmentId = new mongoose.Types.ObjectId(class_enrolment_id);
 
     const studentExist = await Student.findById({
       _id: studentId,
@@ -730,8 +730,8 @@ const recordCbtScore = async (
     };
 
     const subjectObj = {
-      subject: Object(subject_id),
-      subject_teacher: Object(teacher_id),
+      subject: new mongoose.Types.ObjectId(subject_id),
+      subject_teacher: new mongoose.Types.ObjectId(teacher_id),
       total_score: 0,
       cumulative_average: 0,
       last_term_cumulative: 0,
@@ -905,7 +905,7 @@ const recordCumScore = async (
       throw new AppError('Class enrolment not found.', 404);
     }
 
-    const subject = Object(subject_id);
+    const subject = new mongoose.Types.ObjectId(subject_id);
 
     const resultExist = await SubjectResult.findOne({
       enrolment: class_enrolment_id,
@@ -1014,8 +1014,8 @@ const processStudentResultUpdate = async (payload: ResultJobData) => {
     };
 
     const subjectObj = {
-      subject: Object(subject_id),
-      subject_teacher: Object(teacher_id),
+      subject: new mongoose.Types.ObjectId(subject_id),
+      subject_teacher: new mongoose.Types.ObjectId(teacher_id),
       total_score: 0,
       cumulative_average: 0,
       class_lowest_mark: 0,
@@ -1043,8 +1043,8 @@ const processStudentResultUpdate = async (payload: ResultJobData) => {
 
       if (!subjectResult) {
         subjectResult = {
-          subject: Object(subject_id),
-          subject_teacher: Object(teacher_id),
+          subject: new mongoose.Types.ObjectId(subject_id),
+          subject_teacher: new mongoose.Types.ObjectId(teacher_id),
           total_score: 0,
           cumulative_average: 0,
           last_term_cumulative: 0,
@@ -1134,8 +1134,8 @@ const processStudentExamResultUpdate = async (
     };
 
     const subjectObj = {
-      subject: Object(subject_id),
-      subject_teacher: Object(teacher_id),
+      subject: new mongoose.Types.ObjectId(subject_id),
+      subject_teacher: new mongoose.Types.ObjectId(teacher_id),
       total_score: 0,
       cumulative_average: 0,
       last_term_cumulative: 0,
@@ -1163,8 +1163,8 @@ const processStudentExamResultUpdate = async (
 
       if (!subjectResult) {
         subjectResult = {
-          subject: Object(subject_id),
-          subject_teacher: Object(teacher_id),
+          subject: new mongoose.Types.ObjectId(subject_id),
+          subject_teacher: new mongoose.Types.ObjectId(teacher_id),
           total_score: 0,
           cumulative_average: 0,
           last_term_cumulative: 0,
@@ -1279,7 +1279,7 @@ const processStudentSubjectPositionUpdate = async (
     class_lowest_mark,
   } = payload;
 
-  const student = Object(student_id);
+  const student = new mongoose.Types.ObjectId(student_id);
   try {
     const sessionResult = await Result.findOne({
       student: student,
@@ -1342,7 +1342,7 @@ const processSubjectCumScoreUpdate = async (
     student_id,
     actual_term_result,
   } = payload;
-  const student = Object(student_id);
+  const student = new mongoose.Types.ObjectId(student_id);
 
   try {
     const sessionResult = await Result.findOne({
@@ -1778,8 +1778,8 @@ const processStudentCbtExamResultUpdateManually = async (
     };
 
     const subjectObj = {
-      subject: Object(subject_id),
-      subject_teacher: Object(teacher_id),
+      subject: new mongoose.Types.ObjectId(subject_id),
+      subject_teacher: new mongoose.Types.ObjectId(teacher_id),
       total_score: 0,
       cumulative_average: 0,
       last_term_cumulative: 0,
@@ -1807,8 +1807,8 @@ const processStudentCbtExamResultUpdateManually = async (
 
       if (!subjectResult) {
         subjectResult = {
-          subject: Object(subject_id),
-          subject_teacher: Object(teacher_id),
+          subject: new mongoose.Types.ObjectId(subject_id),
+          subject_teacher: new mongoose.Types.ObjectId(teacher_id),
           total_score: 0,
           cumulative_average: 0,
           last_term_cumulative: 0,

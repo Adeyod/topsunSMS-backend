@@ -918,7 +918,7 @@
 //       class_enrolment_id,
 //       class_id,
 //     } = payload;
-//     const subject = Object(subject_id);
+//     const subject = new mongoose.Types.ObjectId(subject_id);
 
 //     const classExist = await Class.findById({
 //       _id: class_id,
@@ -2715,7 +2715,7 @@ const fetchAllResultsOfAStudent = async (
   try {
     const { student_id } = payload;
 
-    const student = Object(student_id);
+    const student = new mongoose.Types.ObjectId(student_id);
 
     const studentResults = await Result.find({
       student: student,
@@ -2756,8 +2756,8 @@ const fetchStudentResultByResultId = async (
   try {
     const { student_id, result_id } = payload;
 
-    const student = Object(student_id);
-    const result = Object(result_id);
+    const student = new mongoose.Types.ObjectId(student_id);
+    const result = new mongoose.Types.ObjectId(result_id);
 
     const studentResult = await Result.findOne(
       {
@@ -2834,8 +2834,8 @@ const studentEffectiveAreasForActiveTermRecording = async (
       perseverance,
     } = payload;
 
-    const student = Object(student_id);
-    const session = Object(session_id);
+    const student = new mongoose.Types.ObjectId(student_id);
+    const session = new mongoose.Types.ObjectId(session_id);
 
     const teacher = await Teacher.findById({
       _id: userId,
@@ -3457,7 +3457,7 @@ const recordManyStudentCbtExamScoresManually = async (
       class_enrolment_id,
       class_id,
     } = payload;
-    const subject = Object(subject_id);
+    const subject = new mongoose.Types.ObjectId(subject_id);
 
     const classId = new mongoose.Types.ObjectId(class_id);
 
@@ -3781,10 +3781,10 @@ const recordManyStudentSubjectResultTotal = async (
       session_id,
     } = payload;
 
-    const session = Object(session_id);
-    const subject = Object(subject_id);
-    const classId = Object(class_id);
-    const enrolment = Object(class_enrolment_id);
+    const session = new mongoose.Types.ObjectId(session_id);
+    const subject = new mongoose.Types.ObjectId(subject_id);
+    const classId = new mongoose.Types.ObjectId(class_id);
+    const enrolment = new mongoose.Types.ObjectId(class_enrolment_id);
 
     if (!userId || !userRole) {
       throw new AppError(
@@ -4033,8 +4033,8 @@ const fetchStudentSpecificResult = async (
   try {
     const { student_id, session_id, term, userRole, userId } = payload;
 
-    const student = Object(student_id);
-    const session = Object(session_id);
+    const student = new mongoose.Types.ObjectId(student_id);
+    const session = new mongoose.Types.ObjectId(session_id);
 
     if (userRole === 'student') {
       if (userId.toString() !== student.toString()) {
@@ -4048,6 +4048,9 @@ const fetchStudentSpecificResult = async (
       if (!parentDoc) {
         throw new AppError('Parent not found.', 404);
       }
+
+      console.log('parentDoc:', parentDoc);
+      console.log('parentDoc.children:', parentDoc.children);
 
       const allowed = parentDoc.children?.includes(student);
       if (!allowed) {

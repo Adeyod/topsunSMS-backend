@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Admin from '../models/admin.model';
 import Class from '../models/class.model';
 import ClassEnrolment from '../models/classes_enrolment.model';
@@ -142,7 +143,7 @@ const fetchMySchoolSummary = async (userRole: string) => {
 
 const fetchAdminByAdminId = async (admin_id: string) => {
   try {
-    const adminObj = Object(admin_id);
+    const adminObj = new mongoose.Types.ObjectId(admin_id);
 
     const admin = await Admin.findOne({
       _id: adminObj,
@@ -162,4 +163,4 @@ const fetchAdminByAdminId = async (admin_id: string) => {
   }
 };
 
-export { fetchMySchoolSummary, fetchAllAdmins, fetchAdminByAdminId };
+export { fetchAdminByAdminId, fetchAllAdmins, fetchMySchoolSummary };
