@@ -15,6 +15,7 @@ import {
   jwtDecodeRefreshToken,
 } from '../middleware/jwtAuth';
 import BlackListedToken from '../models/black_listed.model';
+import Payment from '../models/payment.model';
 import { RefreshToken } from '../models/refresh_token.model';
 import Session from '../models/session.model';
 import {
@@ -153,7 +154,7 @@ const userLogin = async (
       throw new AppError('Invalid credential...', 404);
     }
 
-    // let userPaymentDoc = null;
+    let userPaymentDoc = null;
 
     if (userExist.redundant === true) {
       throw new AppError('User not found...', 404);
@@ -167,15 +168,17 @@ const userLogin = async (
         is_active: true,
       });
 
-      // const activeTerm = session?.terms.find((term) => term.is_active === true);
+      const activeTerm = session?.terms.find((term) => term.is_active === true);
 
-      // userPaymentDoc = await Payment.findOne({
-      //   student: userExist._id,
-      //   session: session?._id,
-      //   term: activeTerm?.name,
-      // });
+      userPaymentDoc = await Payment.findOne({
+        student: userExist._id,
+        session: session?._id,
+        term: activeTerm?.name,
+      });
 
-      // userExist.set('latest_payment_document', userPaymentDoc, { strict: false });
+      userExist.set('latest_payment_document', userPaymentDoc, {
+        strict: false,
+      });
     } else if (userExist.role === 'teacher') {
       await userExist.populate(
         'teaching_assignment.class_id teaching_assignment.subject subjects_capable_of_teaching class_managing'

@@ -1,7 +1,7 @@
+import mongoose from 'mongoose';
 import {
   PaymentDocument,
   StudentWithPaymentType,
-  UserDocument,
   UserWithoutPassword,
 } from '../constants/types';
 import Parent from '../models/parents.model';
@@ -9,7 +9,6 @@ import Payment from '../models/payment.model';
 import Session from '../models/session.model';
 import Student from '../models/students.model';
 import { AppError } from '../utils/app.error';
-import mongoose from 'mongoose';
 
 const getStudentDetails = async (
   student_id: string,
@@ -223,8 +222,8 @@ const fetchParentById = async (
 };
 
 export {
-  fetchParentById,
   fetchAllParents,
-  getStudentDetails,
+  fetchParentById,
   getManyStudentDetails,
+  getStudentDetails,
 };
