@@ -535,6 +535,7 @@ import {
 } from '../constants/types';
 import CbtExam from '../models/cbt_exam.model';
 import ClassEnrolment from '../models/classes_enrolment.model';
+import Fee from '../models/fees.model';
 import Session from '../models/session.model';
 import Student from '../models/students.model';
 import TermSettings from '../models/term_settings.model';
@@ -624,18 +625,17 @@ const creatingNewTerm = async (
     }
 
     // THIS IS NEEDED WHEN PAYMENT IS ENABLED
-    // const feeDocExist = await Fee.findOne({
-    //   school: school,
-    //   academic_session_id: response._id,
-    //   term: name,
-    // });
+    const feeDocExist = await Fee.findOne({
+      academic_session_id: response._id,
+      term: name,
+    });
 
-    // if (!feeDocExist) {
-    //   throw new AppError(
-    //     'Please create fee document for all levels in the school before proceeding.',
-    //     400
-    //   );
-    // }
+    if (!feeDocExist) {
+      throw new AppError(
+        'Please create fee document for all levels in the school before proceeding.',
+        400
+      );
+    }
 
     if (name === 'second_term') {
       const firstTerm = response.terms.find(

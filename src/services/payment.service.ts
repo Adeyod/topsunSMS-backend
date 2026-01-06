@@ -69,7 +69,7 @@ const createSchoolFeePaymentDocumentForStudents = async (
 
     const unenrolledStudents = allStudents.filter(
       (student) =>
-        !student.current_class?.class_id ||
+        // !student.current_class?.class_id ||
         student.active_class_enrolment === false
     );
 
