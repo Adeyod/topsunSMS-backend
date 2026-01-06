@@ -630,18 +630,22 @@ const fetchPaymentTransactionHistoryByStudentId = async (
       { $sort: { 'transaction.date_paid': -1 } },
 
       {
-        $group: {
-          _id: null,
-          transaction_history: { $push: '$transaction' },
-        },
+        $replaceRoot: { newRoot: '$transaction' },
       },
 
-      {
-        $project: {
-          _id: 0,
-          transaction_history: 1,
-        },
-      },
+      // {
+      //   $group: {
+      //     _id: null,
+      //     transaction_history: { $push: '$transaction' },
+      //   },
+      // },
+
+      // {
+      //   $project: {
+      //     _id: 0,
+      //     transaction_history: 1,
+      //   },
+      // },
     ];
 
     // Run aggregation
@@ -650,8 +654,12 @@ const fetchPaymentTransactionHistoryByStudentId = async (
       Payment.aggregate(pipeline).sort({ createdAt: -1 }),
     ]);
 
+    console.log('payments:', payments);
+
+    const paymentObj = [...payments];
+    console.log('paymentObj:', paymentObj);
     return {
-      paymentObj: payments as unknown as PaymentHistoryDataType[],
+      paymentObj: paymentObj as unknown as PaymentHistoryDataType[],
       // totalCount,
     };
   } catch (error) {
