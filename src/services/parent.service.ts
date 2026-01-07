@@ -201,18 +201,52 @@ const fetchParentById = async (
   parent_id: string
 ): Promise<UserWithoutPassword> => {
   try {
+    const parent = new mongoose.Types.ObjectId(parent_id);
     const response = await Parent.findById({
-      _id: parent_id,
-    }).populate('children', '-password');
+      _id: parent,
+    })
+      .populate('children', '-password')
+      .lean();
 
     if (!response) {
       throw new AppError('Parent not found.', 404);
     }
 
-    const { password, ...others } = response.toJSON();
+    const activeSession = await Session.findOne({
+      is_active: true,
+    });
 
-    return others as UserWithoutPassword;
+    const activeTerm = activeSession?.terms.find(
+      (term) => term.is_active === true
+    );
+
+    let latest_payment_document = null;
+
+    const childrenWithPayments = await Promise.all(
+      (response.children || []).map(async (child: any) => {
+        const payment = await Payment.findOne({
+          student: child._id,
+          session: activeSession?._id,
+          term: activeTerm?.name,
+        });
+
+        return {
+          ...child,
+          latest_payment_document: payment || null,
+        };
+      })
+    );
+
+    const { password, children, ...others } = response;
+
+    const responseObj = {
+      ...others,
+      children: childrenWithPayments,
+    };
+
+    return responseObj as UserWithoutPassword;
   } catch (error) {
+    console.log('error:', error);
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
