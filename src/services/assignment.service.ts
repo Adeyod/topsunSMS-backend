@@ -235,9 +235,22 @@ const fetchSubjectAssignmentSubmissionById = async (
 
     const assignmentId = new mongoose.Types.ObjectId(assignment_submission_id);
 
-    const submissionExist = await AssignmentSubmission.findById({
-      _id: assignmentId,
-    });
+    const submissionExist = await AssignmentSubmission.findById(
+      assignmentId
+    ).populate([
+      {
+        path: 'student_id',
+        select: 'first_name last_name current_class',
+        populate: {
+          path: 'current_class.class_id',
+          select: '_id name level',
+        },
+      },
+      {
+        path: 'subject_id',
+        select: '_id name',
+      },
+    ]);
 
     if (!submissionExist) {
       throw new AppError('Assignment submission not found.', 404);
