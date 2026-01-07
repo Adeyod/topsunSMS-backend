@@ -178,6 +178,13 @@ const validateGradingArray = (
     throw new Error('Grades must be unique.');
   }
 
+  const remarkSet = new Set(
+    gradingArray.map((item) => item.remark.trim().toLowerCase())
+  );
+  if (remarkSet.size !== gradingArray.length) {
+    throw new Error('Remarks must be unique.');
+  }
+
   return true;
 };
 

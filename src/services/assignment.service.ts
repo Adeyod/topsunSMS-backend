@@ -3,6 +3,7 @@ import {
   AssignmentCreationPayloadType,
   AssignmentMarkingPayloadType,
   AssignmentSubmissionType,
+  AssignmentWithQuestions,
   FindOneAssignmentPayload,
   GetAllSubjectPayloadType,
   GetAssignmentPayloadType,
@@ -235,9 +236,9 @@ const fetchSubjectAssignmentSubmissionById = async (
 
     const assignmentId = new mongoose.Types.ObjectId(assignment_submission_id);
 
-    const submissionExist = await AssignmentSubmission.findById(
-      assignmentId
-    ).populate([
+    const submissionExist = await AssignmentSubmission.findById({
+      _id: assignmentId,
+    }).populate([
       {
         path: 'student_id',
         select: 'first_name last_name current_class',
@@ -250,19 +251,42 @@ const fetchSubjectAssignmentSubmissionById = async (
         path: 'subject_id',
         select: '_id name',
       },
+      {
+        path: 'assignment_id',
+        select: 'questions',
+      },
     ]);
 
     if (!submissionExist) {
       throw new AppError('Assignment submission not found.', 404);
     }
 
+    const submissionObj = submissionExist.toObject();
+
     const assignmentExist = await Assignment.findById({
-      _id: submissionExist.assignment_id,
+      _id: submissionExist.assignment_id._id,
     });
 
     if (!assignmentExist) {
       throw new AppError('Assignment not found.', 404);
     }
+
+    const assignment =
+      submissionObj.assignment_id as unknown as AssignmentWithQuestions;
+    const questions = assignment.questions || [];
+    const answers = submissionObj.answers || [];
+
+    const mergedAnswers = questions.map((question: any) => {
+      const matchedAnswer = answers.find(
+        (ans: any) => ans.question_number === question.question_number
+      );
+
+      return {
+        question_number: question.question_number,
+        question_text: question.question_text,
+        text_response: matchedAnswer?.text_response || null,
+      };
+    });
 
     if (userRole === 'teacher') {
       // Check if the teacher is the one taking the subject in the class
@@ -310,9 +334,13 @@ const fetchSubjectAssignmentSubmissionById = async (
       }
     }
 
-    return submissionExist;
+    const merged = {
+      ...submissionObj,
+      mergedQandA: mergedAnswers,
+    };
+
+    return merged;
   } catch (error) {
-    console.log('error in main catch:', error);
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {

@@ -2088,6 +2088,14 @@ type GetAssignmentSubmissionPayloadType = {
   userRole: string;
 };
 
+type AssignmentWithQuestions = {
+  questions: {
+    question_number: number;
+    question_text: string;
+    _id: mongoose.Types.ObjectId;
+  }[];
+};
+
 type GetAllSubjectPayloadType = {
   subject_id: string;
   session_id: string;
@@ -2176,6 +2184,7 @@ export {
   AssignmentDocument,
   AssignmentMarkingPayloadType,
   AssignmentSubmissionType,
+  AssignmentWithQuestions,
   AsyncHandler,
   AttendanceDocument,
   AttendanceMarkingType,

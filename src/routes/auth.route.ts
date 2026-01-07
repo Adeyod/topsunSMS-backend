@@ -1,16 +1,16 @@
 import express from 'express';
 import {
-  registerUser,
-  loginUser,
-  verifyUserEmail,
-  resendEmailVerificationLink,
   forgotPassword,
-  resetPassword,
+  loginUser,
   logoutUser,
+  registerUser,
   requestAccessToken,
+  resendEmailVerificationLink,
+  resetPassword,
+  verifyUserEmail,
 } from '../controllers/auth.controller';
-import { verifyAccessToken } from '../middleware/jwtAuth';
 import { permission } from '../middleware/authorization';
+import { verifyAccessToken } from '../middleware/jwtAuth';
 
 const router = express.Router();
 
