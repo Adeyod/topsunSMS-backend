@@ -45,7 +45,7 @@ const registerNewUser = async (payload: UserDocument) => {
 
     if (payload.role === 'student') {
       const admissionNumberExist = await findSameAdmissionNumber(
-        payload.admission_number
+        payload.admission_number.trim()
       );
 
       if (admissionNumberExist) {
@@ -578,7 +578,7 @@ export {
   registerNewUser,
   sendingEmailVerificationToken,
   userEmailVerification,
-  userLogin,
+  userLogin
 };
 
 // meetgeek ottaai

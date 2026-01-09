@@ -245,7 +245,7 @@ const findAndVerifyUser = async (payload: VerifyUserType) => {
 const findSameAdmissionNumber = async (admission_number: string) => {
   try {
     const student = await Student.findOne({
-      admission_number: admission_number,
+      admission_number: admission_number.toUpperCase(),
     });
 
     if (student) {

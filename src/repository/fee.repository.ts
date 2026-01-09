@@ -1,16 +1,14 @@
-import mongoose, { ClientSession, ObjectId } from 'mongoose';
+import mongoose, { ObjectId } from 'mongoose';
 import {
-  AccountType,
   ClassDocument,
   FeePayloadType,
   MandatoryFeeProcessingType,
   OptionalFeeProcessingType,
-  SchoolFeesDocument,
 } from '../constants/types';
-import Fee from '../models/fees.model';
 import Class from '../models/class.model';
-import { AppError } from '../utils/app.error';
+import Fee from '../models/fees.model';
 import Session from '../models/session.model';
+import { AppError } from '../utils/app.error';
 
 const getLevelFeeDoc = async (
   uniqueClassLevel: ClassDocument[],
@@ -85,6 +83,13 @@ const mySchoolClasses = async (session: mongoose.ClientSession) => {
     }
 
     const schoolClasses = await Class.find({}).session(session);
+
+    if (!schoolClasses || schoolClasses.length === 0) {
+      throw new AppError(
+        'Classes not found. Please create classes to proceed.',
+        400
+      );
+    }
 
     const schoolObj = {
       schoolClasses,
@@ -217,10 +222,10 @@ const mandatoryFeeProcessing = async (payload: MandatoryFeeProcessingType) => {
 };
 
 export {
-  mandatoryFeeProcessing,
-  optionalFeeProcessing,
-  mySchoolClasses,
-  getLevelFeeDoc,
   createFeeDoc,
   fetchClassLevels,
+  getLevelFeeDoc,
+  mandatoryFeeProcessing,
+  mySchoolClasses,
+  optionalFeeProcessing,
 };
