@@ -57,14 +57,14 @@ const fetchMySchoolSummary = async (userRole: string) => {
 
     let schoolAdmins: {}[] = [];
 
-    if (userRole === 'school_owner') {
+    if (userRole === 'super_admin') {
       schoolAdmins = await Admin.find();
     }
 
     const value = 'Showing total school';
 
     const users_summary_array = [
-      userRole === 'school_owner' && {
+      userRole === 'super_admin' && {
         total_count: schoolAdmins.length,
         key: 'admins',
         title: 'School Admins',
