@@ -235,9 +235,7 @@ const allActiveTermCbtAssessmentDocumentsInATermEnding = async (
   term: string
 ) => {
   try {
-    const activeSession = await Session.findById({
-      _id: session,
-    });
+    const activeSession = await Session.findById(session);
 
     if (!activeSession) {
       throw new AppError('Session not found.', 404);
@@ -255,6 +253,7 @@ const allActiveTermCbtAssessmentDocumentsInATermEnding = async (
       {
         academic_session_id: activeSession._id,
         term: actualTerm.name,
+        is_active: true,
       },
       {
         $set: { is_active: false },

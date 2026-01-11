@@ -23,7 +23,7 @@ import {
 import { permission } from '../middleware/authorization';
 // import getSchoolId from '../middleware/getSchoolId';
 // import schoolSubDomain from '../middleware/subDomain';
-import { developerProtected } from '../middleware/developerProtected';
+// import { developerProtected } from '../middleware/developerProtected';
 import { verifyAccessToken } from '../middleware/jwtAuth';
 
 const router = express.Router();
@@ -33,21 +33,21 @@ router.post(
   '/create-term-exam-document/:academic_session_id/:term',
   // requireFeatureAccess(['objective_exam', 'theory_exam'], 'any'),
   permission(['super_admin']),
-  developerProtected,
+  // developerProtected,
   createTermCbtAssessmentDocument
 );
 
 router.put(
   '/end-term-exam-document/:exam_document_id',
   permission(['super_admin']),
-  developerProtected,
+  // developerProtected,
   endTermCbtAssessmentDocument
 );
 
 router.put(
   '/end-all-active-term-exam-documents',
   permission(['super_admin']),
-  developerProtected,
+  // developerProtected,
   endAllActiveTermCbtAssessmentDocumentsInATerm
 );
 
@@ -77,21 +77,21 @@ router.post(
   '/create-term-class-exam-timetable/:academic_session_id/:class_id',
   // requireFeatureAccess(['objective_exam', 'theory_exam'], 'any'),
   permission(['super_admin', 'admin']),
-  developerProtected,
+  // developerProtected,
   createTermClassCbtAssessmentTimetable
 );
 
 router.put(
   '/end-subject-term-class-exam-timetable/:timetable_id/:subject_id',
   permission(['super_admin', 'admin']),
-  developerProtected,
+  // developerProtected,
   endTakingASubjectInATimetableForATerm
 );
 
 router.put(
   '/update-term-class-exam-timetable/:timetable_id/:subject_id',
   permission(['super_admin', 'admin']),
-  developerProtected,
+  // developerProtected,
   updateTermClassCbtAssessmentTimetableToChangeSubjectDate
 );
 
