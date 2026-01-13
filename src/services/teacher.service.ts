@@ -2238,6 +2238,7 @@ const fetchStudentsInClassOfferingTeacherSubject = async (
 
     return subjectObj;
   } catch (error) {
+    console.log('error:', error);
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
