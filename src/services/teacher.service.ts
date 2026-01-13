@@ -2087,6 +2087,8 @@ const fetchStudentsInClassOfferingTeacherSubject = async (
       academic_session_id,
     } = payload;
 
+    console.log('fetchStudentsInClassOfferingTeacherSubject payload:', payload);
+
     const classExist = await Class.findById({
       _id: class_id,
     })
