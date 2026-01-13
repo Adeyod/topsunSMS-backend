@@ -948,7 +948,7 @@ const recordCumScore = async (
 
     const sortedGrades = gradingArray.sort((a, b) => b.value - a.value);
 
-    let grade = 'F';
+    let grade = 'F9';
     let remark = 'Fail';
 
     for (const gradeItem of gradingArray) {
@@ -956,7 +956,7 @@ const recordCumScore = async (
         (grade = gradeItem.grade), (remark = gradeItem.remark);
         break;
       } else {
-        (grade = 'F'), (remark = 'Fail');
+        (grade = 'F9'), (remark = 'Fail');
       }
     }
 
