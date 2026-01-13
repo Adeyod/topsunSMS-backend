@@ -2235,10 +2235,15 @@ const fetchStudentsInClassOfferingTeacherSubject = async (
 
     console.log('studentOfferingSubject:', studentOfferingSubject);
 
+    // const subjectTeacherObj = classExist.teacher_subject_assignments.find(
+    //   (s) =>
+    //     new mongoose.Types.ObjectId(s?.subject as any)?._id.toString() ===
+    //     subjectExist._id.toString()
+    // );
+
     const subjectTeacherObj = classExist.teacher_subject_assignments.find(
       (s) =>
-        new mongoose.Types.ObjectId(s?.subject as any)?._id.toString() ===
-        subjectExist._id.toString()
+        s.subject && s.subject._id.toString() === subjectExist._id.toString()
     );
 
     console.log('subjectTeacherObj:', subjectTeacherObj);
