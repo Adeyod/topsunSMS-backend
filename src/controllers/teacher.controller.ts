@@ -460,6 +460,10 @@ const getStudentsInClassOfferingTeacherSubject = catchErrors(
     // const start = Date.now();
 
     const { class_id, academic_session_id, subject_id } = req.params;
+    console.log(
+      'getStudentsInClassOfferingTeacherSubject req.params:',
+      req.params
+    );
 
     const userId = req.user?.userId;
     const userRole = req.user?.userRole;
