@@ -2101,6 +2101,8 @@ const fetchStudentsInClassOfferingTeacherSubject = async (
       throw new AppError(`Class with ID: ${class_id} does not exist.`, 404);
     }
 
+    console.log('classExist:', classExist);
+
     const subjectExist = await Subject.findById({
       _id: subject_id,
     });
@@ -2108,6 +2110,8 @@ const fetchStudentsInClassOfferingTeacherSubject = async (
     if (!subjectExist) {
       throw new AppError(`Subject with ID: ${subject_id} does not exist.`, 404);
     }
+
+    console.log('subjectExist:', subjectExist);
 
     if (userRole === 'teacher') {
       const findTeacher = await Teacher.findById({
@@ -2149,6 +2153,8 @@ const fetchStudentsInClassOfferingTeacherSubject = async (
       );
     }
 
+    console.log('sessionExist:', sessionExist);
+
     const activeTerm = sessionExist.terms.find(
       (term) => term.is_active === true
     );
@@ -2170,6 +2176,8 @@ const fetchStudentsInClassOfferingTeacherSubject = async (
         404
       );
     }
+
+    console.log('classDetails:', classDetails);
 
     const studentOfferingSubject = await Promise.all(
       classDetails?.students
@@ -2225,18 +2233,22 @@ const fetchStudentsInClassOfferingTeacherSubject = async (
         })
     );
 
+    console.log('studentOfferingSubject:', studentOfferingSubject);
+
     const subjectTeacherObj = classExist.teacher_subject_assignments.find(
       (s) =>
         new mongoose.Types.ObjectId(s?.subject as any)?._id.toString() ===
         subjectExist._id.toString()
     );
 
+    console.log('subjectTeacherObj:', subjectTeacherObj);
     const subjectObj = {
       students: studentOfferingSubject,
       subject: subjectTeacherObj?.subject,
       subject_teacher: subjectTeacherObj?.teacher,
       class_enrolment_id: classDetails._id,
     };
+    console.log('subjectObj:', subjectObj);
 
     return subjectObj;
   } catch (error) {
