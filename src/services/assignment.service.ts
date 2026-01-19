@@ -88,13 +88,13 @@ const assignmentCreation = async (payload: AssignmentCreationPayloadType) => {
     const subjectTeacher = classExist.teacher_subject_assignments.find(
       (p) =>
         p?.subject?.toString() === subject_id.toString() &&
-        p?.teacher?.toString() === teacherExist._id.toString()
+        p?.teacher?.toString() === teacherExist._id.toString(),
     );
 
     if (!subjectTeacher) {
       throw new AppError(
         'You are not the teacher assigned to teach this subject.',
-        400
+        400,
       );
     }
 
@@ -106,7 +106,7 @@ const assignmentCreation = async (payload: AssignmentCreationPayloadType) => {
     if (!classEnrolmentExist) {
       throw new AppError(
         'There is no active class enrolment for this class.',
-        404
+        404,
       );
     }
 
@@ -127,9 +127,9 @@ const assignmentCreation = async (payload: AssignmentCreationPayloadType) => {
     if (duplicateQuestions.size > 0) {
       throw new AppError(
         `Duplicate question found for: ${Array.from(duplicateQuestions).join(
-          ', '
+          ', ',
         )}.`,
-        400
+        400,
       );
     }
 
@@ -184,13 +184,13 @@ const fetchAssignmentById = async (payload: GetAssignmentPayloadType) => {
       const subjectTeacher = classDetails.teacher_subject_assignments.find(
         (a) =>
           a.subject.toString() === assignmentExist.subject_id.toString() &&
-          a.teacher.toString() === userId.toString()
+          a.teacher.toString() === userId.toString(),
       );
 
       if (!subjectTeacher) {
         throw new AppError(
           'You are not the teacher assigned to teach this subject.',
-          400
+          400,
         );
       }
     } else if (userRole === 'student') {
@@ -206,13 +206,13 @@ const fetchAssignmentById = async (payload: GetAssignmentPayloadType) => {
       const offeredSubject = classEnrolmentExist.students.find(
         (a) =>
           a.student.toString() === userId.toString() &&
-          a.subjects_offered.includes(assignmentExist.subject_id)
+          a.subjects_offered.includes(assignmentExist.subject_id),
       );
 
       if (!offeredSubject) {
         throw new AppError(
           'You are not enrolled to study this subject in this session.',
-          400
+          400,
         );
       }
     }
@@ -229,7 +229,7 @@ const fetchAssignmentById = async (payload: GetAssignmentPayloadType) => {
 };
 
 const fetchSubjectAssignmentSubmissionById = async (
-  payload: GetAssignmentSubmissionPayloadType
+  payload: GetAssignmentSubmissionPayloadType,
 ) => {
   try {
     const { assignment_submission_id, userId, userRole } = payload;
@@ -263,6 +263,8 @@ const fetchSubjectAssignmentSubmissionById = async (
 
     const submissionObj = submissionExist.toObject();
 
+    const { answers, ...others } = submissionObj;
+
     const assignmentExist = await Assignment.findById({
       _id: submissionExist.assignment_id._id,
     });
@@ -274,17 +276,28 @@ const fetchSubjectAssignmentSubmissionById = async (
     const assignment =
       submissionObj.assignment_id as unknown as AssignmentWithQuestions;
     const questions = assignment.questions || [];
-    const answers = submissionObj.answers || [];
+    const answersArray = submissionObj.answers || [];
 
     const mergedAnswers = questions.map((question: any) => {
-      const matchedAnswer = answers.find(
-        (ans: any) => ans.question_number === question.question_number
+      const matchedAnswer = answersArray.find(
+        (ans: any) => ans.question_number === question.question_number,
       );
 
       return {
         question_number: question.question_number,
         question_text: question.question_text,
         text_response: matchedAnswer?.text_response || null,
+      };
+    });
+
+    const formattedAnswer = answersArray.map((ans: any) => {
+      const matchingQuestion = questions.find(
+        (question: any) => question.question_number === ans.question_number,
+      );
+
+      return {
+        ...ans,
+        question_text: matchingQuestion?.question_text,
       };
     });
 
@@ -301,13 +314,13 @@ const fetchSubjectAssignmentSubmissionById = async (
       const subjectTeacher = classDetails.teacher_subject_assignments.find(
         (a) =>
           a.subject.toString() === assignmentExist.subject_id.toString() &&
-          a.teacher.toString() === userId.toString()
+          a.teacher.toString() === userId.toString(),
       );
 
       if (!subjectTeacher) {
         throw new AppError(
           'You are not the teacher assigned to teach this subject.',
-          400
+          400,
         );
       }
     } else if (userRole === 'student') {
@@ -323,19 +336,20 @@ const fetchSubjectAssignmentSubmissionById = async (
       const offeredSubject = classEnrolmentExist.students.find(
         (a) =>
           a.student.toString() === userId.toString() &&
-          a.subjects_offered.includes(assignmentExist.subject_id)
+          a.subjects_offered.includes(assignmentExist.subject_id),
       );
 
       if (!offeredSubject) {
         throw new AppError(
           'You are not enrolled to study this subject in this session.',
-          400
+          400,
         );
       }
     }
 
     const merged = {
-      ...submissionObj,
+      ...others,
+      answers: formattedAnswer,
       mergedQandA: mergedAnswers,
     };
 
@@ -353,7 +367,7 @@ const fetchAllSubjectAssignmentsInClass = async (
   payload: GetAllSubjectPayloadType,
   page?: number,
   limit?: number,
-  searchParams = ''
+  searchParams = '',
 ) => {
   try {
     const { subject_id, session_id, class_id, userRole, userId } = payload;
@@ -389,13 +403,13 @@ const fetchAllSubjectAssignmentsInClass = async (
       const subjectTeacher = classExist.teacher_subject_assignments.find(
         (a) =>
           a.subject.toString() === subjectId.toString() &&
-          a.teacher.toString() === userId.toString()
+          a.teacher.toString() === userId.toString(),
       );
 
       if (!subjectTeacher) {
         throw new AppError(
           'You are not the teacher assigned to teach this subject.',
-          400
+          400,
         );
       }
     } else if (userRole === 'student') {
@@ -404,14 +418,14 @@ const fetchAllSubjectAssignmentsInClass = async (
           a.student.toString() === userId.toString() &&
           a.subjects_offered.some(
             (subId: mongoose.Types.ObjectId) =>
-              subId.toString() === subjectExist._id.toString()
-          )
+              subId.toString() === subjectExist._id.toString(),
+          ),
       );
 
       if (!offeredSubject) {
         throw new AppError(
           'You are not enrolled to study this subject in this session.',
-          400
+          400,
         );
       }
     }
@@ -468,7 +482,7 @@ const fetchAllSubjectAssignmentsInClass = async (
 };
 
 const fetchSubjectAssignmentSubmissions = async (
-  payload: SubjectAssignmentSubmissionsType
+  payload: SubjectAssignmentSubmissionsType,
 ): Promise<{
   submissions: SubmissionDocument[];
   totalCount: number;
@@ -539,13 +553,13 @@ const fetchSubjectAssignmentSubmissions = async (
     const actualSubjectTeacher = classExist.teacher_subject_assignments.find(
       (a) =>
         a.teacher.toString() === teacherExist._id.toString() &&
-        a.subject.toString() === assignmentExist.subject_id.toString()
+        a.subject.toString() === assignmentExist.subject_id.toString(),
     );
 
     if (!actualSubjectTeacher) {
       throw new AppError(
         'This is not the teacher assigned to teach this subject in this class.',
-        400
+        400,
       );
     }
 
@@ -564,7 +578,7 @@ const fetchSubjectAssignmentSubmissions = async (
 };
 
 const fetchAllMySubjectAssignmentSubmissionsInASession = async (
-  payload: StudentSubjectAssignmentSubmissionsType
+  payload: StudentSubjectAssignmentSubmissionsType,
 ): Promise<{
   submissions: SubmissionDocument[];
   totalCount: number;
@@ -650,7 +664,7 @@ const assignmentSubmission = async (payload: AssignmentSubmissionType) => {
     if (!assignmentExist) {
       throw new AppError(
         `Assignment with ${assignment_id} does not exist.`,
-        404
+        404,
       );
     }
 
@@ -673,13 +687,13 @@ const assignmentSubmission = async (payload: AssignmentSubmissionType) => {
     const actualStudentInEnrolment = classEnrolmentExist.students.find(
       (a) =>
         a.student.toString() === studentExist._id.toString() &&
-        a.subjects_offered.includes(assignmentExist.subject_id)
+        a.subjects_offered.includes(assignmentExist.subject_id),
     );
 
     if (!actualStudentInEnrolment) {
       throw new AppError(
         `This student is not enrolled to take this subject in this class.`,
-        400
+        400,
       );
     }
 
@@ -721,30 +735,30 @@ const assignmentMarking = async (payload: AssignmentMarkingPayloadType) => {
       payload;
 
     const atLeastOneMarked = submission_doc.answers.some(
-      (a) => a.mark !== undefined
+      (a) => a.mark !== undefined,
     );
 
     if (atLeastOneMarked) {
       const missingMark = submission_doc.answers.find(
-        (a) => a.mark === undefined
+        (a) => a.mark === undefined,
       );
 
       if (missingMark) {
         throw new AppError(
           `All questions must be marked. Missing mark for question ${missingMark.question_number}.`,
-          400
+          400,
         );
       }
 
       const calTotal = submission_doc.answers.reduce(
         (a, b) => a + (b.mark ?? 0),
-        0
+        0,
       );
 
       if (calTotal !== submission_doc.total_score) {
         throw new AppError(
           'Total sum does not tally with summation of the question marks.',
-          400
+          400,
         );
       }
     }
@@ -760,11 +774,11 @@ const assignmentMarking = async (payload: AssignmentMarkingPayloadType) => {
     }
 
     const assignmentSubmissionId = new mongoose.Types.ObjectId(
-      assignment_submission_id
+      assignment_submission_id,
     );
 
     const assignmentSubmissionExist = await findAssignmentSubmissionById(
-      assignmentSubmissionId
+      assignmentSubmissionId,
     );
 
     if (!assignmentSubmissionExist) {
@@ -774,12 +788,12 @@ const assignmentMarking = async (payload: AssignmentMarkingPayloadType) => {
     if (assignmentSubmissionExist.graded === true) {
       throw new AppError(
         'This submission has been marked by the teacher.',
-        400
+        400,
       );
     }
 
     const assignmentExist = await findAssignmentById(
-      assignmentSubmissionExist.assignment_id
+      assignmentSubmissionExist.assignment_id,
     );
 
     if (!assignmentExist) {
@@ -795,13 +809,13 @@ const assignmentMarking = async (payload: AssignmentMarkingPayloadType) => {
     const subjectTeacher = classExist.teacher_subject_assignments.find(
       (a) =>
         a.subject.toString() === assignmentExist.subject_id.toString() &&
-        a.teacher.toString() === userId.toString()
+        a.teacher.toString() === userId.toString(),
     );
 
     if (!subjectTeacher) {
       throw new AppError(
         'You are the teacher assigned to teach this subject.',
-        400
+        400,
       );
     }
 
