@@ -826,6 +826,8 @@ const studentUpdateDetails = async (
       const deletion = await cloudinaryDestroy(
         response.profile_image.public_url
       );
+
+      console.log("deletion:", deletion)
     }
 
     const imageUpload = await handleFileUpload(req, res);
