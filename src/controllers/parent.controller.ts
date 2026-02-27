@@ -242,9 +242,6 @@ const getParentById = catchErrors(async (req, res) => {
   const userId = req.user?.userId;
   const userRole = req.user?.userRole;
 
-  console.log('getParentById userId:', userId);
-  console.log('getParentById userRole:', userRole);
-
   if (!userId) {
     throw new AppError('Please login to proceed.', 404);
   }
@@ -341,5 +338,6 @@ export {
   fetchAllLinkedStudents,
   getAllChildResults,
   getAllParents,
-  getParentById,
+  getParentById
 };
+

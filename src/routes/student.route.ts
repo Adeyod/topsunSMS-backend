@@ -1,21 +1,19 @@
 import express from 'express';
-import { verifyAccessToken } from '../middleware/jwtAuth';
-import { permission } from '../middleware/authorization';
 import {
-  getAStudentById,
-  updateStudentDetails,
+  adminUpdateStudentSessionSubscription,
   getAllStudents,
   getAllStudentsOnAClassLevel,
-  linkStudentWithParent,
-  studentsSubscribeToNewSession,
-  adminUpdateStudentSessionSubscription,
-  studentOrParentUpdateStudentSessionSubscription,
-  getStudentsThatSubscribedToNewSession,
+  getAStudentById,
   getNewStudentsThatHasNoClassEnrolmentBefore,
   getStudentsThatAreYetToSubscribedToNewSession,
-
-  // calculateStudentCumulativeScoreForAllSubjectsPerTerm,
+  getStudentsThatSubscribedToNewSession,
+  linkStudentWithParent,
+  studentOrParentUpdateStudentSessionSubscription,
+  studentsSubscribeToNewSession,
+  updateStudentDetails,
 } from '../controllers/student.controller';
+import { permission } from '../middleware/authorization';
+import { verifyAccessToken } from '../middleware/jwtAuth';
 import uploadFile from '../middleware/multer';
 
 const router = express.Router();
@@ -60,7 +58,7 @@ router.get(
 
 router.put(
   '/update-student-details/:student_id',
-  permission(['parent', 'student']),
+  permission(['super_admin', 'admin']),
   uploadFile.single('image'),
   updateStudentDetails
 );
@@ -76,7 +74,7 @@ router.get(
   2) student subscribe to new session
   3) show admin those students that has subscribed to new session in a class using their previous class ID
   4) admin will be able to select them in group, we will only show the next class for admin to choose.
- 
+
  */
 
 router.get(

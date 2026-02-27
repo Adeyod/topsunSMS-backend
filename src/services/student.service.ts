@@ -706,40 +706,36 @@
 // };
 
 ////////////////////////////////////////////////////////////////////////////////
-import mongoose, { ObjectId } from 'mongoose';
+import { Request } from 'express';
+import mongoose from 'mongoose';
+import { rolesEnum } from '../constants/enum';
 import {
   ParentObjType,
   SessionSubscriptionType,
-  StudentAccountDocumentType,
   StudentLinkingType,
-  StudentNotificationType,
   StudentSessionSubscriptionType,
-  StudentUpdateDetailsReturnType,
   StudentUpdateType,
   StudentWithPaymentType,
   UserDocument,
-  UserWithoutPassword,
+  UserWithoutPassword
 } from '../constants/types';
+import Class from '../models/class.model';
+import Parent from '../models/parents.model';
 import Payment from '../models/payment.model';
 import Session from '../models/session.model';
 import Student from '../models/students.model';
 import { AppError } from '../utils/app.error';
-import { Request } from 'express';
 import { cloudinaryDestroy, handleFileUpload } from '../utils/cloudinary';
 import { maxParentLength } from '../utils/code';
-import Parent from '../models/parents.model';
 import {
   capitalizeFirstLetter,
-  mySchoolDomain,
-  mySchoolName,
   schoolCityHandCoded,
   schoolCountryHandCoded,
   schoolNameHandCoded,
   schoolStateHandCoded,
-  sendingEmailToQueue,
+  sendingEmailToQueue
 } from '../utils/functions';
 import { emailQueue } from '../utils/queue';
-import Class from '../models/class.model';
 
 const fetchStudentById = async (
   student_id: string
@@ -810,7 +806,7 @@ const studentUpdateDetails = async (
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const { home_address, student_id, parent_id, userRole } = payload;
+    const { home_address, student_id, userRole } = payload;
 
     const response = await Student.findById({
       _id: student_id,
@@ -820,15 +816,10 @@ const studentUpdateDetails = async (
       throw new AppError('Student not found.', 404);
     }
 
-    if (parent_id !== student_id) {
-      if (userRole === 'parent') {
-        if (!response.parent_id?.includes(Object(parent_id))) {
-          throw new AppError(
-            'You can not update this student because you are not a parent to this student.',
-            400
-          );
-        }
-      }
+    const allowedRoles = [rolesEnum[0], rolesEnum[4]]
+
+    if(!allowedRoles.includes(userRole)) {
+      throw new AppError('Please reach out to the school owner to update your details.', 400)
     }
 
     if (response.profile_image?.url) {
@@ -1736,15 +1727,8 @@ const studentSessionSubscriptionUpdateByStudentOrParent = async (
 // THAT ALLOW DOUBLE PROMOTION AND STUDENT TO REPEAT CLASS.
 
 export {
-  fetchStudentsThatAreYetToSubscribedToNewSession,
-  fetchNewStudentsThatHasNoClassEnrolmentBefore,
-  fetchStudentsThatSubscribedToNewSession,
-  studentSessionSubscriptionUpdateByAdmin,
-  studentSessionSubscriptionUpdateByStudentOrParent,
-  newSessionStudentsSubscription,
-  studentLinking,
-  fetchAllStudents,
-  fetchStudentById,
-  studentUpdateDetails,
-  fetchAllStudentsOnAClassLevel,
+  fetchAllStudents, fetchAllStudentsOnAClassLevel, fetchNewStudentsThatHasNoClassEnrolmentBefore, fetchStudentById, fetchStudentsThatAreYetToSubscribedToNewSession, fetchStudentsThatSubscribedToNewSession, newSessionStudentsSubscription,
+  studentLinking, studentSessionSubscriptionUpdateByAdmin,
+  studentSessionSubscriptionUpdateByStudentOrParent, studentUpdateDetails
 };
+

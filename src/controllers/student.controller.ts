@@ -1,4 +1,3 @@
-import mongoose from 'mongoose';
 import { StudentLinkingType } from '../constants/types';
 import {
   fetchAllStudents,
@@ -92,18 +91,14 @@ const updateStudentDetails = catchErrors(async (req, res) => {
 
   const { success, value } = validateInput;
 
-  const parent_id =
-    userRole === 'parent' ? req.user?.userId.toString() : undefined;
-
-  if (userRole === 'parent' && !parent_id) {
-    throw new AppError('Parent ID not found.', 400);
+  if(!userRole) {
+    throw new AppError('User role is required. Please login to proceed.', 400)
   }
 
   const userObj = {
     home_address: value.home_address,
     student_id,
     userRole,
-    parent_id,
   };
 
   const result = await studentUpdateDetails(req, userObj, res);
@@ -623,15 +618,8 @@ const getStudentsThatAreYetToSubscribedToNewSession = catchErrors(
 );
 
 export {
-  getAStudentById,
-  updateStudentDetails,
-  getAllStudents,
-  getAllStudentsOnAClassLevel,
-  linkStudentWithParent,
-  studentsSubscribeToNewSession,
-  adminUpdateStudentSessionSubscription,
-  studentOrParentUpdateStudentSessionSubscription,
-  getStudentsThatSubscribedToNewSession,
-  getNewStudentsThatHasNoClassEnrolmentBefore,
-  getStudentsThatAreYetToSubscribedToNewSession,
+  adminUpdateStudentSessionSubscription, getAllStudents,
+  getAllStudentsOnAClassLevel, getAStudentById, getNewStudentsThatHasNoClassEnrolmentBefore,
+  getStudentsThatAreYetToSubscribedToNewSession, getStudentsThatSubscribedToNewSession, linkStudentWithParent, studentOrParentUpdateStudentSessionSubscription, studentsSubscribeToNewSession, updateStudentDetails
 };
+

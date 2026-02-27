@@ -717,8 +717,8 @@ type UserWithoutPassword = Omit<UserDocument, 'password'>;
 type StudentUpdateType = {
   home_address: string;
   student_id: string;
-  parent_id?: string;
-  userRole?: string;
+  // parent_id?: string;
+  userRole: string;
   // school_id: string;
 };
 
@@ -2397,5 +2397,6 @@ export {
   VerificationDocument,
   VerificationType,
   VerifyUserType,
-  WaitingForConfirmationType,
+  WaitingForConfirmationType
 };
+
