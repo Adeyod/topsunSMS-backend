@@ -44,7 +44,7 @@ const assignmentCreation = async (payload: AssignmentCreationPayloadType) => {
       _id: session_id,
     });
 
-    console.log('sessionExist:', sessionExist);
+    console.log('payload:', payload);
 
     if (!sessionExist) {
       throw new AppError('Session not found.', 404);
@@ -88,9 +88,10 @@ const assignmentCreation = async (payload: AssignmentCreationPayloadType) => {
     const subjectTeacher = classExist.teacher_subject_assignments.find(
       (p) =>
         p?.subject?.toString() === subject_id.toString() &&
-        p?.teacher?.toString() === teacherExist._id.toString(),
+      p?.teacher?.toString() === teacherExist._id.toString(),
     );
 
+    console.log('subjectTeacher:', subjectTeacher);
     if (!subjectTeacher) {
       throw new AppError(
         'You are not the teacher assigned to teach this subject.',
@@ -103,6 +104,7 @@ const assignmentCreation = async (payload: AssignmentCreationPayloadType) => {
       academic_session_id: sessionExist._id,
     });
 
+    console.log('classEnrolmentExist:', classEnrolmentExist);
     if (!classEnrolmentExist) {
       throw new AppError(
         'There is no active class enrolment for this class.',
@@ -145,10 +147,12 @@ const assignmentCreation = async (payload: AssignmentCreationPayloadType) => {
       due_date: due_date,
     });
 
+    console.log('newAssignment:', newAssignment);
     await newAssignment.save();
 
     return newAssignment;
   } catch (error) {
+    console.log('error:', error);
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
@@ -843,5 +847,6 @@ export {
   fetchAllSubjectAssignmentsInClass,
   fetchAssignmentById,
   fetchSubjectAssignmentSubmissionById,
-  fetchSubjectAssignmentSubmissions,
+  fetchSubjectAssignmentSubmissions
 };
+
