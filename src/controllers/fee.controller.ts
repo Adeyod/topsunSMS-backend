@@ -247,30 +247,27 @@
 // };
 
 ////////////////////////////////////////////////////////////////
-import mongoose from 'mongoose';
-import { FeePayloadType } from '../constants/types';
 import {
+  fetchAllMandatoryFees,
+  fetchAllOptionalFees,
   fetchAllSchoolFeesPerTerm,
   fetchASchoolFee,
   fetchASchoolFeeByLevelAndTerm,
+  fetchSchoolFees,
+  fetchTermFees,
+  fetchTermMandatoryFees,
+  fetchTermOptionalFees,
   mandatoryFeesAddition,
   mandatoryFeesCreation,
   optionalFeesAddition,
   optionalFeesCreation,
   schoolFeesCreation,
-  fetchSchoolFees,
-  fetchTermFees,
-  fetchAllMandatoryFees,
-  fetchAllOptionalFees,
-  fetchTermMandatoryFees,
-  fetchTermOptionalFees,
 } from '../services/fee.service';
 import { AppError } from '../utils/app.error';
 import catchErrors from '../utils/tryCatch';
 import {
   optionalFeesValidation,
-  schoolBusValidation,
-  schoolFeesValidation,
+  schoolFeesValidation
 } from '../utils/validation';
 // import { saveLog } from '../logs/log.service';
 
@@ -488,8 +485,8 @@ const createOptionalFees = catchErrors(async (req, res) => {
     applicable_classes,
     amount,
   };
-  const missingField = Object.entries(requiredFields).find(
-    ([key, value]) => !value
+   const missingField = Object.entries(requiredFields).find(
+    ([key, value]) => value === undefined || value === null || value === ''
   );
 
   if (missingField) {
@@ -558,7 +555,7 @@ const createMandatoryFees = catchErrors(async (req, res) => {
     amount,
   };
   const missingField = Object.entries(requiredFields).find(
-    ([key, value]) => !value
+    ([key, value]) => value === undefined || value === null || value === ''
   );
 
   if (missingField) {
@@ -627,7 +624,7 @@ const addMandatoryFeeDuringTerm = catchErrors(async (req, res) => {
     term,
   };
   const missingField = Object.entries(requiredFields).find(
-    ([key, value]) => !value
+    ([key, value]) => value === undefined || value === null || value === ''
   );
 
   if (missingField) {
@@ -698,7 +695,7 @@ const addOptionalFeeDuringTerm = catchErrors(async (req, res) => {
     term,
   };
   const missingField = Object.entries(requiredFields).find(
-    ([key, value]) => !value
+    ([key, value]) => value === undefined || value === null || value === ''
   );
 
   if (missingField) {
@@ -1058,19 +1055,10 @@ const getTermOptionalFees = catchErrors(async (req, res) => {
 const updateSchoolFeesById = catchErrors(async (req, res) => {});
 
 export {
-  getSchoolFees,
   addMandatoryFeeDuringTerm,
-  addOptionalFeeDuringTerm,
-  createSchoolFees,
-  updateSchoolFeesById,
-  getAllSchoolFeesPerTerm,
-  createOptionalFees,
-  createMandatoryFees,
-  getASchoolFeeById,
-  getASchoolFeeByLevelAndTerm,
-  getTermFees,
-  getAllMandatoryFees,
-  getAllOptionalFees,
-  getTermMandatoryFees,
-  getTermOptionalFees,
+  addOptionalFeeDuringTerm, createMandatoryFees, createOptionalFees, createSchoolFees, getAllMandatoryFees,
+  getAllOptionalFees, getAllSchoolFeesPerTerm, getASchoolFeeById,
+  getASchoolFeeByLevelAndTerm, getSchoolFees, getTermFees, getTermMandatoryFees,
+  getTermOptionalFees, updateSchoolFeesById
 };
+

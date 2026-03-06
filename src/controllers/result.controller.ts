@@ -702,8 +702,8 @@ const recordStudentScorePerTerm = catchErrors(async (req, res) => {
     class_enrolment_id,
     class_id,
   };
-  const missingField = Object.entries(requiredFields).find(
-    ([key, value]) => !value
+   const missingField = Object.entries(requiredFields).find(
+    ([key, value]) => value === undefined || value === null || value === ''
   );
 
   if (missingField) {
@@ -796,8 +796,8 @@ const manualCbtRecordingPerStudentPerTerm = catchErrors(async (req, res) => {
     subject_id,
     class_id,
   };
-  const missingField = Object.entries(requiredFields).find(
-    ([key, value]) => !value
+   const missingField = Object.entries(requiredFields).find(
+    ([key, value]) => value === undefined || value === null || value === ''
   );
 
   if (missingField) {
@@ -921,8 +921,8 @@ const recordAllStudentsScoresPerTerm = catchErrors(async (req, res) => {
     class_enrolment_id,
     class_id,
   };
-  const missingField = Object.entries(requiredFields).find(
-    ([key, value]) => !value
+   const missingField = Object.entries(requiredFields).find(
+    ([key, value]) => value === undefined || value === null || value === ''
   );
 
   if (missingField) {
@@ -1044,7 +1044,7 @@ const updateStudentsSubjectScoreInAClass = catchErrors(async (req, res) => {
     class_id,
   };
   const missingField = Object.entries(requiredFields).find(
-    ([key, value]) => !value
+    ([key, value]) => value === undefined || value === null || value === ''
   );
 
   if (missingField) {
@@ -1178,8 +1178,8 @@ const recordAllStudentsExamScoresPerTerm = catchErrors(async (req, res) => {
     class_enrolment_id,
     class_id,
   };
-  const missingField = Object.entries(requiredFields).find(
-    ([key, value]) => !value
+   const missingField = Object.entries(requiredFields).find(
+    ([key, value]) => value === undefined || value === null || value === ''
   );
 
   if (missingField) {
@@ -1381,7 +1381,7 @@ const getStudentTermResult = catchErrors(async (req, res) => {
   const requiredFields = { student_id, academic_session_id, term };
 
   const missingField = Object.entries(requiredFields).find(
-    ([key, value]) => !value
+    ([key, value]) => value === undefined || value === null || value === ''
   );
 
   if (missingField) {
@@ -1448,8 +1448,8 @@ const getStudentSessionResults = catchErrors(async (req, res) => {
 
   const requiredFields = { student_id, academic_session_id };
 
-  const missingField = Object.entries(requiredFields).find(
-    ([key, value]) => !value
+   const missingField = Object.entries(requiredFields).find(
+    ([key, value]) => value === undefined || value === null || value === ''
   );
 
   if (missingField) {
@@ -1767,8 +1767,8 @@ const recordStudentEffectiveAreasForActiveTerm = catchErrors(
     };
 
     const missingField = Object.entries(requiredFields).find(
-      ([key, value]) => !value
-    );
+    ([key, value]) => value === undefined || value === null || value === ''
+  );
 
     if (missingField) {
       throw new AppError(
@@ -1914,7 +1914,7 @@ const recordAllStudentsLastTermCumPerTerm = catchErrors(async (req, res) => {
     class_id,
   };
   const missingField = Object.entries(requiredFields).find(
-    ([key, value]) => !value
+    ([key, value]) => value === undefined || value === null || value === ''
   );
 
   if (missingField) {
@@ -2248,5 +2248,6 @@ export {
   //////////////////////////////////////////
   subjectPositionGradingInClass,
   subjectResultTotalCalculation,
-  updateStudentsSubjectScoreInAClass,
+  updateStudentsSubjectScoreInAClass
 };
+

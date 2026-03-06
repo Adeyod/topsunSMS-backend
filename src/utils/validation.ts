@@ -1773,5 +1773,6 @@ export {
   staffValidation,
   studentValidation,
   superAdminValidation,
-  teacherValidation,
+  teacherValidation
 };
+

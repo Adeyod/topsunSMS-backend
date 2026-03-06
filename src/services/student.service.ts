@@ -987,7 +987,7 @@ const fetchAllStudents = async (
   totalPages: number;
 }> => {
   try {
-    let query = Student.find({}).sort({ createdAt: -1 });
+    let query = Student.find({redundant: false}).sort({ createdAt: -1 });
 
     // Apply search filter if present
     if (searchParams?.trim()) {
@@ -1063,6 +1063,7 @@ const fetchAllStudentsOnAClassLevel = async (level: string) => {
   try {
     const students = await Student.find({
       current_class_level: level,
+      redundant: false
     }).select('-password');
 
     if (!students || students.length === 0) {
@@ -1458,6 +1459,7 @@ const fetchStudentsThatSubscribedToNewSession = async (level: string) => {
           'current_class.class_id': d?._id,
           new_session_subscription: true,
           active_class_enrolment: false,
+          redundant: false
         });
       })
     );
@@ -1494,6 +1496,7 @@ const fetchNewStudentsThatHasNoClassEnrolmentBefore = async (
     let query = Student.find({
       current_class: null,
       current_class_level: null,
+      redundant: false
     });
 
     if (searchParams) {
@@ -1569,6 +1572,7 @@ const fetchStudentsThatAreYetToSubscribedToNewSession = async (
     let query = Student.find({
       new_session_subscription: null,
       active_class_enrolment: false,
+      redundant: false
     });
 
     if (searchParams) {
@@ -1648,8 +1652,9 @@ const studentSessionSubscriptionUpdateByStudentOrParent = async (
       new_session_subscription_status,
     } = payload;
 
-    const student = await Student.findById({
+    const student = await Student.findOne({
       _id: student_id,
+      redundant: false
     });
 
     if (!student) {

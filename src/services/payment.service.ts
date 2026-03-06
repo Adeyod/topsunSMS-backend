@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import { paymentEnum, paymentStatusEnum } from '../constants/enum';
+import { paymentEnum, paymentStatusEnum, termEnum } from '../constants/enum';
 import {
   AddFeeToStudentPaymentDocType,
   AddingFeeToPaymentPayload,
@@ -55,7 +55,7 @@ const createSchoolFeePaymentDocumentForStudents = async (
       );
     }
 
-    const allStudents = await Student.find().session(session);
+    const allStudents = await Student.find({redundant: false}).session(session);
 
     if (!allStudents) {
       throw new AppError('No students found yet.', 404);
@@ -289,6 +289,143 @@ const addingFeeToStudentPaymentDocument = async (
     }
   }
 };
+
+type AddFeeToStudentsType = {
+  session_id: string,
+  amount: number,
+  fee_name: string,
+  studentIds: string[]
+}
+
+const addFeeToStudents = async(payload: AddFeeToStudentsType)=>{
+  try {
+    const {session_id, amount, fee_name, studentIds} = payload
+
+     const studentObjectIds = studentIds.map(
+      (id) => new mongoose.Types.ObjectId(id)
+    );
+
+    const session = new mongoose.Types.ObjectId(session_id)
+
+    const sessionExist = await Session.findById(session)
+
+    if(!sessionExist) {
+      throw new AppError('Session not found.', 404)
+    }
+
+    if(!sessionExist?.is_active){
+      throw new AppError('Session has already ended.', 400)
+    }
+
+   const feeObj = {
+    fee_name,
+    amount
+   }
+
+   const result = await Payment.updateMany(
+    {
+      session: session,
+      term: termEnum[1],
+      student: {$in: studentObjectIds},
+      "fees_breakdown.fee_name": 'school_fee'
+    },
+    {
+     $inc: {
+      "fees_breakdown.$[fee].amount":amount,
+      total_amount: amount,
+      remaining_amount: amount
+     }
+    },
+    {
+      arrayFilters: [
+        {"fee.fee_name":"school_fee"}
+      ]
+    }
+   )
+
+   console.log("result:", result)
+
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw new AppError(error.message, error.statusCode);
+    } else {
+      console.error(error);
+      throw new Error(`Something happened: ${error}`);
+    }
+  }
+}
+
+/**
+ * The ID of all students involve, the amount and what the fee is for
+ */
+
+// const payload = {
+//   session_id: '6900ba5768f7bbc23430ede2',
+//   amount: 5000,
+//   fee_name: 'science fee',
+//   studentIds: [
+// '6901ef29e2976ae54e6da87c',
+// '6901f09ee2976ae54e6da94b',
+// '6901f124e2976ae54e6da971',
+// '6901f1a4e2976ae54e6da991',
+// '6901f2aee2976ae54e6da9ce',
+// '6901f33ae2976ae54e6da9eb',
+// '6901f3abe2976ae54e6daa0e',
+// '6901f428e2976ae54e6daa31',
+// '6901f696e2976ae54e6dac85',
+// '6901f725e2976ae54e6daca8',
+// '6901f7d2e2976ae54e6dacce',
+// '69022af0a051ae2466968c05',
+// '69021a5518c02cfcb84501c9',
+// '69021af018c02cfcb84501ec',
+// '69021b7e18c02cfcb845020f',
+// '69021c0018c02cfcb8450235',
+// '69021c7518c02cfcb8450255',
+// '69021dc918c02cfcb84502a1',
+// '69022761a051ae2466968b22',
+// '69022800a051ae2466968b42',
+// '69022967a051ae2466968ba2',
+// '690229eba051ae2466968bc5',
+// '6912eae560c832f7c12ccb24',
+// '6912ebe560c832f7c12ccb64',
+// '6912ec7f60c832f7c12ccb84',
+// '6912ecf660c832f7c12ccba1',
+// '6912eeba60c832f7c12ccd69',
+// '6912ef9d60c832f7c12ccdac'
+//   ]
+// }
+
+// addFeeToStudents(payload)
+
+// const payload = {
+//   session_id: '6900ba5768f7bbc23430ede2',
+//   amount: 5000,
+//   fee_name: 'science fee',
+//   studentIds: [
+// '',
+// '',
+// '',
+// '',
+// '',
+// '',
+// '',
+// '',
+// '',
+// ''
+// // '',
+// // '',
+// // '',
+// // '',
+// // '',
+// // ''
+// // '',
+// // '',
+// // ''
+// // '',
+// // ''
+// // ''
+//   ]
+// }
 
 const fetchAllStudentPaymentDocumentsByStudentId = async (
   payload: StudentPaymentHistoryType,
@@ -1609,5 +1746,6 @@ export {
   fetchStudentOutstandingPaymentDoc,
   fetchStudentSinglePaymentDoc,
   studentBankFeePayment,
-  studentCashFeePayment,
+  studentCashFeePayment
 };
+

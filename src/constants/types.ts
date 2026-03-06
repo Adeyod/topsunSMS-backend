@@ -2163,6 +2163,13 @@ type DeclineStudentPayloadType = {
   bursar_id: mongoose.Types.ObjectId;
 };
 
+type SubjectAdditionToEnrolledStudentsType = {
+subject_id: string,
+session_id: string,
+enrolment_id: string,
+studentIds: string[]
+}
+
 export {
   AccessModeType,
   AccountCreationReturnType,
@@ -2360,8 +2367,7 @@ export {
   StudentUpdateType,
   StudentValidationType,
   StudentWalletObjType,
-  StudentWithPaymentType,
-  SubjectAdditionType,
+  StudentWithPaymentType, SubjectAdditionToEnrolledStudentsType, SubjectAdditionType,
   SubjectAssignmentSubmissionsType,
   SubjectCreationType,
   SubjectCumScoreJobData,

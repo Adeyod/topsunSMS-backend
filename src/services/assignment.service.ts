@@ -150,13 +150,15 @@ const assignmentCreation = async (payload: AssignmentCreationPayloadType) => {
     console.log('newAssignment:', newAssignment);
     await newAssignment.save();
 
+    https://topsun-schools.onrender.com/api/v1/class-enrollment/get-all-class-enrollments
+
     return newAssignment;
   } catch (error) {
     console.log('error:', error);
     if (error instanceof AppError) {
       throw new AppError(error.message, error.statusCode);
     } else {
-      throw new Error('Something went wrong');
+      throw new Error(`Something went wrong: ${error}`);
     }
   }
 };

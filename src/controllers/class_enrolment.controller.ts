@@ -280,7 +280,7 @@ import {
   fetchAllStudentsInAClass,
   fetchAllStudentsInAClassInActiveSession,
   fetchEnrollmentsBySession,
-  fetchSingleEnrollment,
+  fetchSingleEnrollment, subjectAdditionToEnrolledStudents
 } from '../services/class_enrolment.service';
 import { AppError } from '../utils/app.error';
 import catchErrors from '../utils/tryCatch';
@@ -750,9 +750,54 @@ const manyStudentsEnrolmentToClass = catchErrors(async (req, res) => {
   });
 });
 
+const addSubjectToEnrolledStudents = catchErrors(async(req, res)=>{
+const {session_id, enrolment_id, subject_id} = req.params
+const {studentIds} = req.body
+
+const requiredFields = {
+  session_id, enrolment_id, subject_id
+}
+
+const missingField = Object.entries(requiredFields).find(
+    ([key, value]) => value === undefined || value === null || value === ''
+  );
+
+  if (missingField) {
+    throw new AppError(
+      `Please provide ${missingField[0].replace('_', ' ')} to proceed.`,
+      400
+    );
+  }
+
+  if(studentIds.length < 1) {
+    throw new AppError('Please provide students ID to be updated.', 400)
+  }
+
+  const payload = {
+    studentIds,
+    session_id,
+    enrolment_id,
+    subject_id
+  }
+
+  const result = await subjectAdditionToEnrolledStudents(payload)
+
+  if(!result) {
+    throw new AppError("Unable to add subject to students' enrolment.", 400)
+  }
+
+  return res.status(200).json({
+    message: 'Subject added to enrolments successfully.',
+    success: true,
+    status: 200,
+    result
+  })
+})
+
 // addLogoToASchool, addSchoolImageToASchool,
 
 export {
+  addSubjectToEnrolledStudents,
   getAllActiveClassEnrollments,
   getAllEnrollments,
   getAllSessionEnrollmentsBySessionId,
@@ -760,5 +805,6 @@ export {
   getAllStudentsInAClassInActiveSession,
   getASingleEnrollmentById,
   manyStudentsEnrolmentToClass,
-  studentEnrolmentToClass,
+  studentEnrolmentToClass
 };
+

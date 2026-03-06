@@ -16,6 +16,26 @@ const createAssignment = catchErrors(async (req, res) => {
   const { class_id, subject_id, session_id } = req.params;
   const { questions_array, title, due_date } = req.body;
 
+
+    const requiredFields = {
+    subject_id,
+    session_id,
+    class_id,
+    title,
+    due_date,
+  };
+
+  const missingField = Object.entries(requiredFields).find(
+    ([key, value]) => value === undefined || value === null || value === ''
+  );
+
+  if (missingField) {
+    throw new AppError(
+      `Please provide ${missingField[0].replace('_', ' ')} to proceed.`,
+      400
+    );
+  }
+
   const user = req.user?.userId;
 
   if (!user) {
@@ -26,24 +46,7 @@ const createAssignment = catchErrors(async (req, res) => {
     throw new AppError('Questions can not be empty.', 400);
   }
 
-  const requiredFields = {
-    subject_id,
-    session_id,
-    class_id,
-    title,
-    due_date,
-  };
 
-  const missingField = Object.entries(requiredFields).find(
-    ([key, value]) => !value
-  );
-
-  if (missingField) {
-    throw new AppError(
-      `Please provide ${missingField[0].replace('_', ' ')} to proceed.`,
-      400
-    );
-  }
 
   const payload = {
     subject_id: Object(subject_id),
@@ -113,7 +116,7 @@ const getAllSubjectAssignmentsInClass = catchErrors(async (req, res) => {
   };
 
   const missingField = Object.entries(requiredFields).find(
-    ([key, value]) => !value
+    ([key, value]) => value === undefined || value === null || value === ''
   );
 
   if (missingField) {
@@ -398,5 +401,6 @@ export {
   getSubjectAssignmentSubmissionById,
   getSubjectAssignmentSubmissions,
   markAssignment,
-  submitAssignment,
+  submitAssignment
 };
+

@@ -53,7 +53,7 @@ const registerUser = catchErrors(async (req, res) => {
   };
 
   const missingField = Object.entries(requiredFields).find(
-    ([key, value]) => !value
+    ([key, value]) => value === undefined || value === null || value === ''
   );
 
   if (missingField) {
@@ -68,8 +68,9 @@ const registerUser = catchErrors(async (req, res) => {
       phone,
       employment_date,
     };
+
     const workerMissingField = Object.entries(workerFields).find(
-      ([key, value]) => !value
+      ([key, value]) => value === undefined || value === null || value === ''
     );
 
     if (workerMissingField) {
@@ -402,12 +403,6 @@ const logoutUser = catchErrors(async (req, res) => {
 });
 
 export {
-  requestAccessToken,
-  registerUser,
-  loginUser,
-  verifyUserEmail,
-  resendEmailVerificationLink,
-  forgotPassword,
-  resetPassword,
-  logoutUser,
+  forgotPassword, loginUser, logoutUser, registerUser, requestAccessToken, resendEmailVerificationLink, resetPassword, verifyUserEmail
 };
+

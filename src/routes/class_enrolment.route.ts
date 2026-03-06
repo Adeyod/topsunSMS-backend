@@ -1,16 +1,17 @@
 import express from 'express';
-import { verifyAccessToken } from '../middleware/jwtAuth';
-import { permission } from '../middleware/authorization';
 import {
-  studentEnrolmentToClass,
+  addSubjectToEnrolledStudents,
   getASingleEnrollmentById,
-  getAllEnrollments,
   getAllActiveClassEnrollments,
+  getAllEnrollments,
   getAllSessionEnrollmentsBySessionId,
   getAllStudentsInAClass,
   getAllStudentsInAClassInActiveSession,
   manyStudentsEnrolmentToClass,
+  studentEnrolmentToClass
 } from '../controllers/class_enrolment.controller';
+import { permission } from '../middleware/authorization';
+import { verifyAccessToken } from '../middleware/jwtAuth';
 
 const router = express.Router();
 
@@ -63,5 +64,7 @@ router.post(
   permission(['admin', 'super_admin']),
   manyStudentsEnrolmentToClass
 );
+
+router.put('/add-subject-to-enrolled-students/:session_id/:enrolment_id/:subject_id',permission(['admin', 'super_admin']), addSubjectToEnrolledStudents)
 
 export default router;

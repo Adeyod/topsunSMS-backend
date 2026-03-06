@@ -3,12 +3,13 @@ import { enrolmentEnum } from '../constants/enum';
 import {
   ClassEnrolmentDocument,
   GetClassStudentsType,
-  StudentEnrolmentType,
+  StudentEnrolmentType, SubjectAdditionToEnrolledStudentsType
 } from '../constants/types';
 import Class from '../models/class.model';
 import ClassEnrolment from '../models/classes_enrolment.model';
 import Session from '../models/session.model';
 import Student from '../models/students.model';
+import Subject from '../models/subject.model';
 import { AppError } from '../utils/app.error';
 
 const enrolStudentToClass = async (
@@ -28,6 +29,7 @@ const enrolStudentToClass = async (
 
     const studentSubscribed = await Student.findOne({
       _id: student_id,
+      redundant: false
     }).session(session);
 
     if (!studentSubscribed) {
@@ -70,6 +72,11 @@ const enrolStudentToClass = async (
       );
       // }
     }
+
+    /**
+     * from the enrolment page, since students are there, we can find a way to select students and also subject we want to add to the students enrolment array for the session or what do you think sir?
+     * We just use the id of the students, id of the subject and id of the enrolment to make the update. This update will only be possible in an active enrolment in an active session.
+     */
 
     const compulsorySubjects = await Class.findById({ _id: class_id }).session(
       session
@@ -608,6 +615,93 @@ const fetchAllStudentsInAClassInActiveSession = async (
   }
 };
 
+
+const subjectAdditionToEnrolledStudents = async (
+  payload: SubjectAdditionToEnrolledStudentsType
+) => {
+  try {
+    // I need to add class id so as to confirm if the subject is part of what is to be offered in the class
+    const { session_id, subject_id, enrolment_id, studentIds } = payload;
+
+    const subject = new mongoose.Types.ObjectId(subject_id)
+    const session = new mongoose.Types.ObjectId(session_id)
+    const enrolment = new mongoose.Types.ObjectId(enrolment_id)
+
+
+    const subjectExist = await Subject.findById({
+      _id: subject
+    })
+
+    console.log("subjectExist:", subjectExist)
+
+    if(!subjectExist) {
+      throw new AppError('Subject not found.', 404)
+    }
+
+    const sessionExist = await Session.findById(session);
+    console.log("sessionExist:", sessionExist)
+
+    if (!sessionExist) {
+      throw new AppError(`Session with ID: ${session_id} does not exist.`, 404);
+    }
+
+    if (sessionExist.is_active !== true) {
+      throw new AppError(
+        `Session with ID: ${session_id} is no more active and you can only use this resource when the session is active.`,
+        403
+      );
+    }
+
+    const enrolmentExist = await ClassEnrolment.findById(enrolment);
+    console.log("enrolmentExist:", enrolmentExist)
+
+    if (!enrolmentExist) {
+      throw new AppError(
+        `Enrolment not found.`,
+        404
+      );
+    }
+
+    if(!enrolmentExist.is_active){
+      throw new AppError('You can only add subject to students inside an active enrolment. This duration of this enrolment has passed.', 400)
+    }
+
+    console.log("enrolment student[0] length before update:", enrolmentExist.students[0].subjects_offered.length)
+
+
+    const studentObjectIds = studentIds.map(
+      (id) => new mongoose.Types.ObjectId(id)
+    );
+    console.log("studentObjectIds:", studentObjectIds)
+
+   await ClassEnrolment.updateOne(
+    {_id: enrolment},
+    {
+      $addToSet: {
+        "students.$[student].subjects_offered":subject
+      }
+    },
+    {
+      arrayFilters: [
+        {
+          "student.student": {$in: studentObjectIds}
+        }
+      ]
+    }
+   )
+
+   console.log("enrolment student[0] length after update:", enrolmentExist.students[0].subjects_offered.length)
+
+    return {message: 'Subject successfully added to selected students.'}
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw new AppError(error.message, error.statusCode);
+    } else {
+      throw new Error('Something happened.');
+    }
+  }
+};
+
 export {
   enrolManyStudentsToClass,
   enrolStudentToClass,
@@ -616,5 +710,6 @@ export {
   fetchAllStudentsInAClass,
   fetchAllStudentsInAClassInActiveSession,
   fetchEnrollmentsBySession,
-  fetchSingleEnrollment,
+  fetchSingleEnrollment, subjectAdditionToEnrolledStudents
 };
+

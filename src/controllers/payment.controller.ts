@@ -804,8 +804,8 @@ const addFeeToStudentPaymentDocument = catchErrors(async (req, res) => {
     fee_name,
     amount,
   };
-  const missingField = Object.entries(requiredFields).find(
-    ([key, value]) => !value
+   const missingField = Object.entries(requiredFields).find(
+    ([key, value]) => value === undefined || value === null || value === ''
   );
 
   if (missingField) {
@@ -1469,7 +1469,7 @@ const makeBankPayment = catchErrors(async (req, res) => {
     bank_name,
   };
   const missingField = Object.entries(requiredFields).find(
-    ([key, value]) => !value
+    ([key, value]) => value === undefined || value === null || value === ''
   );
 
   if (missingField) {
@@ -1667,5 +1667,6 @@ export {
   getPaymentDetailsByPaymentId,
   getPaymentTransactionHistoryByStudentId,
   makeBankPayment,
-  makeCashPayment,
+  makeCashPayment
 };
+
