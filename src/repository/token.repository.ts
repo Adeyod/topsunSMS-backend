@@ -1,23 +1,19 @@
-import mongoose, { Document, Model } from 'mongoose';
-import { verificationEnum } from '../constants/enum';
+import mongoose, { Model } from 'mongoose';
 import {
   RefreshTokenType,
   UserDocument,
   VerificationDocument,
-  VerificationType,
-  VerifyUserType,
+  VerificationType
 } from '../constants/types';
+import { RefreshToken } from '../models/refresh_token.model';
 import {
   AdminToken,
-  NonTeachingToken,
-  OldStudentToken,
   ParentToken,
   StudentToken,
   SuperAdminToken,
   TeacherToken,
 } from '../models/token.model';
 import { generateCode } from '../utils/code';
-import { RefreshToken } from '../models/refresh_token.model';
 
 const generateAndStoreVerificationToken = async (
   payload: UserDocument,
@@ -26,8 +22,6 @@ const generateAndStoreVerificationToken = async (
   const roleTokenModel: Record<string, any> = {
     super_admin: SuperAdminToken,
     admin: AdminToken,
-    non_teaching: NonTeachingToken,
-    old_student: OldStudentToken,
     parent: ParentToken,
     student: StudentToken,
     teacher: TeacherToken,
@@ -92,14 +86,6 @@ const getUserTokenDetails = async (
       field: 'token',
     },
     {
-      model: NonTeachingToken as unknown as Model<VerificationDocument>,
-      field: 'token',
-    },
-    {
-      model: OldStudentToken as unknown as Model<VerificationDocument>,
-      field: 'token',
-    },
-    {
       model: ParentToken as unknown as Model<VerificationDocument>,
       field: 'token',
     },
@@ -150,14 +136,6 @@ const getUserTokenDetailsUsingUserId = async (
       field: 'admin_id',
     },
     {
-      model: NonTeachingToken as unknown as Model<VerificationDocument>,
-      field: 'non_teaching_id',
-    },
-    {
-      model: OldStudentToken as unknown as Model<VerificationDocument>,
-      field: 'old_student_id',
-    },
-    {
       model: ParentToken as unknown as Model<VerificationDocument>,
       field: 'parent_id',
     },
@@ -182,8 +160,7 @@ const getUserTokenDetailsUsingUserId = async (
 };
 
 export {
-  generateAndStoreVerificationToken,
-  getUserTokenDetails,
-  getUserTokenDetailsUsingUserId,
-  getUserRefreshTokenDetails,
+  generateAndStoreVerificationToken, getUserRefreshTokenDetails, getUserTokenDetails,
+  getUserTokenDetailsUsingUserId
 };
+

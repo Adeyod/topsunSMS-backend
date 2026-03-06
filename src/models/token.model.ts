@@ -34,40 +34,6 @@ const superAdminTokenSchema = new mongoose.Schema(
   }
 );
 
-const nonTeachingTokenSchema = new mongoose.Schema(
-  {
-    non_teaching_id: { type: Schema.Types.ObjectId, ref: 'NonTeaching' },
-    token: { type: String, required: true },
-    purpose: { type: String, required: true },
-    role: { type: String, required: true },
-    created_at: {
-      type: Date,
-      default: Date.now(),
-      expires: 1800,
-    },
-  },
-  {
-    timestamps: true,
-  }
-);
-
-const oldStudentTokenSchema = new mongoose.Schema(
-  {
-    old_student_id: { type: Schema.Types.ObjectId, ref: 'OldStudent' },
-    token: { type: String, required: true },
-    purpose: { type: String, required: true },
-    role: { type: String, required: true },
-    created_at: {
-      type: Date,
-      default: Date.now(),
-      expires: 1800,
-    },
-  },
-  {
-    timestamps: true,
-  }
-);
-
 const parentTokenSchema = new mongoose.Schema(
   {
     parent_id: { type: Schema.Types.ObjectId, ref: 'Parent' },
@@ -124,24 +90,16 @@ const SuperAdminToken = mongoose.model(
   'SuperAdminToken',
   superAdminTokenSchema
 );
-const NonTeachingToken = mongoose.model(
-  'NonTeachingToken',
-  nonTeachingTokenSchema
-);
-const OldStudentToken = mongoose.model(
-  'OldStudentToken',
-  oldStudentTokenSchema
-);
+
 const ParentToken = mongoose.model('ParentToken', parentTokenSchema);
 const StudentToken = mongoose.model('StudentToken', studentTokenSchema);
 const TeacherToken = mongoose.model('TeacherToken', teacherTokenSchema);
 
 export {
-  SuperAdminToken,
   AdminToken,
-  NonTeachingToken,
-  OldStudentToken,
   ParentToken,
   StudentToken,
-  TeacherToken,
+  SuperAdminToken,
+  TeacherToken
 };
+
