@@ -124,4 +124,20 @@ const cloudinaryDestroy = async (public_id: string | string[]) => {
     console.error(error.message);
   }
 };
-export { cloudinaryDestroy, handleFileUpload };
+
+const uploadBase64Signature = async(base64: string): Promise<CloudinaryType> => {
+  try {
+    const result = await cloudinary.uploader.upload(base64, {
+      folder: "Christ's School/signatures"
+    })
+
+    return {
+      url: result.secure_url,
+      public_url: result.public_id
+    }
+  } catch (error) {
+console.error(error)
+}
+}
+export { cloudinaryDestroy, handleFileUpload, uploadBase64Signature };
+

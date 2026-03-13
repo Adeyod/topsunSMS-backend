@@ -20,6 +20,7 @@ import {
   makeCashPayment,
 } from '../controllers/payment.controller';
 import { permission } from '../middleware/authorization';
+import { requireFeature } from '../middleware/feature';
 import { verifyAccessToken } from '../middleware/jwtAuth';
 import uploadFile from '../middleware/multer';
 

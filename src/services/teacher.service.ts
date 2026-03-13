@@ -1247,6 +1247,7 @@ import { SubjectResult } from '../models/subject_result.model';
 import TeacherAssignment from '../models/teacher_assignment.model';
 import Teacher from '../models/teachers.model';
 import { AppError } from '../utils/app.error';
+import { uploadBase64Signature } from '../utils/cloudinary';
 import { capitalizeFirstLetter, genderFunction } from '../utils/functions';
 
 const classTeacherAssignedEndpoint = async (
@@ -2660,6 +2661,44 @@ const teacherDeletion = async (teacher_id: string) => {
   }
 };
 
+const teacherSignatureAddition = async(signature: string, userId: Types.ObjectId)=>{
+  try {
+
+    if(!signature.startsWith("data:image/png")) {
+      throw new AppError('Invalid inage format.', 400)
+    }
+
+    const teacher = await Teacher.findById(userId)
+
+    if(!teacher || teacher.redundant === true) {
+      throw new AppError('Teacher does not exist.', 404)
+    }
+
+    const uploadImage = await uploadBase64Signature(signature)
+
+    if(!uploadImage?.url && !uploadImage?.public_url) {
+      throw new AppError('Error uploading signature of the teacher.', 400)
+    }
+
+    teacher.signature = {
+      url: uploadImage?.url,
+      public_url: uploadImage?.public_url
+    }
+
+    teacher.is_signature_added = true
+
+    await teacher.save()
+    return teacher.signature
+
+  } catch (error) {
+     if (error instanceof AppError) {
+      throw new AppError(error.message, error.statusCode);
+    } else {
+      throw new Error('Something happened');
+    }
+  }
+}
+
 export {
   assigningTeacherToSubject,
   changingTeacherToSubject,
@@ -2675,5 +2714,6 @@ export {
   fetchTeachersBySubjectId,
   getTeacherDetailsById,
   onboardTeacher,
-  teacherDeletion,
+  teacherDeletion, teacherSignatureAddition
 };
+

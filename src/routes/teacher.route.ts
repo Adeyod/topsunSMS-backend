@@ -1,5 +1,6 @@
 import express from 'express';
 import {
+  addTeacherSignature,
   assignTeacherToClass,
   assignTeacherToSubject,
   changeClassTeacher,
@@ -14,7 +15,7 @@ import {
   getStudentsInClassThatTeacherManages,
   getStudentsOfferingTeacherSubjectUsingClassId,
   getTeachersBySubjectId,
-  teacherOnboardingById,
+  teacherOnboardingById
 } from '../controllers/teacher.controller';
 import { permission } from '../middleware/authorization';
 import { verifyAccessToken } from '../middleware/jwtAuth';
@@ -28,6 +29,7 @@ router.put(
   assignTeacherToClass
 );
 
+router.put('/add-teacher-signature', permission(['teacher']), addTeacherSignature)
 router.put(
   '/change-class-teacher/:class_id',
   permission(['admin', 'super_admin']),

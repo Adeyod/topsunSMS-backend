@@ -14,7 +14,7 @@ import {
   fetchTeachersBySubjectId,
   getTeacherDetailsById,
   onboardTeacher,
-  teacherDeletion,
+  teacherDeletion, teacherSignatureAddition
 } from '../services/teacher.service';
 import { AppError } from '../utils/app.error';
 import catchErrors from '../utils/tryCatch';
@@ -829,7 +829,35 @@ const getClassTeacherManagesByTeacherId = catchErrors(async (req, res) => {
   });
 });
 
+
+const addTeacherSignature = catchErrors(async(req, res)=>{
+  const {signature} = req.body
+
+  if(!signature) {
+    throw new AppError('Signature is required.', 400)
+  }
+
+  const userId = req.user?.userId
+
+  if(!userId) {
+    throw new AppError('Please login to continue.', 400)
+  }
+
+  const result = await teacherSignatureAddition(signature, userId)
+
+  if(!result) {
+    throw new AppError('Unable to add teacher signature.', 400)
+  }
+
+  return res.status(200).json({
+    message: "Teacher's signature added successfully.",
+    success: true,
+    status: 200,
+    teacher_signature: result
+  })
+})
 export {
+  addTeacherSignature,
   assignTeacherToClass,
   assignTeacherToSubject,
   changeClassTeacher,
@@ -844,5 +872,6 @@ export {
   getStudentsInClassThatTeacherManages,
   getStudentsOfferingTeacherSubjectUsingClassId,
   getTeachersBySubjectId,
-  teacherOnboardingById,
+  teacherOnboardingById
 };
+

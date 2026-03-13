@@ -41,6 +41,11 @@ const teacherSchema = new mongoose.Schema<UserDocument>(
         },
       },
     ],
+     signature: {
+      url: { type: String },
+      public_url: { type: String },
+    },
+    is_signature_added: {type: Boolean, default: false}
   },
   {
     timestamps: true,

@@ -1,36 +1,36 @@
-import express from 'express';
-import dotenv from 'dotenv';
-dotenv.config();
-import cors, { CorsOptions } from 'cors';
-import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+import cors, { CorsOptions } from 'cors';
+import dotenv from 'dotenv';
+import express from 'express';
+import helmet from 'helmet';
 import connectDB from './DBConfig/connectDB';
+dotenv.config();
 
-import { setupGlobalErrorHandler } from './middleware/globalError';
 import { errorHandler } from './middleware/errorHandler';
+import { setupGlobalErrorHandler } from './middleware/globalError';
 import { serverAdapter } from './utils/queue';
 
 import adminRoute from './routes/admin.route';
-import cbtRoute from './routes/cbt.route';
-import resultRoute from './routes/result.route';
-import paymentRoute from './routes/payment.route';
-import feeRoute from './routes/fee.route';
-import authRoute from './routes/auth.route';
 import assignmentRoute from './routes/assignment.route';
-import classEnrolmentRoute from './routes/class_enrolment.route';
+import authRoute from './routes/auth.route';
+import cbtRoute from './routes/cbt.route';
 import classRoute from './routes/class.route';
+import classEnrolmentRoute from './routes/class_enrolment.route';
+import feeRoute from './routes/fee.route';
+import parentRoute from './routes/parent.route';
+import paymentRoute from './routes/payment.route';
+import resultRoute from './routes/result.route';
+import schoolRoute from './routes/school.route';
 import schoolAdminRoute from './routes/school_admin.route';
-import superAdminRoute from './routes/super_admin.route';
 import sessionRoute from './routes/session.route';
 import studentRoute from './routes/student.route';
-import parentRoute from './routes/parent.route';
-import schoolRoute from './routes/school.route';
 import subjectRoute from './routes/subject.route';
+import superAdminRoute from './routes/super_admin.route';
 import teacherRoute from './routes/teacher.route';
 // import { examStatusUpdatejob } from './utils/cron_jobs';
-import { registerCbtHandlers } from './sockets/cbtSocketHandlers';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import { registerCbtHandlers } from './sockets/cbtSocketHandlers';
 // import ngrok from '@ngrok/ngrok';
 
 connectDB;
@@ -66,8 +66,8 @@ const corsOptions: CorsOptions = {
   credentials: true,
 };
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({limit: '10mb'}));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(cookieParser());
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));

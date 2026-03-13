@@ -151,14 +151,23 @@ const requiredStatusesEnum = [
   'class_position_calculated',
   'effective_recorded',
 ];
+
+ enum FeatureEnum {
+  FEE = "feeManagement",
+  PAYMENT = "paymentManagement",
+  CBT = "cbtManagement",
+  ASSIGNMENT = "assignmentManagement",
+  ATTENDANCE = "attendanceManagement",
+  LESSON_NOTE = "lessonNoteManagement",
+}
+
 export {
   attendanceEnum,
   busRouteEnum,
   busTripEnum,
   enrolmentEnum,
   examKeyEnum,
-  examStatusEnum,
-  finalResultStatusEnum,
+  examStatusEnum, FeatureEnum, finalResultStatusEnum,
   genderEnum,
   gradeEnum,
   mandatedSuperAdmins,
@@ -181,5 +190,6 @@ export {
   transactionStatusEnum,
   transactionTypeEnum,
   triggerTypeEnum,
-  verificationEnum,
+  verificationEnum
 };
+

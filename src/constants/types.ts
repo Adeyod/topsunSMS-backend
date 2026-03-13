@@ -89,6 +89,11 @@ type UserDocument = Document &
       url: string;
       public_url: string;
     };
+    signature?: {
+      url: string;
+      public_url: string
+    };
+    is_signature_added?: boolean;
     children?: mongoose.Types.ObjectId[];
     class_managing?: mongoose.Types.ObjectId;
     session: string;
@@ -1385,6 +1390,14 @@ type ContactUsType = {
   message: string;
 };
 
+type FeatureKey =
+  | "feeManagement"
+  | "paymentManagement"
+  | "cbtManagement"
+  | "assignmentManagement"
+  | "attendanceManagement"
+  | "lessonNoteManagement";
+
 type FeatureKeyType =
   | 'result_processing'
   | 'objective_exam'
@@ -2199,8 +2212,7 @@ export {
   BankPaymentType,
   BusCategoryType,
   BusFeeValidationType,
-  BusPayloadType,
-  BusSubscriptionType,
+  BusPayloadType, BusSubscriptionType,
   CashPaymentType,
   CbtAssessmentAuthorizationPayloadType,
   CbtAssessmentDocument,
@@ -2257,8 +2269,7 @@ export {
   EnrolledStudentSubjects,
   ExamComponentType,
   ExamScoreType,
-  ExcludeParentAndStudent,
-  FeatureKeyType,
+  ExcludeParentAndStudent, FeatureKey, FeatureKeyType,
   FeePayloadType,
   FetchAttendanceType,
   FilePath,
