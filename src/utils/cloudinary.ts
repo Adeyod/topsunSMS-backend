@@ -6,6 +6,7 @@ import {
 import dotenv from 'dotenv';
 import fs from 'fs';
 import { CloudinaryType, FilePath, FolderName } from '../constants/types';
+import { schoolNameHandCoded } from './functions';
 dotenv.config();
 
 cloudinary.config({
@@ -48,7 +49,7 @@ const cloudinaryUploads = async (
 };
 
 const uploader = async (path: FilePath): Promise<CloudinaryType> => {
-  return await cloudinaryUploads(path, "Christs' School");
+  return await cloudinaryUploads(path, `${schoolNameHandCoded}`);
 };
 
 const singleFileUpload = async (
@@ -128,7 +129,7 @@ const cloudinaryDestroy = async (public_id: string | string[]) => {
 const uploadBase64Signature = async(base64: string): Promise<CloudinaryType> => {
   try {
     const result = await cloudinary.uploader.upload(base64, {
-      folder: "Christ's School/signatures"
+      folder: `${schoolNameHandCoded}/signatures`
     })
 
     return {

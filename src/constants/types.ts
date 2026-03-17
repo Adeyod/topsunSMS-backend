@@ -50,6 +50,8 @@ type SchoolUserType = UserObj & {
   school_id: mongoose.Types.ObjectId;
 };
 
+type Position = 'head_teacher' | 'hod' | 'counsellor'
+
 type UserDocument = Document &
   UserObj & {
     _id: mongoose.Types.ObjectId;
@@ -58,6 +60,7 @@ type UserDocument = Document &
     role: string;
     is_verified?: boolean;
     redundant?: boolean;
+    positions: Position[]
     wallet_account_obj?: StudentAccountType;
     is_chosen_major?: boolean;
     new_session_subscription?: boolean;

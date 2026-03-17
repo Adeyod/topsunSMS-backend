@@ -1247,7 +1247,7 @@ import { SubjectResult } from '../models/subject_result.model';
 import TeacherAssignment from '../models/teacher_assignment.model';
 import Teacher from '../models/teachers.model';
 import { AppError } from '../utils/app.error';
-import { uploadBase64Signature } from '../utils/cloudinary';
+import { cloudinaryDestroy, uploadBase64Signature } from '../utils/cloudinary';
 import { capitalizeFirstLetter, genderFunction } from '../utils/functions';
 
 const classTeacherAssignedEndpoint = async (
@@ -2664,7 +2664,7 @@ const teacherDeletion = async (teacher_id: string) => {
 const teacherSignatureAddition = async(signature: string, userId: Types.ObjectId)=>{
   try {
 
-    if(!signature.startsWith("data:image/png")) {
+    if(!signature.startsWith("data:image")) {
       throw new AppError('Invalid inage format.', 400)
     }
 
@@ -2672,6 +2672,10 @@ const teacherSignatureAddition = async(signature: string, userId: Types.ObjectId
 
     if(!teacher || teacher.redundant === true) {
       throw new AppError('Teacher does not exist.', 404)
+    }
+
+    if(teacher.signature?.public_url) {
+     await cloudinaryDestroy(teacher.signature.public_url)
     }
 
     const uploadImage = await uploadBase64Signature(signature)

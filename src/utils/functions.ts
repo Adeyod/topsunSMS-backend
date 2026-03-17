@@ -348,7 +348,7 @@ const extractSubdomain = (host: string): string | null => {
 };
 
 const schoolSubscriptionPlan = subscriptionEnum[1];
-const schoolNameHandCoded = 'Born to Win';
+const schoolNameHandCoded = 'Topsun';
 const schoolCityHandCoded = 'Ado-Ekiti';
 const schoolStateHandCoded = 'Ekiti State';
 const schoolCountryHandCoded = 'Nigeria';
@@ -451,5 +451,6 @@ export {
   sendingCompanyEmailToQueue,
   sendingEmailToQueue,
   validateGradingArray,
-  validatePriorityOrder,
+  validatePriorityOrder
 };
+

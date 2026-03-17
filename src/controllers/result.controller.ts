@@ -1704,6 +1704,7 @@ const getStudentSpecificResult = catchErrors(async (req, res) => {
 
   const result = await fetchStudentSpecificResult(payload);
 
+  console.log("result:", result)
   // const duration = Date.now() - start;
 
   // const savelogPayload = {

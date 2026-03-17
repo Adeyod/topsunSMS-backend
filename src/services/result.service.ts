@@ -4094,11 +4094,16 @@ const fetchStudentSpecificResult = async (
 
     const classExist = await Class.findById({
       _id: classEnrolment.class,
-    });
+    }).populate({
+      path: 'class_teacher',
+      select: 'first_name last_name signature'
+    })
 
     if (!classExist) {
       throw new AppError('Class not found.', 404);
     }
+
+    console.log("classExist:", classExist.class_teacher)
 
     const studentSubjectEnrolled = classEnrolment?.students[0].subjects_offered;
 
@@ -4158,6 +4163,7 @@ const fetchStudentSpecificResult = async (
       const termResult = obj.term_results.find((a) => a.term === term);
 
       const { term_results, ...rest } = obj;
+
       return {
         ...rest,
         ...termResult,
@@ -4197,6 +4203,7 @@ const fetchStudentSpecificResult = async (
     const neededObj = {
       // academic_session: sessionExist._id,
       student: remainingValues,
+      class_teacher: classExist.class_teacher,
       term_result: formattedResult,
     };
 
@@ -4232,5 +4239,6 @@ export {
   recordStudentScore,
   studentEffectiveAreasForActiveTermRecording,
   studentsSubjectPositionInClass,
-  studentsSubjectScoreInAClassUpdating,
+  studentsSubjectScoreInAClassUpdating
 };
+
