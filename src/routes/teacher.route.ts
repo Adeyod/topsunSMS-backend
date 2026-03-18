@@ -1,6 +1,7 @@
 import express from 'express';
 import {
   addTeacherSignature,
+  assignHeadTeacher,
   assignTeacherToClass,
   assignTeacherToSubject,
   changeClassTeacher,
@@ -11,11 +12,12 @@ import {
   getAllTeachers,
   getATeacherById,
   getClassTeacherManagesByTeacherId,
+  getHeadTeacher,
   getStudentsInClassOfferingTeacherSubject,
   getStudentsInClassThatTeacherManages,
   getStudentsOfferingTeacherSubjectUsingClassId,
   getTeachersBySubjectId,
-  teacherOnboardingById
+  teacherOnboardingById,
 } from '../controllers/teacher.controller';
 import { permission } from '../middleware/authorization';
 import { verifyAccessToken } from '../middleware/jwtAuth';
@@ -26,92 +28,108 @@ router.use(verifyAccessToken);
 router.put(
   '/assign-class-teacher',
   permission(['admin', 'super_admin']),
-  assignTeacherToClass
+  assignTeacherToClass,
 );
 
-router.put('/add-teacher-signature', permission(['teacher']), addTeacherSignature)
+router.post(
+  '/assign-head-teacher/:teacher_id',
+  permission(['super_admin', 'admin']),
+  assignHeadTeacher,
+);
+router.put(
+  '/add-teacher-signature',
+  permission(['teacher']),
+  addTeacherSignature,
+);
+
 router.put(
   '/change-class-teacher/:class_id',
   permission(['admin', 'super_admin']),
-  changeClassTeacher
+  changeClassTeacher,
 );
 
 router.put(
   '/assign-teacher-to-subject',
   permission(['admin', 'super_admin']),
-  assignTeacherToSubject
+  assignTeacherToSubject,
 );
 
 router.put(
   '/change-subject-teacher-in-a-class',
   permission(['admin', 'super_admin']),
-  changeSubjectTeacherInAClass
+  changeSubjectTeacherInAClass,
 );
 
 router.put(
   '/teacher-onboarding/:teacher_id',
   permission(['admin', 'super_admin']),
-  teacherOnboardingById
+  teacherOnboardingById,
 );
 
 router.get(
   '/get-a-teacher-by-id/:teacher_id',
   permission(['admin', 'super_admin']),
-  getATeacherById
+  getATeacherById,
 );
 
 router.delete(
   '/delete-teacher/:teacher_id',
   permission(['admin', 'super_admin']),
-  deleteTeacher
+  deleteTeacher,
 );
 
 router.get(
   '/get-all-teachers-by-subject/:subject_id',
   permission(['admin', 'super_admin']),
-  getTeachersBySubjectId
+  getTeachersBySubjectId,
+);
+
+router.get(
+  '/get-head-teacher',
+  permission(['admin', 'super_admin']),
+  getHeadTeacher,
 );
 
 router.get(
   '/get-all-teachers',
   permission(['admin', 'super_admin']),
-  getAllTeachers
+  getAllTeachers,
 );
 
 router.get(
   '/get-students-in-class-offering-subject/:academic_session_id/:class_id/:subject_id',
   permission(['super_admin', 'teacher']),
-  getStudentsInClassOfferingTeacherSubject
+  getStudentsInClassOfferingTeacherSubject,
 );
 
 router.get(
   '/students-in-class-offering-subject-using-class-id/:class_id',
   permission(['teacher']),
-  getStudentsOfferingTeacherSubjectUsingClassId
+  getStudentsOfferingTeacherSubjectUsingClassId,
 );
 
 router.get(
   '/get-all-classes-teacher-teaches/:teacher_id',
   permission(['admin', 'super_admin', 'teacher']),
-  getAllClassesTeacherTeachesByTeacherId
+  getAllClassesTeacherTeachesByTeacherId,
 );
 
 router.get(
   '/get-all-students-in-class/:class_id/:academic_session_id',
   permission(['admin', 'super_admin', 'teacher']),
-  getAllStudentsInClassByClassId
+  getAllStudentsInClassByClassId,
 );
 
 router.get(
   '/get-all-students-in-class-that-teacher-manages/:teacher_id/:class_id/:academic_session_id',
   permission(['teacher', 'super_admin']),
-  getStudentsInClassThatTeacherManages
+  getStudentsInClassThatTeacherManages,
 );
 
 router.get(
   '/get-class-teacher-manages-by-teacher-id/:teacher_id',
   permission(['teacher']),
-  getClassTeacherManagesByTeacherId
+  getClassTeacherManagesByTeacherId,
 );
 
 // fetch all classes that a teacher is teaching using teacher_id and add subject and students.
