@@ -1,711 +1,3 @@
-// import mongoose from 'mongoose';
-// import {
-//   SessionSubscriptionType,
-//   StudentCumScoreType,
-//   StudentLinkingType,
-//   StudentNotificationType,
-//   StudentUpdateType,
-//   StudentWithPaymentType,
-//   UserDocument,
-//   UserWithoutPassword,
-// } from '../constants/types';
-// import Parent from '../models/parents.model';
-// import Student from '../models/students.model';
-// import { AppError } from '../utils/app.error';
-// import Grading from '../models/grading.model';
-// import { cloudinaryDestroy, handleFileUpload } from '../utils/cloudinary';
-// import { Request } from 'express';
-// import { capitalizeFirstLetter } from '../utils/functions';
-// import { queue } from '../utils/queue';
-// import Session from '../models/session.model';
-// import Payment from '../models/payment.model';
-// import ClassEnrolment from '../models/classes_enrolment.model';
-// import Class from '../models/class.model';
-// import { maxParentLength } from '../utils/code';
-// import { studentsSubjectPositionInClass } from './result.service';
-
-// const studentLinking = async (param: StudentLinkingType) => {
-//   const session = await mongoose.startSession();
-//   session.startTransaction();
-
-//   try {
-//     const student = await Student.findOne(
-//       {
-//         admission_number: param.admission_number,
-//         first_name: param.first_name,
-//         last_name: param.last_name,
-//       },
-//       null,
-//       { session }
-//     );
-
-//     if (!student) {
-//       throw new AppError('Student not found', 404);
-//     }
-
-//     if (student.parent_id && student?.parent_id?.length + 1 > maxParentLength) {
-//       throw new AppError(
-//         `Student can only be linked to ${maxParentLength} parents and presently ${student.first_name} ${student.last_name} has already being linked to ${student.parent_id.length} parents.`,
-//         400
-//       );
-//     }
-
-//     if (student.parent_id?.includes(param.parent_id)) {
-//       throw new AppError('This parent is already linked to the student', 400);
-//     }
-
-//     const parent = await Parent.findOne({ _id: param.parent_id }, null, {
-//       session,
-//     });
-
-//     if (!parent) {
-//       throw new AppError('Parent does not exist', 404);
-//     }
-
-//     if (parent.children?.includes(student._id)) {
-//       throw new AppError('This student is already linked to the parent', 400);
-//     }
-
-//     const getStudent = await Student.findOneAndUpdate(
-//       {
-//         admission_number: param.admission_number,
-//         first_name: param.first_name,
-//         last_name: param.last_name,
-//       },
-//       {
-//         $addToSet: { parent_id: param.parent_id },
-//       },
-//       {
-//         new: true,
-//         session,
-//       }
-//     );
-
-//     if (!getStudent) {
-//       throw new AppError('Student not found.', 404);
-//     }
-
-//     const getParent = await Parent.findByIdAndUpdate(
-//       {
-//         _id: param.parent_id,
-//       },
-//       {
-//         $addToSet: { children: getStudent._id },
-//       },
-//       {
-//         new: true,
-//         session,
-//       }
-//     );
-
-//     if (!getParent) {
-//       throw new AppError('Parent not found.', 404);
-//     }
-
-//     await session.commitTransaction();
-//     session.endSession();
-
-//     const linkingDetails = {
-//       parent: getParent,
-//       student: getStudent,
-//     };
-
-//     return linkingDetails;
-//   } catch (error) {
-//     await session.abortTransaction();
-//     session.endSession();
-//     throw error;
-//   }
-// };
-
-// const studentCumScorePerTerm = async (param: StudentCumScoreType) => {
-//   const { studentId, sessionId, term, studentClass } = param;
-
-//   try {
-//     const gradingRecords = await Grading.find({
-//       student: studentId,
-//       session: sessionId,
-//       term: term,
-//       class: studentClass,
-//     }).populate('subject');
-
-//     if (!gradingRecords || gradingRecords.length === 0) {
-//       throw new AppError(
-//         'No grading data for this student in this session',
-//         404
-//       );
-//     }
-
-//     let totalScore = 0;
-//     gradingRecords.forEach((record) => {
-//       if (record.total_score !== null) {
-//         totalScore += record.total_score;
-//       }
-//     });
-
-//     const cumulativeScore = totalScore / gradingRecords.length;
-//     return cumulativeScore;
-//   } catch (error) {
-//     throw error;
-//   }
-// };
-
-// const fetchAllStudents = async (
-//   page: number | undefined,
-//   limit: number | undefined,
-//   searchParams: string
-// ): Promise<{
-//   studentObj: StudentWithPaymentType[];
-//   totalCount: number;
-//   totalPages: number;
-// }> => {
-//   try {
-//     let query = Student.find().sort({ createdAt: -1 });
-
-//     if (searchParams) {
-//       const regex = new RegExp(searchParams, 'i');
-
-//       query = query.where({
-//         $or: [
-//           { first_name: { $regex: regex } },
-//           { last_name: { $regex: regex } },
-//           { middle_name: { $regex: regex } },
-//           { email: { $regex: regex } },
-//           { gender: { $regex: regex } },
-//         ],
-//       });
-//     }
-
-//     if (!query) {
-//       throw new AppError('Students not found.', 404);
-//     }
-
-//     const count = await query.clone().countDocuments();
-//     let pages = 0;
-
-//     if (page !== undefined && limit !== undefined && count !== 0) {
-//       const offset = (page - 1) * limit;
-//       query = query.skip(offset).limit(limit).sort({ createdAt: -1 });
-//       pages = Math.ceil(count / limit);
-//       if (page > pages) {
-//         throw new AppError('Page can not be found.', 404);
-//       }
-//     }
-
-//     const findStudent = await query;
-
-//     if (!findStudent || findStudent.length === 0) {
-//       throw new AppError('Students not found.', 404);
-//     }
-
-//     const activeSession = await Session.findOne({
-//       is_active: true,
-//     });
-
-//     const activeTerm = activeSession?.terms.find(
-//       (term) => term.is_active === true
-//     );
-
-//     const studentsPasswordRemoved2: StudentWithPaymentType[] =
-//       await Promise.all(
-//         findStudent.map(async (p) => {
-//           const payment = await Payment.findOne({
-//             student: p._id,
-//             session: activeSession?._id,
-//             term: activeTerm?.name,
-//           }).lean();
-//           const { password, ...others } = p.toJSON();
-
-//           const student = {
-//             ...others,
-//             latest_payment_document: payment || null,
-//           } as StudentWithPaymentType;
-
-//           return student;
-//         })
-//       );
-
-//     return {
-//       studentObj: studentsPasswordRemoved2 as StudentWithPaymentType[],
-//       totalCount: count,
-//       totalPages: pages,
-//     };
-//   } catch (error) {
-//     if (error instanceof AppError) {
-//       throw new AppError(error.message, error.statusCode);
-//     } else {
-//       throw new Error('Something went wrong.');
-//     }
-//   }
-// };
-
-// const fetchStudentById = async (
-//   student_id: string
-// ): Promise<UserWithoutPassword> => {
-//   try {
-//     const response = await Student.findById({
-//       _id: student_id,
-//     }).populate('parent_id', '-password');
-
-//     const session = await Session.findOne({
-//       is_active: true,
-//     });
-
-//     const activeTerm = session?.terms.find((term) => term.is_active === true);
-
-//     let userPaymentDoc = null;
-
-//     if (session) {
-//       userPaymentDoc = await Payment.findOne({
-//         student: response?._id,
-//         session: session._id,
-//         term: activeTerm?.name,
-//       });
-
-//       response?.set('latest_payment_document', userPaymentDoc, {
-//         strict: false,
-//       });
-//     }
-
-//     if (!response) {
-//       throw new AppError('Parent not found.', 404);
-//     }
-
-//     const { password, ...others } = response.toJSON();
-
-//     const userObj = {
-//       ...others,
-//       latest_payment_document: userPaymentDoc,
-//     };
-
-//     return userObj as UserWithoutPassword;
-//   } catch (error) {
-//     if (error instanceof AppError) {
-//       throw new AppError(error.message, error.statusCode);
-//     } else {
-//       console.error(error);
-//       throw new Error('Something went wrong');
-//     }
-//   }
-// };
-
-// const studentUpdateDetails = async (
-//   req: Request,
-//   payload: StudentUpdateType,
-//   res: any
-// ): Promise<UserWithoutPassword> => {
-//   try {
-//     const { home_address, close_bus_stop, student_id, parent_id, userRole } =
-//       payload;
-
-//     const response = await Student.findById({
-//       _id: student_id,
-//     });
-
-//     if (!response) {
-//       throw new AppError('Student not found.', 404);
-//     }
-
-//     if (parent_id !== student_id) {
-//       if (userRole === 'parent') {
-//         if (
-//           !response.parent_id?.includes(new mongoose.Types.ObjectId(parent_id))
-//         ) {
-//           throw new AppError(
-//             'You can not update this student because you are not a parent to this student.',
-//             400
-//           );
-//         }
-//       }
-//     }
-
-//     if (response.profile_image?.url) {
-//       const deletion = await cloudinaryDestroy(
-//         response.profile_image.public_url
-//       );
-//     }
-
-//     const imageUpload = await handleFileUpload(req, res);
-
-//     if (!imageUpload) {
-//       throw new AppError('Unable to upload profile image.', 400);
-//     }
-
-//     let imageData: { url: string; public_url: string } | undefined;
-
-//     if (Array.isArray(imageUpload)) {
-//       imageData = imageUpload[0];
-//     } else {
-//       imageData = imageUpload;
-//     }
-
-//     if (!imageData) {
-//       throw new AppError('This is not a valid cloudinary image upload.', 400);
-//     }
-
-//     const updateStudent = await Student.findByIdAndUpdate(
-//       { _id: student_id },
-//       {
-//         home_address,
-//         close_bus_stop,
-//         is_updated: true,
-//         profile_image: {
-//           url: imageData.url,
-//           public_url: imageData.public_url,
-//         },
-//       },
-//       { new: true }
-//     );
-
-//     if (!updateStudent) {
-//       throw new AppError('Unable to update student.', 400);
-//     }
-
-//     const { password, ...others } = updateStudent.toJSON();
-
-//     return others as UserWithoutPassword;
-//   } catch (error) {
-//     if (error instanceof AppError) {
-//       throw new AppError(error.message, error.statusCode);
-//     } else {
-//       console.error(error);
-//       throw new Error('Something went wrong');
-//     }
-//   }
-// };
-
-// const newSessionStudentsSubscription = async (): Promise<
-//   {
-//     studentDetails: {
-//       email: string;
-//       first_name: string;
-//       last_name: string;
-//     };
-//     parentDetails: {
-//       parent_email: string;
-//       parent_first_name: string;
-//       parent_last_name: string;
-//       child_email: string;
-//       child_first_name: string;
-//       child_last_name: string;
-//     } | null;
-//   }[]
-// > => {
-//   try {
-//     const students = (await Student.find().populate(
-//       'parent_id'
-//     )) as StudentNotificationType[];
-
-//     if (!students) {
-//       throw new AppError('Students not found', 404);
-//     }
-
-//     const activeSession = await Session.findOne({
-//       is_active: true,
-//     });
-
-//     if (!activeSession) {
-//       throw new AppError('No active session not found', 404);
-//     }
-
-//     const studentDetails = students.map((student) => {
-//       const parent = Array.isArray(student.parent_id)
-//         ? student?.parent_id[0]
-//         : null;
-
-//       return {
-//         studentDetails: {
-//           email: student.email,
-//           first_name: capitalizeFirstLetter(student.first_name),
-//           last_name: capitalizeFirstLetter(student.last_name),
-//           type: 'session-subscription',
-//         },
-
-//         parentDetails: parent
-//           ? {
-//               parent_email: parent?.email,
-//               parent_first_name: capitalizeFirstLetter(parent?.first_name),
-//               parent_last_name: capitalizeFirstLetter(parent?.last_name),
-//               child_email: student.email,
-//               child_first_name: capitalizeFirstLetter(student.first_name),
-//               child_last_name: capitalizeFirstLetter(student.last_name),
-//               type: 'session-subscription',
-//             }
-//           : null,
-//       };
-//     });
-
-//     const sendStudentEmail = studentDetails.map(async (s) => {
-//       const studentJobData = {
-//         first_name:
-//           s.studentDetails.first_name + ' ' + s.studentDetails.last_name,
-//         type: 'session-subscription',
-//         email: s.studentDetails.email,
-//         academic_session: activeSession.academic_session,
-//         option: 'student',
-//       };
-//       const mailSent = await queue.add('sendMail', studentJobData, {
-//         attempts: 3,
-//         backoff: 10000,
-//         removeOnComplete: true,
-//       });
-//     });
-
-//     const sendParentEmail = studentDetails.map(async (s) => {
-//       if (s.parentDetails !== null) {
-//         const parentJobData = {
-//           first_name:
-//             s.parentDetails?.parent_first_name +
-//             ' ' +
-//             s.parentDetails?.parent_last_name,
-//           child_name:
-//             s.parentDetails?.child_first_name +
-//             ' ' +
-//             s.parentDetails?.child_last_name,
-//           child_email: s.parentDetails?.child_email,
-//           email: s.parentDetails?.parent_email,
-//           type: 'session-subscription',
-//           option: 'parent',
-//           academic_session: activeSession.academic_session,
-//         };
-
-//         const mailSent = await queue.add('sendMail', parentJobData, {
-//           attempts: 3,
-//           backoff: 10000,
-//           removeOnComplete: true,
-//         });
-//       }
-//     });
-
-//     return studentDetails;
-//   } catch (error) {
-//     if (error instanceof AppError) {
-//       throw new AppError(error.message, error.statusCode);
-//     } else {
-//       throw new Error('Something happened.');
-//     }
-//   }
-// };
-
-// const studentSessionSubscriptionUpdate = async (
-//   payload: SessionSubscriptionType
-// ): Promise<UserDocument> => {
-//   try {
-//     const {
-//       student_id,
-//       academic_session_id,
-//       parent_id,
-//       userRole,
-//       new_session_subscription_status,
-//     } = payload;
-
-//     const student = await Student.findById({
-//       _id: student_id,
-//     });
-
-//     if (!student) {
-//       throw new AppError(`Student with ID: ${student_id} not found.`, 404);
-//     }
-
-//     if (student.is_verified !== true) {
-//       throw new AppError(
-//         `Student bearing ${student.first_name} ${student.last_name} need to verify his/her email before progressing`,
-//         400
-//       );
-//     }
-
-//     if (student.is_updated !== true) {
-//       throw new AppError(
-//         `Student bearing ${student.first_name} ${student.last_name} need to update his/her account by providing address and also latest profile picture before progressing`,
-//         400
-//       );
-//     }
-
-//     if (userRole && parent_id) {
-//       if (userRole === 'parent') {
-//         const parentMatch = student.parent_id?.includes(parent_id);
-//         if (!parentMatch) {
-//           throw new AppError(
-//             'You can only update a student that you are linked to as a parent.',
-//             400
-//           );
-//         }
-//       }
-//     }
-
-//     const session = await Session.findById({
-//       _id: academic_session_id,
-//     });
-
-//     if (!session) {
-//       throw new AppError(
-//         `Session with ID: ${academic_session_id} not found.`,
-//         404
-//       );
-//     }
-
-//     if (session.is_active !== true) {
-//       throw new AppError(
-//         `The session with ID: ${academic_session_id} is not active.`,
-//         400
-//       );
-//     }
-
-//     if (student.new_session_subscription !== null) {
-//       throw new AppError(
-//         `This student has already informed us of his decision concerning session subscription for the ${session.academic_session} academic session.`,
-//         400
-//       );
-//     }
-
-//     student.new_session_subscription = new_session_subscription_status;
-//     const studentObj = await student.save();
-
-//     const { password, ...others } = studentObj.toJSON();
-
-//     return others as UserDocument;
-//   } catch (error) {
-//     if (error instanceof AppError) {
-//       throw new AppError(error.message, error.statusCode);
-//     } else {
-//       throw new Error('Something happened');
-//     }
-//   }
-// };
-
-// const fetchStudentsThatSubscribedToNewSession = async (level: string) => {
-//   try {
-//     const classExist = await Class.find({ level });
-
-//     if (!classExist || classExist.length === 0) {
-//       throw new AppError(`Class with level: ${level} does not exist.`, 404);
-//     }
-
-//     const students = await Promise.all(
-//       classExist.map(async (d) => {
-//         return await Student.find({
-//           'current_class.class_id': d?._id,
-//           new_session_subscription: true,
-//           active_class_enrolment: false,
-//         });
-//       })
-//     );
-
-//     const studentIds = students.flat().map((student) => {
-//       const { password, ...others } = student.toJSON();
-//       return others;
-//     });
-
-//     return studentIds;
-//   } catch (error) {
-//     if (error instanceof AppError) {
-//       throw new AppError(error.message, error.statusCode);
-//     } else {
-//       throw new Error('Something happened');
-//     }
-//   }
-// };
-
-// const fetchNewStudentsThatHasNoClassEnrolmentBefore = async (
-//   page: number | undefined,
-//   limit: number | undefined,
-//   searchParams: string
-// ) => {
-//   try {
-//     // let query = Student.find({
-//     //   $or: [
-//     //     { 'current_class.class_id': null }, // Handles case where class_id exists but is null
-//     //     { current_class: { $exists: false } }, // Handles case where current_class does not exist
-//     //   ],
-//     //   current_class_level: null,
-//     // });
-
-//     let query = Student.find({
-//       current_class: null,
-//       current_class_level: null,
-//     });
-
-//     if (searchParams) {
-//       const regex = new RegExp(searchParams, 'i');
-
-//       query = query.where({
-//         $or: [
-//           { first_name: { $regex: regex } },
-//           { last_name: { $regex: regex } },
-//           { middle_name: { $regex: regex } },
-//           { email: { $regex: regex } },
-//         ],
-//       });
-//     }
-
-//     if (!query) {
-//       throw new AppError('Students not found.', 404);
-//     }
-//     const count = await query.clone().countDocuments();
-//     let pages = 0;
-
-//     if (page !== undefined && limit !== undefined && count !== 0) {
-//       const offset = (page - 1) * limit;
-
-//       query = query.skip(offset).limit(limit).sort({ createdAt: -1 });
-
-//       pages = Math.ceil(count / limit);
-
-//       if (page > pages) {
-//         throw new AppError('Page can not be found.', 404);
-//       }
-//     }
-
-//     const students = await query;
-
-//     if (!students || students.length === 0) {
-//       throw new AppError('Students not found', 404);
-//     }
-
-//     return { students, totalPages: pages, totalCount: count };
-//   } catch (error) {
-//     if (error instanceof AppError) {
-//       throw new AppError(error.message, error.statusCode);
-//     } else {
-//       throw new Error('Something happened');
-//     }
-//   }
-// };
-
-// const fetchAllStudentsOnAClassLevel = async (level: string) => {
-//   try {
-//     const students = await Student.find({
-//       current_class_level: level,
-//     }).select('-password');
-
-//     if (!students || students.length === 0) {
-//       throw new AppError('No student found for this class level.', 404);
-//     }
-
-//     return students;
-//   } catch (error) {
-//     if (error instanceof AppError) {
-//       throw new AppError(error.message, error.statusCode);
-//     } else {
-//       throw new Error('Something happened');
-//     }
-//   }
-// };
-
-// export {
-//   fetchAllStudentsOnAClassLevel,
-//   fetchNewStudentsThatHasNoClassEnrolmentBefore,
-//   fetchStudentsThatSubscribedToNewSession,
-//   studentSessionSubscriptionUpdate,
-//   newSessionStudentsSubscription,
-//   studentUpdateDetails,
-//   studentLinking,
-//   studentCumScorePerTerm,
-//   fetchAllStudents,
-//   fetchStudentById,
-// };
-
-////////////////////////////////////////////////////////////////////////////////
 import { Request } from 'express';
 import mongoose from 'mongoose';
 import { rolesEnum } from '../constants/enum';
@@ -717,7 +9,7 @@ import {
   StudentUpdateType,
   StudentWithPaymentType,
   UserDocument,
-  UserWithoutPassword
+  UserWithoutPassword,
 } from '../constants/types';
 import Class from '../models/class.model';
 import Parent from '../models/parents.model';
@@ -733,12 +25,12 @@ import {
   schoolCountryHandCoded,
   schoolNameHandCoded,
   schoolStateHandCoded,
-  sendingEmailToQueue
+  sendingEmailToQueue,
 } from '../utils/functions';
 import { emailQueue } from '../utils/queue';
 
 const fetchStudentById = async (
-  student_id: string
+  student_id: string,
 ): Promise<UserWithoutPassword> => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -754,7 +46,7 @@ const fetchStudentById = async (
     });
 
     const activeTerm = sessionExist?.terms.find(
-      (term) => term.is_active === true
+      (term) => term.is_active === true,
     );
 
     let userPaymentDoc = null;
@@ -801,7 +93,7 @@ const fetchStudentById = async (
 const studentUpdateDetails = async (
   req: Request,
   payload: StudentUpdateType,
-  res: any
+  res: any,
 ): Promise<UserWithoutPassword> => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -812,22 +104,25 @@ const studentUpdateDetails = async (
       _id: student_id,
     }).session(session);
 
-    if (!response) {
+    if (!response || response.redundant === true) {
       throw new AppError('Student not found.', 404);
     }
 
-    const allowedRoles = [rolesEnum[0], rolesEnum[4]]
+    const allowedRoles = [rolesEnum[0], rolesEnum[4]];
 
-    if(!allowedRoles.includes(userRole)) {
-      throw new AppError('Please reach out to the school owner to update your details.', 400)
+    if (!allowedRoles.includes(userRole)) {
+      throw new AppError(
+        'Please reach out to the school owner to update your details.',
+        400,
+      );
     }
 
     if (response.profile_image?.url) {
       const deletion = await cloudinaryDestroy(
-        response.profile_image.public_url
+        response.profile_image.public_url,
       );
 
-      console.log("deletion:", deletion)
+      console.log('deletion:', deletion);
     }
 
     const imageUpload = await handleFileUpload(req, res);
@@ -858,7 +153,7 @@ const studentUpdateDetails = async (
           public_url: imageData.public_url,
         },
       },
-      { new: true }
+      { new: true },
     ).session(session);
 
     if (!updateStudent) {
@@ -980,14 +275,14 @@ const studentUpdateDetails = async (
 const fetchAllStudents = async (
   page?: number,
   limit?: number,
-  searchParams = ''
+  searchParams = '',
 ): Promise<{
   studentObj: StudentWithPaymentType[];
   totalCount: number;
   totalPages: number;
 }> => {
   try {
-    let query = Student.find({redundant: false}).sort({ createdAt: -1 });
+    let query = Student.find({ redundant: false }).sort({ createdAt: -1 });
 
     // Apply search filter if present
     if (searchParams?.trim()) {
@@ -1026,7 +321,7 @@ const fetchAllStudents = async (
 
     const activeSession = await Session.findOne({ is_active: true });
     const activeTerm = activeSession?.terms.find(
-      (term) => term.is_active === true
+      (term) => term.is_active === true,
     );
 
     const studentsWithPayments: StudentWithPaymentType[] = await Promise.all(
@@ -1043,7 +338,7 @@ const fetchAllStudents = async (
           ...others,
           latest_payment_document: payment || null,
         } as StudentWithPaymentType;
-      })
+      }),
     );
 
     return {
@@ -1063,7 +358,7 @@ const fetchAllStudentsOnAClassLevel = async (level: string) => {
   try {
     const students = await Student.find({
       current_class_level: level,
-      redundant: false
+      redundant: false,
     }).select('-password');
 
     if (!students || students.length === 0) {
@@ -1092,9 +387,10 @@ const studentLinking = async (param: StudentLinkingType) => {
         admission_number: admission_number,
         first_name: first_name,
         last_name: last_name,
+        redundant: false,
       },
       null,
-      { session }
+      { session },
     );
 
     if (!student) {
@@ -1104,7 +400,7 @@ const studentLinking = async (param: StudentLinkingType) => {
     if (student.parent_id && student?.parent_id?.length + 1 > maxParentLength) {
       throw new AppError(
         `Student can only be linked to ${maxParentLength} parents and presently ${student.first_name} ${student.last_name} has already being linked to ${student.parent_id.length} parents.`,
-        400
+        400,
       );
     }
 
@@ -1138,7 +434,7 @@ const studentLinking = async (param: StudentLinkingType) => {
       {
         new: true,
         session,
-      }
+      },
     );
 
     if (!getStudent) {
@@ -1155,7 +451,7 @@ const studentLinking = async (param: StudentLinkingType) => {
       {
         new: true,
         session,
-      }
+      },
     );
 
     if (!getParent) {
@@ -1234,6 +530,7 @@ const newSessionStudentsSubscription = async (): Promise<
     const students = await Student.find({
       active_class_enrolment: false,
       new_session_subscription: null,
+      redundant: false,
     })
       .populate<{ parent_id: ParentObjType[] }>('parent_id') // Ensure correct type for populated data
       .lean();
@@ -1345,7 +642,7 @@ const newSessionStudentsSubscription = async (): Promise<
 };
 
 const studentSessionSubscriptionUpdateByAdmin = async (
-  payload: SessionSubscriptionType
+  payload: SessionSubscriptionType,
 ): Promise<Omit<UserDocument, 'password'>[]> => {
   try {
     const { student_ids_array, academic_session_id, userRole } = payload;
@@ -1353,15 +650,16 @@ const studentSessionSubscriptionUpdateByAdmin = async (
     // student_ids_array.map((student_id) => {});
 
     const validStudentIds = student_ids_array.filter((id) =>
-      mongoose.Types.ObjectId.isValid(id)
+      mongoose.Types.ObjectId.isValid(id),
     );
 
     const objectIds = validStudentIds.map(
-      (id) => new mongoose.Types.ObjectId(id)
+      (id) => new mongoose.Types.ObjectId(id),
     );
 
     const foundStudents = await Student.find({
       _id: { $in: objectIds },
+      redundant: false,
     });
 
     if (foundStudents.length !== validStudentIds.length) {
@@ -1381,7 +679,7 @@ const studentSessionSubscriptionUpdateByAdmin = async (
     });
 
     const validStudents = notVerified.filter(
-      (s) => s.isValid === true && s.isUpdated === true
+      (s) => s.isValid === true && s.isUpdated === true,
     );
     const notValidStudents = notVerified.filter((s) => s.isValid !== true);
     const notUpdatedStudents = notVerified.filter((s) => s.isUpdated !== true);
@@ -1390,9 +688,9 @@ const studentSessionSubscriptionUpdateByAdmin = async (
       const notValidNames = notValidStudents.map((a) => a.studentName);
       throw new AppError(
         `The students with the following names are not verified: ${notValidNames.join(
-          ', '
+          ', ',
         )}`,
-        400
+        400,
       );
     }
 
@@ -1400,9 +698,9 @@ const studentSessionSubscriptionUpdateByAdmin = async (
       const notUpdatedNames = notUpdatedStudents.map((a) => a.studentName);
       throw new AppError(
         `The students with the following names have not updated their addresses and profile picture: ${notUpdatedNames.join(
-          ', '
+          ', ',
         )}`,
-        400
+        400,
       );
     }
 
@@ -1413,14 +711,14 @@ const studentSessionSubscriptionUpdateByAdmin = async (
     if (!session) {
       throw new AppError(
         `Session with ID: ${academic_session_id} not found.`,
-        404
+        404,
       );
     }
 
     if (session.is_active !== true) {
       throw new AppError(
         `The session with ID: ${academic_session_id} is not active.`,
-        400
+        400,
       );
     }
 
@@ -1459,9 +757,9 @@ const fetchStudentsThatSubscribedToNewSession = async (level: string) => {
           'current_class.class_id': d?._id,
           new_session_subscription: true,
           active_class_enrolment: false,
-          redundant: false
+          redundant: false,
         });
-      })
+      }),
     );
 
     const studentIds = students.flat().map((student) => {
@@ -1482,7 +780,7 @@ const fetchStudentsThatSubscribedToNewSession = async (level: string) => {
 const fetchNewStudentsThatHasNoClassEnrolmentBefore = async (
   page: number | undefined,
   limit: number | undefined,
-  searchParams: string
+  searchParams: string,
 ) => {
   try {
     // let query = Student.find({
@@ -1496,7 +794,7 @@ const fetchNewStudentsThatHasNoClassEnrolmentBefore = async (
     let query = Student.find({
       current_class: null,
       current_class_level: null,
-      redundant: false
+      redundant: false,
     });
 
     if (searchParams) {
@@ -1549,7 +847,7 @@ const fetchNewStudentsThatHasNoClassEnrolmentBefore = async (
 const fetchStudentsThatAreYetToSubscribedToNewSession = async (
   page: number | undefined,
   limit: number | undefined,
-  searchParams: string
+  searchParams: string,
 ) => {
   try {
     const activeSessionExist = await Session.findOne({
@@ -1559,7 +857,7 @@ const fetchStudentsThatAreYetToSubscribedToNewSession = async (
     if (!activeSessionExist) {
       throw new AppError(
         'There is no active session found for the school. Please start a new session before proceeding.',
-        400
+        400,
       );
     }
 
@@ -1572,7 +870,7 @@ const fetchStudentsThatAreYetToSubscribedToNewSession = async (
     let query = Student.find({
       new_session_subscription: null,
       active_class_enrolment: false,
-      redundant: false
+      redundant: false,
     });
 
     if (searchParams) {
@@ -1617,7 +915,7 @@ const fetchStudentsThatAreYetToSubscribedToNewSession = async (
     if (students.length === 0) {
       throw new AppError(
         'There is no student that has not subscribed to a new session in the school.',
-        400
+        400,
       );
     }
 
@@ -1641,7 +939,7 @@ const fetchStudentsThatAreYetToSubscribedToNewSession = async (
 };
 
 const studentSessionSubscriptionUpdateByStudentOrParent = async (
-  payload: StudentSessionSubscriptionType
+  payload: StudentSessionSubscriptionType,
 ): Promise<Omit<UserDocument, 'password'>> => {
   try {
     const {
@@ -1654,7 +952,7 @@ const studentSessionSubscriptionUpdateByStudentOrParent = async (
 
     const student = await Student.findOne({
       _id: student_id,
-      redundant: false
+      redundant: false,
     });
 
     if (!student) {
@@ -1664,14 +962,14 @@ const studentSessionSubscriptionUpdateByStudentOrParent = async (
     if (student.is_verified !== true) {
       throw new AppError(
         `Student bearing ${student.first_name} ${student.last_name} need to verify his/her email before progressing`,
-        400
+        400,
       );
     }
 
     if (student.is_updated !== true) {
       throw new AppError(
         `Student bearing ${student.first_name} ${student.last_name} need to update his/her account by providing address and also latest profile picture before progressing`,
-        400
+        400,
       );
     }
 
@@ -1681,7 +979,7 @@ const studentSessionSubscriptionUpdateByStudentOrParent = async (
         if (!parentMatch) {
           throw new AppError(
             'You can only update a student that you are linked to as a parent.',
-            400
+            400,
           );
         }
       }
@@ -1694,21 +992,21 @@ const studentSessionSubscriptionUpdateByStudentOrParent = async (
     if (!session) {
       throw new AppError(
         `Session with ID: ${academic_session_id} not found.`,
-        404
+        404,
       );
     }
 
     if (session.is_active !== true) {
       throw new AppError(
         `The session with ID: ${academic_session_id} is not active.`,
-        400
+        400,
       );
     }
 
     if (student.new_session_subscription !== null) {
       throw new AppError(
         `This student has already informed us of his decision concerning session subscription for the ${session.academic_session} academic session.`,
-        400
+        400,
       );
     }
 
@@ -1734,8 +1032,15 @@ const studentSessionSubscriptionUpdateByStudentOrParent = async (
 // THAT ALLOW DOUBLE PROMOTION AND STUDENT TO REPEAT CLASS.
 
 export {
-  fetchAllStudents, fetchAllStudentsOnAClassLevel, fetchNewStudentsThatHasNoClassEnrolmentBefore, fetchStudentById, fetchStudentsThatAreYetToSubscribedToNewSession, fetchStudentsThatSubscribedToNewSession, newSessionStudentsSubscription,
-  studentLinking, studentSessionSubscriptionUpdateByAdmin,
-  studentSessionSubscriptionUpdateByStudentOrParent, studentUpdateDetails
+  fetchAllStudents,
+  fetchAllStudentsOnAClassLevel,
+  fetchNewStudentsThatHasNoClassEnrolmentBefore,
+  fetchStudentById,
+  fetchStudentsThatAreYetToSubscribedToNewSession,
+  fetchStudentsThatSubscribedToNewSession,
+  newSessionStudentsSubscription,
+  studentLinking,
+  studentSessionSubscriptionUpdateByAdmin,
+  studentSessionSubscriptionUpdateByStudentOrParent,
+  studentUpdateDetails,
 };
-

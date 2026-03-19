@@ -11,7 +11,7 @@ import { AppError } from '../utils/app.error';
 
 const fetchAllAdmins = async () => {
   try {
-    const admins = await Admin.find();
+    const admins = await Admin.find({ redundant: false });
     if (!admins) {
       throw new AppError('No school admins found.', 404);
     }
@@ -148,7 +148,7 @@ const fetchAdminByAdminId = async (admin_id: string) => {
     const admin = await Admin.findById({
       _id: adminObj,
     });
-    if (!admin) {
+    if (!admin || admin.redundant === true) {
       throw new AppError('No school admin found.', 404);
     }
 

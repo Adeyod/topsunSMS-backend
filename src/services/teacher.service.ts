@@ -1262,7 +1262,7 @@ const classTeacherAssignedEndpoint = async (
       _id: teacher_id,
     }).session(session);
 
-    if (!findTeacher) {
+    if (!findTeacher || findTeacher.redundant === true) {
       throw new AppError('Teacher not found.', 404);
     }
 
@@ -1346,7 +1346,7 @@ const assigningTeacherToSubject = async (
       _id: teacher_id,
     }).session(session);
 
-    if (!teacherInfo) {
+    if (!teacherInfo || teacherInfo.redundant === true) {
       throw new AppError('Teacher not found.', 404);
     }
 
@@ -1521,7 +1521,7 @@ const getTeacherDetailsById = async (
       )
       .lean();
 
-    if (!findTeacher) {
+    if (!findTeacher || findTeacher.redundant === true) {
       throw new AppError('Teacher not found.', 404);
     }
 
@@ -1550,6 +1550,7 @@ const fetchTeachersBySubjectId = async (
   try {
     let query = Teacher.find({
       subjects_capable_of_teaching: new mongoose.Types.ObjectId(subject_id),
+      redundant: false,
     });
 
     if (searchParams) {
@@ -1627,7 +1628,7 @@ const fetchAllTeachers = async (
   totalPages: number;
 }> => {
   try {
-    let query = Teacher.find({}).populate(
+    let query = Teacher.find({ redundant: false }).populate(
       'teaching_assignment.class_id teaching_assignment.subject subjects_capable_of_teaching',
     );
 
@@ -1720,7 +1721,7 @@ const onboardTeacher = async (
       _id: payload.teacher_id,
     }).session(session);
 
-    if (!teacher) {
+    if (!teacher || teacher.redundant === true) {
       throw new AppError('Teacher not found.', 404);
     }
 
@@ -1832,7 +1833,7 @@ const classTeacherChange = async (payload: ClassTeacherChangeType) => {
       .populate('class_managing')
       .session(session);
 
-    if (!teacherInfo) {
+    if (!teacherInfo || teacherInfo.redundant === true) {
       throw new AppError(
         `Teacher with ID: ${new_class_teacher_id} can not be found.`,
         404,
@@ -1902,7 +1903,7 @@ const changingTeacherToSubject = async (
       _id: new_teacher_id,
     }).session(session);
 
-    if (!teacherInfo) {
+    if (!teacherInfo || teacherInfo.redundant === true) {
       throw new AppError('Teacher not found.', 404);
     }
 
@@ -2112,7 +2113,7 @@ const fetchStudentsInClassOfferingTeacherSubject = async (
       const findTeacher = await Teacher.findById({
         _id: userId,
       });
-      if (!findTeacher) {
+      if (!findTeacher || findTeacher.redundant === true) {
         throw new AppError('Teacher not found.', 404);
       }
 
@@ -2273,7 +2274,7 @@ const fetchAllClassesTeacherTeachesByTeacherId = async (
       }[];
     }>('teaching_assignment.class_id teaching_assignment.subject');
 
-    if (!teacher) {
+    if (!teacher || teacher.redundant === true) {
       throw new AppError(`Teacher with ID: ${teacher_id} does not exist.`, 404);
     }
 
@@ -2367,7 +2368,7 @@ const fetchStudentsOfferingTeacherSubjectUsingClassId = async (
         _id: userId,
       });
 
-      if (!teacher) {
+      if (!teacher || teacher.redundant === true) {
         throw new AppError(`Teacher with ID: ${userId} does not exist.`, 404);
       }
 
@@ -2457,7 +2458,7 @@ const fetchAllStudentsInClassByClassId = async (
         _id: userId,
       });
 
-      if (!teacher) {
+      if (!teacher || teacher.redundant === true) {
         throw new AppError(`Teacher with ID: ${userId} does not exist.`, 404);
       }
 
@@ -2522,7 +2523,7 @@ const fetchStudentsInClassThatTeacherManages = async (
         _id: userId,
       });
 
-      if (!teacher) {
+      if (!teacher || teacher.redundant === true) {
         throw new AppError(`Teacher with ID: ${userId} does not exist.`, 404);
       }
 
@@ -2605,7 +2606,7 @@ const fetchClassTeacherManagesByTeacherId = async (
       _id: teacher,
     });
 
-    if (!teacherExist) {
+    if (!teacherExist || teacherExist.redundant === true) {
       throw new AppError('Teacher not found.', 404);
     }
 
@@ -2643,14 +2644,21 @@ const fetchClassTeacherManagesByTeacherId = async (
 const teacherDeletion = async (teacher_id: string) => {
   try {
     const teacherId = new mongoose.Types.ObjectId(teacher_id);
-    const teacher = await Teacher.findById(teacherId);
+    const teacher = await Teacher.findOneAndUpdate(
+      { _id: teacherId, redundant: false },
+      {
+        $set: {
+          redundant: true,
+          positions: [],
+        },
+      },
+      { new: true },
+    );
 
     if (!teacher) {
       throw new AppError('teacher not found.', 404);
     }
 
-    teacher.redundant = true;
-    await teacher.save();
     return teacher;
   } catch (error) {
     if (error instanceof AppError) {
@@ -2710,7 +2718,7 @@ const headTeacherAssignment = async (teacher_id: string) => {
 
     const teacher = await Teacher.findById(teacherId);
 
-    if (!teacher) {
+    if (!teacher || teacher.redundant === true) {
       throw new AppError('Teacher not found.', 404);
     }
 
@@ -2750,7 +2758,7 @@ const fetchHeadTeacher = async () => {
       'positions.title': 'head_teacher',
     }).select('-password');
 
-    if (!headTeacher) {
+    if (!headTeacher || headTeacher.redundant === true) {
       throw new AppError('Head teacher not found.', 404);
     }
     return headTeacher;
