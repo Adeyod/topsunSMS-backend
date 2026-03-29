@@ -2895,40 +2895,99 @@ const studentEffectiveAreasForActiveTermRecording = async (
       throw new AppError('You are not the class teacher of this class.', 400);
     }
 
-    const termResult = studentResult.term_results.find(
+    // const termResult = studentResult.term_results.find(
+    //   (a) => a.term === activeTerm.name,
+    // );
+
+    // if (!termResult) {
+
+    //   throw new AppError('No result found for this term.', 404);
+    // }
+
+    ////////////////////////////////////////////////////////////////////
+    // if (
+    //   termResult.punctuality === '' ||
+    //   termResult.neatness === '' ||
+    //   termResult.politeness === '' ||
+    //   termResult.honesty === '' ||
+    //   termResult.relationshipWithOthers === '' ||
+    //   termResult.leadership === '' ||
+    //   termResult.emotionalStability === '' ||
+    //   termResult.health === '' ||
+    //   termResult.attitudeToSchoolWork === '' ||
+    //   termResult.attentiveness === '' ||
+    //   termResult.perseverance === ''
+    // ) {
+    //   termResult.punctuality = punctuality;
+    //   termResult.neatness = neatness;
+    //   termResult.politeness = politeness;
+    //   termResult.honesty = honesty;
+    //   termResult.relationshipWithOthers = relationshipWithOthers;
+    //   termResult.leadership = leadership;
+    //   termResult.emotionalStability = emotionalStability;
+    //   termResult.health = health;
+    //   termResult.attitudeToSchoolWork = attitudeToSchoolWork;
+    //   termResult.attentiveness = attentiveness;
+    //   termResult.perseverance = perseverance;
+    // } else {
+    //   throw new AppError('This has already been recorded.', 400);
+    // }
+    //////////////////////////////////////////////////////////////////////
+
+    let termResult = studentResult.term_results.find(
       (a) => a.term === activeTerm.name,
     );
 
     if (!termResult) {
-      throw new AppError('No result found for this term.', 404);
-    }
+      // Create new term result
+      termResult = {
+        term: activeTerm.name,
+        punctuality,
+        neatness,
+        politeness,
+        honesty,
+        relationshipWithOthers,
+        leadership,
+        emotionalStability,
+        health,
+        attitudeToSchoolWork,
+        attentiveness,
+        perseverance,
+        cumulative_score: 0,
+        class_position: '',
+        subject_results: [],
+      };
 
-    if (
-      termResult.punctuality === '' ||
-      termResult.neatness === '' ||
-      termResult.politeness === '' ||
-      termResult.honesty === '' ||
-      termResult.relationshipWithOthers === '' ||
-      termResult.leadership === '' ||
-      termResult.emotionalStability === '' ||
-      termResult.health === '' ||
-      termResult.attitudeToSchoolWork === '' ||
-      termResult.attentiveness === '' ||
-      termResult.perseverance === ''
-    ) {
-      termResult.punctuality = punctuality;
-      termResult.neatness = neatness;
-      termResult.politeness = politeness;
-      termResult.honesty = honesty;
-      termResult.relationshipWithOthers = relationshipWithOthers;
-      termResult.leadership = leadership;
-      termResult.emotionalStability = emotionalStability;
-      termResult.health = health;
-      termResult.attitudeToSchoolWork = attitudeToSchoolWork;
-      termResult.attentiveness = attentiveness;
-      termResult.perseverance = perseverance;
+      studentResult.term_results.push(termResult as any);
     } else {
-      throw new AppError('This has already been recorded.', 400);
+      // If already exists, prevent overwrite
+      if (
+        termResult.punctuality === '' ||
+        termResult.neatness === '' ||
+        termResult.politeness === '' ||
+        termResult.honesty === '' ||
+        termResult.relationshipWithOthers === '' ||
+        termResult.leadership === '' ||
+        termResult.emotionalStability === '' ||
+        termResult.health === '' ||
+        termResult.attitudeToSchoolWork === '' ||
+        termResult.attentiveness === '' ||
+        termResult.perseverance === ''
+      ) {
+        termResult.punctuality = punctuality;
+        termResult.neatness = neatness;
+        termResult.politeness = politeness;
+        termResult.honesty = honesty;
+        termResult.relationshipWithOthers = relationshipWithOthers;
+        termResult.leadership = leadership;
+        termResult.emotionalStability = emotionalStability;
+        termResult.health = health;
+        termResult.attitudeToSchoolWork = attitudeToSchoolWork;
+        termResult.attentiveness = attentiveness;
+        termResult.perseverance = perseverance;
+      } else {
+        throw new AppError('This has already been recorded.', 400);
+      }
     }
 
     await studentResult.save();
@@ -4091,6 +4150,7 @@ const fetchStudentSpecificResult = async (
       },
     ).select('class');
 
+    console.log('classEnrolment:', classEnrolment);
     if (!classEnrolment) {
       throw new AppError(
         'Student not enrolled in this class for this session.',
@@ -4144,6 +4204,8 @@ const fetchStudentSpecificResult = async (
     /**
      * first name, last name, image,
      */
+
+    console.log('studentResult:', studentResult);
 
     if (!studentResult || !studentResult.term_results.length) {
       throw new AppError('Specific term result not found.', 404);
