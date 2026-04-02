@@ -17,7 +17,7 @@ declare global {
 type AsyncHandler = (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => Promise<any>;
 
 // type AsyncHandler = (
@@ -50,7 +50,7 @@ type SchoolUserType = UserObj & {
   school_id: mongoose.Types.ObjectId;
 };
 
-type Position = 'head_teacher' | 'hod' | 'counsellor'
+type Position = 'head_teacher' | 'hod' | 'counsellor';
 
 type UserDocument = Document &
   UserObj & {
@@ -60,7 +60,7 @@ type UserDocument = Document &
     role: string;
     is_verified?: boolean;
     redundant?: boolean;
-    positions: Position[]
+    positions: Position[];
     wallet_account_obj?: StudentAccountType;
     is_chosen_major?: boolean;
     new_session_subscription?: boolean;
@@ -94,7 +94,7 @@ type UserDocument = Document &
     };
     signature?: {
       url: string;
-      public_url: string
+      public_url: string;
     };
     is_signature_added?: boolean;
     children?: mongoose.Types.ObjectId[];
@@ -484,6 +484,8 @@ type TermResult = {
   neatness?: string;
   politeness?: string;
   honesty?: string;
+  student_attendance?: number;
+  class_teacher_comment?: string;
   relationshipWithOthers?: string;
   leadership?: string;
   emotionalStability?: string;
@@ -1394,12 +1396,12 @@ type ContactUsType = {
 };
 
 type FeatureKey =
-  | "feeManagement"
-  | "paymentManagement"
-  | "cbtManagement"
-  | "assignmentManagement"
-  | "attendanceManagement"
-  | "lessonNoteManagement";
+  | 'feeManagement'
+  | 'paymentManagement'
+  | 'cbtManagement'
+  | 'assignmentManagement'
+  | 'attendanceManagement'
+  | 'lessonNoteManagement';
 
 type FeatureKeyType =
   | 'result_processing'
@@ -2051,6 +2053,8 @@ type EffectiveAreasValidationType = {
   punctuality: string;
   neatness: string;
   politeness: string;
+  student_attendance: number;
+  class_teacher_comment: string;
   honesty: string;
   relationshipWithOthers: string;
   leadership: string;
@@ -2180,11 +2184,11 @@ type DeclineStudentPayloadType = {
 };
 
 type SubjectAdditionToEnrolledStudentsType = {
-subject_id: string,
-session_id: string,
-enrolment_id: string,
-studentIds: string[]
-}
+  subject_id: string;
+  session_id: string;
+  enrolment_id: string;
+  studentIds: string[];
+};
 
 export {
   AccessModeType,
@@ -2215,7 +2219,8 @@ export {
   BankPaymentType,
   BusCategoryType,
   BusFeeValidationType,
-  BusPayloadType, BusSubscriptionType,
+  BusPayloadType,
+  BusSubscriptionType,
   CashPaymentType,
   CbtAssessmentAuthorizationPayloadType,
   CbtAssessmentDocument,
@@ -2272,7 +2277,9 @@ export {
   EnrolledStudentSubjects,
   ExamComponentType,
   ExamScoreType,
-  ExcludeParentAndStudent, FeatureKey, FeatureKeyType,
+  ExcludeParentAndStudent,
+  FeatureKey,
+  FeatureKeyType,
   FeePayloadType,
   FetchAttendanceType,
   FilePath,
@@ -2381,7 +2388,9 @@ export {
   StudentUpdateType,
   StudentValidationType,
   StudentWalletObjType,
-  StudentWithPaymentType, SubjectAdditionToEnrolledStudentsType, SubjectAdditionType,
+  StudentWithPaymentType,
+  SubjectAdditionToEnrolledStudentsType,
+  SubjectAdditionType,
   SubjectAssignmentSubmissionsType,
   SubjectCreationType,
   SubjectCumScoreJobData,
@@ -2417,6 +2426,5 @@ export {
   VerificationDocument,
   VerificationType,
   VerifyUserType,
-  WaitingForConfirmationType
+  WaitingForConfirmationType,
 };
-

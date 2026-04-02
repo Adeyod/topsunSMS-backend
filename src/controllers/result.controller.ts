@@ -679,7 +679,7 @@ const recordStudentScorePerTerm = catchErrors(async (req, res) => {
   if (!teacherId) {
     throw new AppError(
       'It is only a teacher that can record test or exam. You need to login as a teacher.',
-      400
+      400,
     );
   }
 
@@ -702,14 +702,14 @@ const recordStudentScorePerTerm = catchErrors(async (req, res) => {
     class_enrolment_id,
     class_id,
   };
-   const missingField = Object.entries(requiredFields).find(
-    ([key, value]) => value === undefined || value === null || value === ''
+  const missingField = Object.entries(requiredFields).find(
+    ([key, value]) => value === undefined || value === null || value === '',
   );
 
   if (missingField) {
     throw new AppError(
       `Please provide ${missingField[0].replace('_', ' ')} to proceed.`,
-      400
+      400,
     );
   }
 
@@ -777,7 +777,7 @@ const manualCbtRecordingPerStudentPerTerm = catchErrors(async (req, res) => {
   if (result_objs.length === 0) {
     throw new AppError(
       'Please provide student IDs and their respective score to proceed.',
-      400
+      400,
     );
   }
 
@@ -796,14 +796,14 @@ const manualCbtRecordingPerStudentPerTerm = catchErrors(async (req, res) => {
     subject_id,
     class_id,
   };
-   const missingField = Object.entries(requiredFields).find(
-    ([key, value]) => value === undefined || value === null || value === ''
+  const missingField = Object.entries(requiredFields).find(
+    ([key, value]) => value === undefined || value === null || value === '',
   );
 
   if (missingField) {
     throw new AppError(
       `Please provide ${missingField[0].replace('_', ' ')} to proceed.`,
-      400
+      400,
     );
   }
 
@@ -818,7 +818,7 @@ const manualCbtRecordingPerStudentPerTerm = catchErrors(async (req, res) => {
   }
 
   const scoreObj = resultSetting.exam_components.component.find(
-    (a) => a.key === key
+    (a) => a.key === key,
   );
 
   const score_name = scoreObj?.name;
@@ -893,7 +893,7 @@ const recordAllStudentsScoresPerTerm = catchErrors(async (req, res) => {
   if (!teacherId) {
     throw new AppError(
       'It is only a teacher that can record test or exam. You need to login as a teacher.',
-      400
+      400,
     );
   }
 
@@ -908,7 +908,7 @@ const recordAllStudentsScoresPerTerm = catchErrors(async (req, res) => {
   if (result_objs.length === 0) {
     throw new AppError(
       'Please provide student IDs and their respective score to proceed.',
-      400
+      400,
     );
   }
 
@@ -921,14 +921,14 @@ const recordAllStudentsScoresPerTerm = catchErrors(async (req, res) => {
     class_enrolment_id,
     class_id,
   };
-   const missingField = Object.entries(requiredFields).find(
-    ([key, value]) => value === undefined || value === null || value === ''
+  const missingField = Object.entries(requiredFields).find(
+    ([key, value]) => value === undefined || value === null || value === '',
   );
 
   if (missingField) {
     throw new AppError(
       `Please provide ${missingField[0].replace('_', ' ')} to continue.`,
-      400
+      400,
     );
   }
 
@@ -950,12 +950,12 @@ const recordAllStudentsScoresPerTerm = catchErrors(async (req, res) => {
   }
 
   const successfulResponse = result.successfulRecords.filter(
-    (r) => r.status === 'fulfilled'
+    (r) => r.status === 'fulfilled',
   );
   const response = successfulResponse.map((r) => r.student_id);
 
   const failureResponse = result.successfulRecords.filter(
-    (r) => r.status !== 'fulfilled'
+    (r) => r.status !== 'fulfilled',
   );
 
   const failedIds = failureResponse.map((r) => r.student_id);
@@ -966,13 +966,13 @@ const recordAllStudentsScoresPerTerm = catchErrors(async (req, res) => {
 
   if (response.length > 0) {
     returnSMsg = `Scores for Students with the following IDs: ${response.join(
-      ','
+      ',',
     )} were recorded successfully.`;
   }
 
   if (failedIds.length > 0) {
     returnFMsg = `Scores for Students with the following IDs: ${failedIds.join(
-      ','
+      ',',
     )} failed.`;
   }
 
@@ -1030,7 +1030,7 @@ const updateStudentsSubjectScoreInAClass = catchErrors(async (req, res) => {
   if (result_objs.length === 0) {
     throw new AppError(
       'Please provide student IDs and their respective score to proceed.',
-      400
+      400,
     );
   }
 
@@ -1044,13 +1044,13 @@ const updateStudentsSubjectScoreInAClass = catchErrors(async (req, res) => {
     class_id,
   };
   const missingField = Object.entries(requiredFields).find(
-    ([key, value]) => value === undefined || value === null || value === ''
+    ([key, value]) => value === undefined || value === null || value === '',
   );
 
   if (missingField) {
     throw new AppError(
       `Please provide ${missingField[0].replace('_', ' ')} to continue.`,
-      400
+      400,
     );
   }
 
@@ -1073,12 +1073,12 @@ const updateStudentsSubjectScoreInAClass = catchErrors(async (req, res) => {
   }
 
   const successfulResponse = result.successfulRecords.filter(
-    (r) => r.status === 'fulfilled'
+    (r) => r.status === 'fulfilled',
   );
   const response = successfulResponse.map((r) => r.student_id);
 
   const failureResponse = result.successfulRecords.filter(
-    (r) => r.status !== 'fulfilled'
+    (r) => r.status !== 'fulfilled',
   );
 
   const failedIds = failureResponse.map((r) => r.student_id);
@@ -1089,13 +1089,13 @@ const updateStudentsSubjectScoreInAClass = catchErrors(async (req, res) => {
 
   if (response.length > 0) {
     returnSMsg = `Scores for Students with the following IDs: ${response.join(
-      ','
+      ',',
     )} were updated successfully.`;
   }
 
   if (failedIds.length > 0) {
     returnFMsg = `Scores for Students with the following IDs: ${failedIds.join(
-      ','
+      ',',
     )} failed.`;
   }
 
@@ -1150,7 +1150,7 @@ const recordAllStudentsExamScoresPerTerm = catchErrors(async (req, res) => {
   if (!teacherId) {
     throw new AppError(
       'It is only a teacher that can record test or exam. You need to login as a teacher.',
-      400
+      400,
     );
   }
 
@@ -1165,7 +1165,7 @@ const recordAllStudentsExamScoresPerTerm = catchErrors(async (req, res) => {
   if (result_objs.length === 0) {
     throw new AppError(
       'Please provide student IDs and their respective score to proceed.',
-      400
+      400,
     );
   }
 
@@ -1178,14 +1178,14 @@ const recordAllStudentsExamScoresPerTerm = catchErrors(async (req, res) => {
     class_enrolment_id,
     class_id,
   };
-   const missingField = Object.entries(requiredFields).find(
-    ([key, value]) => value === undefined || value === null || value === ''
+  const missingField = Object.entries(requiredFields).find(
+    ([key, value]) => value === undefined || value === null || value === '',
   );
 
   if (missingField) {
     throw new AppError(
       `Please provide ${missingField[0].replace('_', ' ')} to continue.`,
-      400
+      400,
     );
   }
 
@@ -1246,7 +1246,7 @@ const getAllSubjectResultOfStudentsInClass = catchErrors(async (req, res) => {
   if (!class_id || !academic_session_id || !subject_id || !term) {
     throw new AppError(
       'Please provide all these parameters to proceed: class id, academic session id, subject id, and term.',
-      400
+      400,
     );
   }
 
@@ -1263,7 +1263,7 @@ const getAllSubjectResultOfStudentsInClass = catchErrors(async (req, res) => {
   if (!results) {
     throw new AppError(
       'Unable to fetch students document for the subject.',
-      400
+      400,
     );
   }
 
@@ -1314,7 +1314,7 @@ const getStudentSubjectResultInAClass = catchErrors(async (req, res) => {
   ) {
     throw new AppError(
       'Please provide all these parameters to proceed: student id class id, academic session id, subject id, and term.',
-      400
+      400,
     );
   }
 
@@ -1337,7 +1337,7 @@ const getStudentSubjectResultInAClass = catchErrors(async (req, res) => {
   if (!result) {
     throw new AppError(
       'Unable to fetch student subject result for the term.',
-      400
+      400,
     );
   }
 
@@ -1381,13 +1381,13 @@ const getStudentTermResult = catchErrors(async (req, res) => {
   const requiredFields = { student_id, academic_session_id, term };
 
   const missingField = Object.entries(requiredFields).find(
-    ([key, value]) => value === undefined || value === null || value === ''
+    ([key, value]) => value === undefined || value === null || value === '',
   );
 
   if (missingField) {
     throw new AppError(
       `Please provide ${missingField[0].replace('_', ' ')} to proceed.`,
-      400
+      400,
     );
   }
 
@@ -1448,14 +1448,14 @@ const getStudentSessionResults = catchErrors(async (req, res) => {
 
   const requiredFields = { student_id, academic_session_id };
 
-   const missingField = Object.entries(requiredFields).find(
-    ([key, value]) => value === undefined || value === null || value === ''
+  const missingField = Object.entries(requiredFields).find(
+    ([key, value]) => value === undefined || value === null || value === '',
   );
 
   if (missingField) {
     throw new AppError(
       `Please provide ${missingField[0].replace('_', ' ')} to proceed.`,
-      400
+      400,
     );
   }
 
@@ -1517,7 +1517,7 @@ const getAllStudentResultsInClassForActiveTermByClassId = catchErrors(
     if (!class_id || !term || !academic_session_id) {
       throw new AppError(
         'Please provide class id, academic session id and term to proceed.',
-        400
+        400,
       );
     }
 
@@ -1533,14 +1533,13 @@ const getAllStudentResultsInClassForActiveTermByClassId = catchErrors(
       term,
     };
 
-    const result = await fetchAllStudentResultsInClassForActiveTermByClassId(
-      payload
-    );
+    const result =
+      await fetchAllStudentResultsInClassForActiveTermByClassId(payload);
 
     if (!result) {
       throw new AppError(
         'Unable to fetch all student results in the class for the term.',
-        404
+        404,
       );
     }
 
@@ -1571,7 +1570,7 @@ const getAllStudentResultsInClassForActiveTermByClassId = catchErrors(
       status: 200,
       students_results: result,
     });
-  }
+  },
 );
 
 const getAllResultsOfAStudent = catchErrors(async (req, res) => {
@@ -1704,7 +1703,7 @@ const getStudentSpecificResult = catchErrors(async (req, res) => {
 
   const result = await fetchStudentSpecificResult(payload);
 
-  console.log("result:", result)
+  console.log('result:', result);
   // const duration = Date.now() - start;
 
   // const savelogPayload = {
@@ -1751,6 +1750,8 @@ const recordStudentEffectiveAreasForActiveTerm = catchErrors(
       attitudeToSchoolWork,
       attentiveness,
       perseverance,
+      student_attendance,
+      class_teacher_comment,
     } = req.body;
 
     const requiredFields = {
@@ -1765,16 +1766,18 @@ const recordStudentEffectiveAreasForActiveTerm = catchErrors(
       attitudeToSchoolWork,
       attentiveness,
       perseverance,
+      student_attendance,
+      class_teacher_comment,
     };
 
     const missingField = Object.entries(requiredFields).find(
-    ([key, value]) => value === undefined || value === null || value === ''
-  );
+      ([key, value]) => value === undefined || value === null || value === '',
+    );
 
     if (missingField) {
       throw new AppError(
         `Please provide ${missingField[0].replace('_', ' ')} to proceed.`,
-        400
+        400,
       );
     }
 
@@ -1808,6 +1811,8 @@ const recordStudentEffectiveAreasForActiveTerm = catchErrors(
       attitudeToSchoolWork: attitudeToSchoolWork.trim().toUpperCase(),
       attentiveness: attentiveness.trim().toUpperCase(),
       perseverance: perseverance.trim().toUpperCase(),
+      student_attendance: student_attendance.trim(),
+      class_teacher_comment: class_teacher_comment.trim().toUpperCase(),
     };
 
     const validateInput = joiValidateEffectiveAreasSchema(input);
@@ -1834,6 +1839,8 @@ const recordStudentEffectiveAreasForActiveTerm = catchErrors(
       attitudeToSchoolWork: value.attitudeToSchoolWork,
       attentiveness: value.attentiveness,
       perseverance: value.perseverance,
+      student_attendance: value.student_attendance,
+      class_teacher_comment: value.class_teacher_comment,
     };
 
     const result = await studentEffectiveAreasForActiveTermRecording(payload);
@@ -1865,7 +1872,7 @@ const recordStudentEffectiveAreasForActiveTerm = catchErrors(
       status: 200,
       result,
     });
-  }
+  },
 );
 
 const recordAllStudentsLastTermCumPerTerm = catchErrors(async (req, res) => {
@@ -1887,7 +1894,7 @@ const recordAllStudentsLastTermCumPerTerm = catchErrors(async (req, res) => {
   if (!teacherId) {
     throw new AppError(
       'It is only a teacher that can record test or exam. You need to login as a teacher.',
-      400
+      400,
     );
   }
 
@@ -1902,7 +1909,7 @@ const recordAllStudentsLastTermCumPerTerm = catchErrors(async (req, res) => {
   if (last_term_cumulative_objs.length === 0) {
     throw new AppError(
       'Please provide student IDs and their respective last term cumulative to proceed.',
-      400
+      400,
     );
   }
 
@@ -1915,13 +1922,13 @@ const recordAllStudentsLastTermCumPerTerm = catchErrors(async (req, res) => {
     class_id,
   };
   const missingField = Object.entries(requiredFields).find(
-    ([key, value]) => value === undefined || value === null || value === ''
+    ([key, value]) => value === undefined || value === null || value === '',
   );
 
   if (missingField) {
     throw new AppError(
       `Please provide ${missingField[0].replace('_', ' ')} to continue.`,
-      400
+      400,
     );
   }
 
@@ -1942,12 +1949,12 @@ const recordAllStudentsLastTermCumPerTerm = catchErrors(async (req, res) => {
   }
 
   const successfulResponse = result.successfulRecords.filter(
-    (r) => r.status === 'fulfilled'
+    (r) => r.status === 'fulfilled',
   );
   const response = successfulResponse.map((r) => r.student_id);
 
   const failureResponse = result.successfulRecords.filter(
-    (r) => r.status !== 'fulfilled'
+    (r) => r.status !== 'fulfilled',
   );
 
   const failedIds = failureResponse.map((r) => r.student_id);
@@ -1958,13 +1965,13 @@ const recordAllStudentsLastTermCumPerTerm = catchErrors(async (req, res) => {
 
   if (response.length > 0) {
     returnSMsg = `Scores for Students with the following IDs: ${response.join(
-      ','
+      ',',
     )} were recorded successfully.`;
   }
 
   if (failedIds.length > 0) {
     returnFMsg = `Scores for Students with the following IDs: ${failedIds.join(
-      ','
+      ',',
     )} failed.`;
   }
 
@@ -2019,7 +2026,7 @@ const subjectPositionGradingInClass = catchErrors(async (req, res) => {
   if (!teacherId) {
     throw new AppError(
       'It is only a teacher that can record test or exam. You need to login as a teacher.',
-      400
+      400,
     );
   }
 
@@ -2097,7 +2104,7 @@ const subjectResultTotalCalculation = catchErrors(async (req, res) => {
   if (!teacherId) {
     throw new AppError(
       'It is only a teacher that can record test or exam. You need to login as a teacher.',
-      400
+      400,
     );
   }
 
@@ -2249,6 +2256,5 @@ export {
   //////////////////////////////////////////
   subjectPositionGradingInClass,
   subjectResultTotalCalculation,
-  updateStudentsSubjectScoreInAClass
+  updateStudentsSubjectScoreInAClass,
 };
-

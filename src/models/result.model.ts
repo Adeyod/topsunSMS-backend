@@ -31,6 +31,8 @@ const resultSchema = new mongoose.Schema<ResultDocument>(
         punctuality: { type: String },
         neatness: { type: String },
         politeness: { type: String },
+        student_attendance: { type: Number, default: 0 },
+        class_teacher_comment: { type: String },
         honesty: { type: String },
         relationshipWithOthers: { type: String },
         leadership: { type: String },
@@ -84,11 +86,11 @@ const resultSchema = new mongoose.Schema<ResultDocument>(
     },
     position: { type: Number },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Result: Model<ResultDocument> = mongoose.model<ResultDocument>(
   'Result',
-  resultSchema
+  resultSchema,
 );
 export default Result;

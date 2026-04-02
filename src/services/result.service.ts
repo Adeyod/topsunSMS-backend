@@ -2832,6 +2832,8 @@ const studentEffectiveAreasForActiveTermRecording = async (
       attitudeToSchoolWork,
       attentiveness,
       perseverance,
+      student_attendance,
+      class_teacher_comment,
     } = payload;
 
     const student = new mongoose.Types.ObjectId(student_id);
@@ -2953,6 +2955,8 @@ const studentEffectiveAreasForActiveTermRecording = async (
         attitudeToSchoolWork,
         attentiveness,
         perseverance,
+        student_attendance,
+        class_teacher_comment,
         cumulative_score: 0,
         class_position: '',
         subject_results: [],
@@ -2972,7 +2976,9 @@ const studentEffectiveAreasForActiveTermRecording = async (
         termResult.health === '' ||
         termResult.attitudeToSchoolWork === '' ||
         termResult.attentiveness === '' ||
-        termResult.perseverance === ''
+        termResult.perseverance === '' ||
+        termResult.student_attendance === 0 ||
+        termResult.class_teacher_comment === ''
       ) {
         termResult.punctuality = punctuality;
         termResult.neatness = neatness;
@@ -2985,6 +2991,8 @@ const studentEffectiveAreasForActiveTermRecording = async (
         termResult.attitudeToSchoolWork = attitudeToSchoolWork;
         termResult.attentiveness = attentiveness;
         termResult.perseverance = perseverance;
+        termResult.student_attendance = student_attendance;
+        termResult.class_teacher_comment = class_teacher_comment;
       } else {
         throw new AppError('This has already been recorded.', 400);
       }
@@ -4114,9 +4122,6 @@ const fetchStudentSpecificResult = async (
         throw new AppError('Parent not found.', 404);
       }
 
-      console.log('parentDoc:', parentDoc);
-      console.log('parentDoc.children:', parentDoc.children);
-
       const allowed = parentDoc.children?.includes(student);
       if (!allowed) {
         throw new AppError('Access denied for this student.', 403);
@@ -4150,7 +4155,6 @@ const fetchStudentSpecificResult = async (
       },
     ).select('class');
 
-    console.log('classEnrolment:', classEnrolment);
     if (!classEnrolment) {
       throw new AppError(
         'Student not enrolled in this class for this session.',
@@ -4169,18 +4173,15 @@ const fetchStudentSpecificResult = async (
       throw new AppError('Class not found.', 404);
     }
 
-    console.log('classExist:', classExist.class_teacher);
-
     const studentSubjectEnrolled = classEnrolment?.students[0].subjects_offered;
-
+    // 69a7115e1fc7750d1ba6f9fe livestock farming
     const subjectResults = await SubjectResult.find({
       student: student,
       session: sessionExist._id,
       class: classEnrolment?.class,
-      subject: { $in: studentSubjectEnrolled },
-    }).populate([{ path: 'subject' }]);
 
-    console.log('subjectResults:', subjectResults);
+      subject: { $in: studentSubjectEnrolled }, // try removing this so that it can fetch subjects that have results already
+    }).populate([{ path: 'subject' }]);
 
     if (!subjectResults || subjectResults.length === 0) {
       throw new AppError(
@@ -4226,18 +4227,35 @@ const fetchStudentSpecificResult = async (
     //   s.term_results.find((a) => a.term === term)
     // );
 
-    const actualSubjectResultForTerm = subjectResults.map((s) => {
-      const obj = s.toObject();
-      const termResult = obj.term_results.find((a) => a.term === term);
+    // const actualSubjectResultForTerm = subjectResults.map((s) => {
+    //   const obj = s.toObject();
+    //   const termResult = obj.term_results.find((a) => a.term === term);
 
-      const { term_results, ...rest } = obj;
+    //   console.log("termResult:", termResult)
 
-      return {
-        ...rest,
-        ...termResult,
-      };
-    });
-    // console.log('actualSubjectResultForTerm:', actualSubjectResultForTerm);
+    //   const { term_results, ...rest } = obj;
+
+    //   return {
+    //     ...rest,
+    //     ...termResult,
+    //   };
+    // });
+
+    const actualSubjectResultForTerm = subjectResults
+      .map((s) => {
+        const obj = s.toObject();
+        const termResult = obj.term_results.find((a) => a.term === term);
+
+        if (!termResult) return null;
+
+        const { term_results, ...rest } = obj;
+
+        return {
+          ...rest,
+          ...termResult,
+        };
+      })
+      .filter(Boolean);
 
     if (
       !actualSubjectResultForTerm ||
@@ -4255,10 +4273,13 @@ const fetchStudentSpecificResult = async (
       term: term,
     }).populate([{ path: 'session', select: 'academic_session' }]);
 
+    const enrollment = await ClassEnrolment.findById(classEnrolment._id);
+
     const classDetails = {
       class_id: classExist._id,
       level: classExist.level,
       name: classExist.name,
+      students_in_class: enrollment && enrollment.students.length,
     };
 
     const headTeacher = await Teacher.findOne({

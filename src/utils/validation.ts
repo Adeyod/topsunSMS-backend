@@ -638,7 +638,7 @@ const joiValidation = <
     | string
     | LinkStudentType
     | CreateSubjectType
-    | CreateClassType
+    | CreateClassType,
 >(
   payload: T,
   validationType:
@@ -648,7 +648,7 @@ const joiValidation = <
     | 'forgot-password'
     | 'link-student'
     | 'create-subject'
-    | 'create-class'
+    | 'create-class',
 ): { success: boolean; value: T } => {
   let validationSchema;
 
@@ -818,7 +818,7 @@ const joiValidation = <
     throw new JoiError(
       error.details[0].message,
       statusCode,
-      error.details[0].type
+      error.details[0].type,
     );
   }
 
@@ -826,7 +826,7 @@ const joiValidation = <
 };
 
 const joiValidateContactUs = <T extends ContactUsType>(
-  payload: T
+  payload: T,
 ): { success: boolean; value?: T; error?: string } => {
   const validationSchema = Joi.object({
     first_name: commonRules.first_name,
@@ -848,7 +848,7 @@ const joiValidateContactUs = <T extends ContactUsType>(
 };
 
 const parentValidation = <T extends ParentType>(
-  payload: T
+  payload: T,
 ): { success: boolean; value?: T; error?: string } => {
   const validationSchema = Joi.object({
     middle_name: commonRules.middle_name,
@@ -864,7 +864,7 @@ const parentValidation = <T extends ParentType>(
 
 const sessionValidation = <T extends string | TermDocument>(
   payload: T,
-  type: 'session' | 'term'
+  type: 'session' | 'term',
 ): { success: boolean; value: T } => {
   let validationSchema;
   switch (type) {
@@ -926,7 +926,7 @@ const sessionValidation = <T extends string | TermDocument>(
     throw new JoiError(
       error.details[0].message,
       statusCode,
-      error.details[0].type
+      error.details[0].type,
     );
   }
 
@@ -934,7 +934,7 @@ const sessionValidation = <T extends string | TermDocument>(
 };
 
 const staffValidation = <T extends ExcludeParentAndStudent>(
-  payload: T
+  payload: T,
 ): { success: boolean; value?: T; error?: string } => {
   const validationSchema = Joi.object({
     middle_name: commonRules.middle_name,
@@ -952,7 +952,7 @@ const staffValidation = <T extends ExcludeParentAndStudent>(
 };
 
 const superAdminValidation = <T extends ExcludeParentAndStudent>(
-  payload: T
+  payload: T,
 ): { success: boolean; value?: T; error?: string } => {
   const validationSchema = Joi.object({
     middle_name: commonRules.middle_name,
@@ -969,7 +969,7 @@ const superAdminValidation = <T extends ExcludeParentAndStudent>(
 };
 
 const admissionValidation = <T extends AdmissionValidationType>(
-  payload: T
+  payload: T,
 ): { success: boolean; value?: T; error?: string } => {
   const validationSchema = Joi.object({
     admission_session: Joi.required(),
@@ -986,7 +986,7 @@ const admissionValidation = <T extends AdmissionValidationType>(
 };
 
 const studentValidation = <T extends StudentValidationType>(
-  payload: T
+  payload: T,
 ): { success: boolean; value?: T; error?: string } => {
   const validationSchema = Joi.object({
     dob: commonRules.dob,
@@ -1010,7 +1010,7 @@ const studentValidation = <T extends StudentValidationType>(
 };
 
 const teacherValidation = <T extends TeacherValidationType>(
-  payload: T
+  payload: T,
 ): { success: boolean; value?: any; error?: string } => {
   const validationSchema = Joi.object({
     first_name: Joi.string()
@@ -1119,7 +1119,7 @@ const commonRules = {
 };
 
 const addressValidation = (
-  home_address: string
+  home_address: string,
 ): { success: boolean; error?: string; value?: any } => {
   const validationSchema = Joi.object({
     home_address: Joi.string()
@@ -1136,7 +1136,7 @@ const addressValidation = (
 };
 
 const cashPaymentValidation = <T extends CashPaymentType>(
-  payload: T
+  payload: T,
 ): { success: boolean; error?: string; value?: any } => {
   const validationSchema = Joi.object({
     student_id: commonRules.student_id,
@@ -1155,7 +1155,7 @@ const cashPaymentValidation = <T extends CashPaymentType>(
 };
 
 const bankApprovalValidation = <T extends BankApprovalType>(
-  payload: T
+  payload: T,
 ): { success: boolean; error?: string; value?: any } => {
   const validationSchema = Joi.object({
     bank_name: commonRules.bank_name,
@@ -1172,7 +1172,7 @@ const bankApprovalValidation = <T extends BankApprovalType>(
 };
 
 const bankPaymentValidation = <T extends BankPaymentType>(
-  payload: T
+  payload: T,
 ): { success: boolean; error?: string; value?: any } => {
   const validationSchema = Joi.object({
     student_id: commonRules.student_id,
@@ -1193,7 +1193,7 @@ const bankPaymentValidation = <T extends BankPaymentType>(
 };
 
 const schoolFeesValidation = (
-  amount: number
+  amount: number,
 ): { success: boolean; value?: any; error?: string } => {
   const validationSchema = Joi.number().positive().required();
 
@@ -1206,7 +1206,7 @@ const schoolFeesValidation = (
 };
 
 const negotiatedFeesValidation = <T extends NegotiatedFeesType>(
-  payload: T
+  payload: T,
 ): { success: boolean; value?: any; error?: string } => {
   const validationSchema = Joi.object({
     negotiated_school_charge: Joi.number().positive().required(),
@@ -1224,7 +1224,7 @@ const negotiatedFeesValidation = <T extends NegotiatedFeesType>(
 
 const optionalFeesValidation = (
   amount: number,
-  fee_name: string
+  fee_name: string,
 ): { success: boolean; value?: any; error?: string } => {
   const validationSchema = Joi.object({
     amount: Joi.number().positive().required(),
@@ -1242,7 +1242,7 @@ const optionalFeesValidation = (
 };
 
 const schoolBusValidation = <T extends SchoolBusValidationType>(
-  payload: T
+  payload: T,
 ): { success: boolean; value?: any; error?: string } => {
   const validationSchema = Joi.object({
     close_group: Joi.object({
@@ -1263,7 +1263,7 @@ const schoolBusValidation = <T extends SchoolBusValidationType>(
 };
 
 const joiValidateClassLevelArray = <T extends ClassLevelArrayType>(
-  payload: T
+  payload: T,
 ): { success: boolean; value?: any; error?: string } => {
   const validationSchema = Joi.object({
     class_level_array: Joi.array()
@@ -1281,7 +1281,7 @@ const joiValidateClassLevelArray = <T extends ClassLevelArrayType>(
 };
 
 const schoolCreationValidation = <T extends SchoolCreationValidationType>(
-  payload: T
+  payload: T,
 ): { success: boolean; value?: any; error?: string } => {
   const validationSchema = Joi.object({
     school_name: Joi.string().required(),
@@ -1306,7 +1306,7 @@ const schoolCreationValidation = <T extends SchoolCreationValidationType>(
 };
 
 const joiBusFeeValidation = <T extends BusFeeValidationType>(
-  payload: T
+  payload: T,
 ): { success: boolean; value?: any; error?: string } => {
   const validationSchema = Joi.object({
     name: Joi.string().required(),
@@ -1326,9 +1326,9 @@ const joiBusFeeValidation = <T extends BusFeeValidationType>(
 };
 
 const joiPriorityOrderValidation = <
-  T extends { priority_order: { fee_name: string; priority_number: number } }
+  T extends { priority_order: { fee_name: string; priority_number: number } },
 >(
-  payload: T
+  payload: T,
 ): { success: boolean; value?: any; error?: string } => {
   const validationSchema = Joi.object({
     priority_order: Joi.array()
@@ -1336,7 +1336,7 @@ const joiPriorityOrderValidation = <
         Joi.object({
           fee_name: Joi.string().required(),
           priority_number: Joi.number().required(),
-        })
+        }),
       )
       .required(),
   });
@@ -1355,9 +1355,9 @@ const joiAccountArrayValidation = <
       account_name: string;
       bank_name: string;
     };
-  }
+  },
 >(
-  payload: T
+  payload: T,
 ): { success: boolean; value?: any; error?: string } => {
   const validationSchema = Joi.object({
     account_details_array: Joi.array()
@@ -1366,7 +1366,7 @@ const joiAccountArrayValidation = <
           account_number: Joi.string().required(),
           account_name: Joi.string().required(),
           bank_name: Joi.string().required(),
-        })
+        }),
       )
       .required(),
   });
@@ -1379,7 +1379,7 @@ const joiAccountArrayValidation = <
 };
 
 const joiValidateExamInputFields = <T extends CbtAssessmentInputFieldsType>(
-  payload: T
+  payload: T,
 ): { success: boolean; value?: any; error?: string } => {
   const validationSchema = Joi.object({
     assessment_type: commonRules.stringRequired.label('assessment_type'),
@@ -1408,7 +1408,7 @@ const singleQuestionSchema = Joi.object({
 })
   .custom((value: ObjQuestionType, helpers) => {
     const normalizedOptions = value.options.map((opt) =>
-      opt.trim().toLowerCase()
+      opt.trim().toLowerCase(),
     );
     const normalizedCorrectAnswer = value.correct_answer.trim().toLowerCase();
 
@@ -1435,7 +1435,7 @@ const singleQuestionSchema = Joi.object({
   });
 
 const joiValidateQuestionArray = (
-  payload: ObjQuestionType[]
+  payload: ObjQuestionType[],
 ): {
   success: boolean;
   value?: any;
@@ -1473,7 +1473,7 @@ const singleAnswerSchema = Joi.object({
   });
 
 const joiValidateAssignmentSubmission = (
-  payload: JoiValidateAssignmentSubmissionType
+  payload: JoiValidateAssignmentSubmissionType,
 ): {
   success: boolean;
   value?: any;
@@ -1484,7 +1484,7 @@ const joiValidateAssignmentSubmission = (
   })
     .custom((value, helpers) => {
       const questionNumbers = value.answers_array.map(
-        (a: AnswerSubmissionObject) => a.question_number
+        (a: AnswerSubmissionObject) => a.question_number,
       );
       const uniqueSet = new Set(questionNumbers);
 
@@ -1509,7 +1509,7 @@ const joiValidateAssignmentSubmission = (
 };
 
 const joiValidateAssessmentDocumentArray = (
-  payload: AssessmentDocumentType[]
+  payload: AssessmentDocumentType[],
 ): {
   success: boolean;
   value?: any;
@@ -1522,13 +1522,13 @@ const joiValidateAssessmentDocumentArray = (
     .custom((value: AssessmentDocumentType[], helpers) => {
       const levels = value.map((v) => v.level);
       const duplicates = levels.filter(
-        (lvl, idx) => levels.indexOf(lvl) !== idx
+        (lvl, idx) => levels.indexOf(lvl) !== idx,
       );
 
       if (duplicates.length > 0) {
         return helpers.error('any.invalid', {
           message: `Duplicate level(s) found: ${[...new Set(duplicates)].join(
-            ', '
+            ', ',
           )}`,
         });
       }
@@ -1560,7 +1560,7 @@ const singleTimetableSchema = Joi.object({
 const allowedGrades = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 const joiValidateEffectiveAreasSchema = (
-  payload: EffectiveAreasValidationType
+  payload: EffectiveAreasValidationType,
 ): {
   success: boolean;
   value?: any;
@@ -1600,6 +1600,19 @@ const joiValidateEffectiveAreasSchema = (
     perseverance: Joi.string()
       .valid(...allowedGrades)
       .required(),
+    class_teacher_comment: Joi.string()
+      .pattern(/^[A-Za-z0-9\s.,']+$/)
+      .min(5)
+      .max(500)
+      .required()
+      .messages({
+        'string.pattern.base':
+          'Class teacher comment must contain only letters and numbers',
+      }),
+    student_attendance: Joi.number().integer().min(0).required().messages({
+      'number.base': 'Student attendance must be a number',
+      'number.integer': 'Student attendance must be an integer',
+    }),
   });
 
   const { error, value } = validationSchema.validate(payload);
@@ -1642,7 +1655,7 @@ const joiValidateEffectiveAreasSchema = (
 // };
 
 const joiValidateVacationAndResumptionDatesSchema = (
-  payload: VacationAndResumptionDatesPayload
+  payload: VacationAndResumptionDatesPayload,
 ): {
   success: boolean;
   value?: any;
@@ -1694,7 +1707,7 @@ const joiValidateVacationAndResumptionDatesSchema = (
 };
 
 const joiValidateTimetableArray = (
-  payload: TimetableArrayType[]
+  payload: TimetableArrayType[],
 ): {
   success: boolean;
   value?: any;
@@ -1709,7 +1722,7 @@ const joiValidateTimetableArray = (
 };
 
 const joiValidateNewDateTimetable = (
-  payload: NewDateTimetable[]
+  payload: NewDateTimetable[],
 ): {
   success: boolean;
   value?: any;
@@ -1724,7 +1737,7 @@ const joiValidateNewDateTimetable = (
 };
 
 const joiValidateCutoffs = (
-  payload: CbtCutoffPayload
+  payload: CbtCutoffPayload,
 ): {
   success: boolean;
   value?: any;
@@ -1773,6 +1786,5 @@ export {
   staffValidation,
   studentValidation,
   superAdminValidation,
-  teacherValidation
+  teacherValidation,
 };
-
