@@ -45,7 +45,7 @@ const registerNewUser = async (payload: UserDocument) => {
 
     if (payload.role === 'student') {
       const admissionNumberExist = await findSameAdmissionNumber(
-        payload.admission_number.trim()
+        payload.admission_number.trim(),
       );
 
       if (admissionNumberExist) {
@@ -61,7 +61,7 @@ const registerNewUser = async (payload: UserDocument) => {
 
     const userEmailVerification = await generateAndStoreVerificationToken(
       userResult,
-      'email_verification'
+      'email_verification',
     );
 
     if (!userEmailVerification) {
@@ -97,13 +97,13 @@ const userEmailVerification = async (token: string) => {
   try {
     const tokenResponse = await getUserTokenDetails(
       token,
-      'email_verification'
+      'email_verification',
     );
 
     if (!tokenResponse) {
       throw new AppError(
         'Token does not exist or verification token has expired. You can request for another one',
-        404
+        404,
       );
     }
 
@@ -117,7 +117,7 @@ const userEmailVerification = async (token: string) => {
     if (!user_id || typeof user_id !== 'object') {
       throw new AppError(
         'Invalid token: No valid user associated with this token',
-        400
+        400,
       );
     }
 
@@ -145,13 +145,13 @@ const userEmailVerification = async (token: string) => {
 };
 
 const userLogin = async (
-  payload: PayloadForLoginInput
+  payload: PayloadForLoginInput,
 ): Promise<LoginResponseType> => {
   try {
     const userExist = await findUserByEmail(payload?.email);
 
     if (!userExist) {
-      throw new AppError('Invalid credential...', 404);
+      throw new AppError('Invalid credential...', 400);
     }
 
     let userPaymentDoc = null;
@@ -181,29 +181,29 @@ const userLogin = async (
       });
     } else if (userExist.role === 'teacher') {
       await userExist.populate(
-        'teaching_assignment.class_id teaching_assignment.subject subjects_capable_of_teaching class_managing'
+        'teaching_assignment.class_id teaching_assignment.subject subjects_capable_of_teaching class_managing',
       );
     }
 
     const passwordMatch = await bcrypt.compare(
       payload?.password,
-      userExist?.password
+      userExist?.password,
     );
 
     if (!passwordMatch) {
-      throw new AppError('Invalid credential...', 404);
+      throw new AppError('Invalid credential...', 400);
     }
 
     if (userExist.is_verified !== true) {
       const checkTokenExist = await getUserTokenDetailsUsingUserId(
         userExist._id,
-        'email_verification'
+        'email_verification',
       );
 
       if (!checkTokenExist) {
         const userVerifyResponse = await generateAndStoreVerificationToken(
           userExist,
-          'email_verification'
+          'email_verification',
         );
 
         if (!userVerifyResponse) {
@@ -225,7 +225,7 @@ const userLogin = async (
 
         throw new AppError(
           'Please verify your email with the token sent to your email address...',
-          400
+          400,
         );
       } else {
         const jobData = {
@@ -243,7 +243,7 @@ const userLogin = async (
 
         throw new AppError(
           'Please verify your email with the token sent to your email address...',
-          400
+          400,
         );
       }
     }
@@ -252,12 +252,12 @@ const userLogin = async (
     const accessToken = await generateAccessToken(
       userExist._id,
       userExist.email,
-      userExist.role
+      userExist.role,
     );
     const refreshToken = await generateRefreshToken(
       userExist._id,
       userExist.email,
-      userExist.role
+      userExist.role,
     );
 
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 12);
@@ -293,7 +293,7 @@ const generateAnotherAccessToken = async (token: string) => {
   try {
     const decodeTokenResponse = await jwtDecodeRefreshToken(token);
     const tokenResponse = await getUserRefreshTokenDetails(
-      decodeTokenResponse.userId
+      decodeTokenResponse.userId,
     );
 
     if (!tokenResponse) {
@@ -315,7 +315,7 @@ const generateAnotherAccessToken = async (token: string) => {
     const newAccessToken = await generateAccessToken(
       user?._id,
       user?.email,
-      user.role
+      user.role,
     );
 
     const userObj = {
@@ -346,13 +346,13 @@ const forgotPass = async (email: string): Promise<UserDocument> => {
 
     const getTokenResponse = await getUserTokenDetailsUsingUserId(
       findUser._id,
-      'password_reset'
+      'password_reset',
     );
 
     if (!getTokenResponse) {
       const userEmailVerification = await generateAndStoreVerificationToken(
         findUser,
-        'password_reset'
+        'password_reset',
       );
 
       if (!userEmailVerification) {
@@ -396,7 +396,7 @@ const forgotPass = async (email: string): Promise<UserDocument> => {
 };
 
 const sendingEmailVerificationToken = async (
-  email: string
+  email: string,
 ): Promise<UserDocument> => {
   try {
     const findUser = await findUserByEmail(email);
@@ -413,7 +413,7 @@ const sendingEmailVerificationToken = async (
 
     const userToken = await getUserTokenDetailsUsingUserId(
       findUser._id,
-      'email_verification'
+      'email_verification',
     );
 
     if (userToken) {
@@ -421,7 +421,7 @@ const sendingEmailVerificationToken = async (
     } else {
       const generateToken = await generateAndStoreVerificationToken(
         findUser,
-        'email_verification'
+        'email_verification',
       );
 
       tokenObj = generateToken;
@@ -453,12 +453,12 @@ const sendingEmailVerificationToken = async (
 };
 
 const changeUserPassword = async (
-  payload: ChangePasswordType
+  payload: ChangePasswordType,
 ): Promise<UserDocument> => {
   try {
     const findToken = await getUserTokenDetails(
       payload.token,
-      'password_reset'
+      'password_reset',
     );
 
     if (!findToken) {
@@ -534,16 +534,16 @@ const loggingUserOut = async (payload: LogoutPayload) => {
     }
 
     const decodeRefreshToken = await jwtDecodeRefreshToken(
-      payload.refresh_token
+      payload.refresh_token,
     );
     const findToken = await getUserRefreshTokenDetails(
-      decodeRefreshToken.userId
+      decodeRefreshToken.userId,
     );
 
     if (findToken) {
       const compareToken = await bcrypt.compare(
         payload.refresh_token,
-        findToken.token
+        findToken.token,
       );
 
       if (compareToken) {
@@ -578,7 +578,7 @@ export {
   registerNewUser,
   sendingEmailVerificationToken,
   userEmailVerification,
-  userLogin
+  userLogin,
 };
 
 // meetgeek ottaai
