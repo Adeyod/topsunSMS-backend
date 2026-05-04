@@ -2832,8 +2832,8 @@ const studentEffectiveAreasForActiveTermRecording = async (
       attitudeToSchoolWork,
       attentiveness,
       perseverance,
-      student_attendance,
-      class_teacher_comment,
+      classTeacherComment,
+      studentAttendance,
     } = payload;
 
     const student = new mongoose.Types.ObjectId(student_id);
@@ -2955,8 +2955,8 @@ const studentEffectiveAreasForActiveTermRecording = async (
         attitudeToSchoolWork,
         attentiveness,
         perseverance,
-        student_attendance,
-        class_teacher_comment,
+        classTeacherComment,
+        studentAttendance,
         cumulative_score: 0,
         class_position: '',
         subject_results: [],
@@ -2977,8 +2977,8 @@ const studentEffectiveAreasForActiveTermRecording = async (
         termResult.attitudeToSchoolWork === '' ||
         termResult.attentiveness === '' ||
         termResult.perseverance === '' ||
-        termResult.student_attendance === 0 ||
-        termResult.class_teacher_comment === ''
+        termResult.studentAttendance === 0 ||
+        termResult.classTeacherComment === ''
       ) {
         termResult.punctuality = punctuality;
         termResult.neatness = neatness;
@@ -2991,8 +2991,8 @@ const studentEffectiveAreasForActiveTermRecording = async (
         termResult.attitudeToSchoolWork = attitudeToSchoolWork;
         termResult.attentiveness = attentiveness;
         termResult.perseverance = perseverance;
-        termResult.student_attendance = student_attendance;
-        termResult.class_teacher_comment = class_teacher_comment;
+        termResult.studentAttendance = studentAttendance;
+        termResult.classTeacherComment = classTeacherComment;
       } else {
         throw new AppError('This has already been recorded.', 400);
       }

@@ -1600,7 +1600,7 @@ const joiValidateEffectiveAreasSchema = (
     perseverance: Joi.string()
       .valid(...allowedGrades)
       .required(),
-    class_teacher_comment: Joi.string()
+    classTeacherComment: Joi.string()
       .pattern(/^[A-Za-z0-9\s.,']+$/)
       .min(5)
       .max(500)
@@ -1609,7 +1609,7 @@ const joiValidateEffectiveAreasSchema = (
         'string.pattern.base':
           'Class teacher comment must contain only letters and numbers',
       }),
-    student_attendance: Joi.number().integer().min(0).required().messages({
+    studentAttendance: Joi.number().integer().min(0).required().messages({
       'number.base': 'Student attendance must be a number',
       'number.integer': 'Student attendance must be an integer',
     }),

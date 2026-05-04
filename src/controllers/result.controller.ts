@@ -1750,8 +1750,8 @@ const recordStudentEffectiveAreasForActiveTerm = catchErrors(
       attitudeToSchoolWork,
       attentiveness,
       perseverance,
-      student_attendance,
-      class_teacher_comment,
+      studentAttendance,
+      classTeacherComment,
     } = req.body;
 
     const requiredFields = {
@@ -1766,8 +1766,8 @@ const recordStudentEffectiveAreasForActiveTerm = catchErrors(
       attitudeToSchoolWork,
       attentiveness,
       perseverance,
-      student_attendance,
-      class_teacher_comment,
+      studentAttendance,
+      classTeacherComment,
     };
 
     const missingField = Object.entries(requiredFields).find(
@@ -1811,8 +1811,8 @@ const recordStudentEffectiveAreasForActiveTerm = catchErrors(
       attitudeToSchoolWork: attitudeToSchoolWork.trim().toUpperCase(),
       attentiveness: attentiveness.trim().toUpperCase(),
       perseverance: perseverance.trim().toUpperCase(),
-      student_attendance: student_attendance.trim(),
-      class_teacher_comment: class_teacher_comment.trim().toUpperCase(),
+      studentAttendance: studentAttendance.trim(),
+      classTeacherComment: classTeacherComment.trim().toUpperCase(),
     };
 
     const validateInput = joiValidateEffectiveAreasSchema(input);
@@ -1839,8 +1839,8 @@ const recordStudentEffectiveAreasForActiveTerm = catchErrors(
       attitudeToSchoolWork: value.attitudeToSchoolWork,
       attentiveness: value.attentiveness,
       perseverance: value.perseverance,
-      student_attendance: value.student_attendance,
-      class_teacher_comment: value.class_teacher_comment,
+      studentAttendance: value.studentAttendance,
+      classTeacherComment: value.classTeacherComment,
     };
 
     const result = await studentEffectiveAreasForActiveTermRecording(payload);

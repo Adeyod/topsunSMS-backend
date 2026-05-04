@@ -484,8 +484,8 @@ type TermResult = {
   neatness?: string;
   politeness?: string;
   honesty?: string;
-  student_attendance?: number;
-  class_teacher_comment?: string;
+  studentAttendance?: number;
+  classTeacherComment?: string;
   relationshipWithOthers?: string;
   leadership?: string;
   emotionalStability?: string;
@@ -2053,8 +2053,8 @@ type EffectiveAreasValidationType = {
   punctuality: string;
   neatness: string;
   politeness: string;
-  student_attendance: number;
-  class_teacher_comment: string;
+  studentAttendance: number;
+  classTeacherComment: string;
   honesty: string;
   relationshipWithOthers: string;
   leadership: string;
