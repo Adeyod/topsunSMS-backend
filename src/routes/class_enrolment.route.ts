@@ -8,7 +8,7 @@ import {
   getAllStudentsInAClass,
   getAllStudentsInAClassInActiveSession,
   manyStudentsEnrolmentToClass,
-  studentEnrolmentToClass
+  studentEnrolmentToClass,
 } from '../controllers/class_enrolment.controller';
 import { permission } from '../middleware/authorization';
 import { verifyAccessToken } from '../middleware/jwtAuth';
@@ -20,51 +20,55 @@ router.use(verifyAccessToken);
 router.get(
   '/get-a-single-class-enrollment/:id',
   permission(['admin', 'super_admin']),
-  getASingleEnrollmentById
+  getASingleEnrollmentById,
 );
 
 router.get(
   '/get-all-students-in-a-class/:class_id/:session_id',
   permission(['admin', 'super_admin', 'teacher']),
-  getAllStudentsInAClass
+  getAllStudentsInAClass,
 );
 
 router.get(
   '/get-all-students-in-a-class-in-active-session/:class_id/:session_id',
   permission(['admin', 'super_admin', 'teacher']),
-  getAllStudentsInAClassInActiveSession
+  getAllStudentsInAClassInActiveSession,
 );
 
 router.get(
   '/get-all-class-enrollments',
   permission(['admin', 'super_admin']),
-  getAllEnrollments
+  getAllEnrollments,
 );
 
 router.get(
   '/get-all-active-class-enrollments',
   permission(['admin', 'super_admin']),
-  getAllActiveClassEnrollments
+  getAllActiveClassEnrollments,
 );
 
 router.get(
   '/get-all-class-enrollments/:session_id',
   permission(['admin', 'super_admin']),
-  getAllSessionEnrollmentsBySessionId
+  getAllSessionEnrollmentsBySessionId,
 );
 
 router.post(
   '/enrol-student-to-class',
   permission(['admin', 'super_admin']),
-  studentEnrolmentToClass
+  studentEnrolmentToClass,
 );
 
 router.post(
   '/enrol-many-students-to-class',
   permission(['admin', 'super_admin']),
-  manyStudentsEnrolmentToClass
+  manyStudentsEnrolmentToClass,
 );
 
-router.put('/add-subject-to-enrolled-students/:session_id/:enrolment_id/:subject_id',permission(['admin', 'super_admin']), addSubjectToEnrolledStudents)
+router.put(
+  '/add-subject-to-enrolled-students/:session_id/:class_id/:enrolment_id/:subject_id',
+  permission(['admin', 'super_admin']),
+  addSubjectToEnrolledStudents,
+);
 
 export default router;

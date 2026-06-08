@@ -2185,6 +2185,7 @@ type DeclineStudentPayloadType = {
 
 type SubjectAdditionToEnrolledStudentsType = {
   subject_id: string;
+  class_id: string;
   session_id: string;
   enrolment_id: string;
   studentIds: string[];

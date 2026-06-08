@@ -621,9 +621,11 @@ const subjectAdditionToEnrolledStudents = async (
 ) => {
   try {
     // I need to add class id so as to confirm if the subject is part of what is to be offered in the class
-    const { session_id, subject_id, enrolment_id, studentIds } = payload;
+    const { session_id, subject_id, enrolment_id, studentIds, class_id } =
+      payload;
 
     const subject = new mongoose.Types.ObjectId(subject_id);
+    const classId = new mongoose.Types.ObjectId(class_id);
     const session = new mongoose.Types.ObjectId(session_id);
     const enrolment = new mongoose.Types.ObjectId(enrolment_id);
 
@@ -635,6 +637,18 @@ const subjectAdditionToEnrolledStudents = async (
 
     if (!subjectExist) {
       throw new AppError('Subject not found.', 404);
+    }
+
+    const classExist = await Class.findOne({
+      _id: classId,
+      compulsory_subjects: subject,
+    });
+
+    if (!classExist) {
+      throw new AppError(
+        `Subject with ID: ${subject} is not part of subjects to be offered in this class.`,
+        400,
+      );
     }
 
     const sessionExist = await Session.findById(session);
