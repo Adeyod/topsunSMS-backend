@@ -1077,6 +1077,7 @@ interface StudentDocument extends Document {
   _id: mongoose.Types.ObjectId;
   first_name: string;
   last_name: string;
+  redundant: boolean;
   subjects_offered: SubjectOfferedType[];
 }
 

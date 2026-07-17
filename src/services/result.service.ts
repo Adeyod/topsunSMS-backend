@@ -4109,14 +4109,13 @@ const fetchStudentSpecificResult = async (
     const student = new mongoose.Types.ObjectId(student_id);
     const session = new mongoose.Types.ObjectId(session_id);
 
+    // 🔐 ACCESS CONTROL
     if (userRole === 'student') {
       if (userId.toString() !== student.toString()) {
         throw new AppError('You can only view your own result.', 403);
       }
     } else if (userRole === 'parent') {
-      const parentDoc = await Parent.findById({
-        _id: userId,
-      });
+      const parentDoc = await Parent.findById(userId);
 
       if (!parentDoc) {
         throw new AppError('Parent not found.', 404);
@@ -4126,16 +4125,10 @@ const fetchStudentSpecificResult = async (
       if (!allowed) {
         throw new AppError('Access denied for this student.', 403);
       }
-    } else {
-      if (!student) {
-        throw new AppError('Student is required.', 400);
-      }
     }
 
-    const sessionExist = await Session.findById({
-      _id: session,
-    });
-
+    // 📅 SESSION CHECK
+    const sessionExist = await Session.findById(session);
     if (!sessionExist) {
       throw new AppError('Session does not exist.', 404);
     }
@@ -4145,15 +4138,16 @@ const fetchStudentSpecificResult = async (
       throw new AppError('Term does not exist in this session.', 400);
     }
 
+    // 🏫 CLASS ENROLMENT
     const classEnrolment = await ClassEnrolment.findOne(
       {
-        academic_session_id: sessionExist,
+        academic_session_id: sessionExist._id,
         'students.student': student,
       },
       {
         students: { $elemMatch: { student: student } },
       },
-    ).select('class');
+    ).select('class students');
 
     if (!classEnrolment) {
       throw new AppError(
@@ -4162,9 +4156,7 @@ const fetchStudentSpecificResult = async (
       );
     }
 
-    const classExist = await Class.findById({
-      _id: classEnrolment.class,
-    }).populate({
+    const classExist = await Class.findById(classEnrolment.class).populate({
       path: 'class_teacher',
       select: 'first_name last_name signature',
     });
@@ -4174,13 +4166,13 @@ const fetchStudentSpecificResult = async (
     }
 
     const studentSubjectEnrolled = classEnrolment?.students[0].subjects_offered;
-    // 69a7115e1fc7750d1ba6f9fe livestock farming
+
+    // 📊 SUBJECT RESULTS
     const subjectResults = await SubjectResult.find({
       student: student,
       session: sessionExist._id,
-      class: classEnrolment?.class,
-
-      subject: { $in: studentSubjectEnrolled }, // try removing this so that it can fetch subjects that have results already
+      class: classEnrolment.class,
+      subject: { $in: studentSubjectEnrolled },
     }).populate([{ path: 'subject' }]);
 
     if (!subjectResults || subjectResults.length === 0) {
@@ -4190,84 +4182,77 @@ const fetchStudentSpecificResult = async (
       );
     }
 
-    const studentResult = await Result.findOne(
-      {
-        student: student,
-      },
-      {
-        term_results: { $elemMatch: { term: term } },
-      },
-    ).populate([
-      { path: 'student', select: 'first_name last_name profile_image' },
-    ]);
-    // console.log('studentResult.term_results:', studentResult?.term_results);
+    // 🧠 RESULT (IMPORTANT FIX STARTS HERE)
+    const resultExist = await Result.findOne({
+      student: student,
+      academic_session_id: session,
+    }).populate({
+      path: 'student',
+      select: 'first_name last_name profile_image',
+    });
 
-    /**
-     * first name, last name, image,
-     */
-
-    console.log('studentResult:', studentResult);
-
-    if (!studentResult || !studentResult.term_results.length) {
-      throw new AppError('Specific term result not found.', 404);
+    if (!resultExist) {
+      throw new AppError('Result record not found for this session.', 404);
     }
 
-    const studentType = studentResult.student as unknown as UserDocument;
+    // ✅ FIND OR CREATE TERM
+    let termResult = resultExist.term_results.find((a) => a.term === term);
 
+    if (!termResult) {
+      const newTerm = {
+        term: term,
+        punctuality: '',
+        neatness: '',
+        politeness: '',
+        honesty: '',
+        relationshipWithOthers: '',
+        leadership: '',
+        emotionalStability: '',
+        health: '',
+        attitudeToSchoolWork: '',
+        attentiveness: '',
+        perseverance: '',
+        classTeacherComment: '',
+        studentAttendance: 0,
+        cumulative_score: 0,
+        class_position: '',
+        subject_results: [],
+      };
+
+      resultExist.term_results.push(newTerm);
+      await resultExist.save();
+
+      termResult = newTerm;
+    }
+
+    // 👤 STUDENT DATA
+    const studentType = resultExist.student as unknown as UserDocument;
     const studentObj = studentType.toObject();
-
     const { password, ...remainingValues } = studentObj;
 
-    const studentResultObj = studentResult.toObject();
-    const actualTermResult = studentResultObj.term_results[0];
-
-    const { subject_results, ...others } = actualTermResult;
-
-    // const actualSubjectResultForTerm = subjectResults.map((s) =>
-    //   s.term_results.find((a) => a.term === term)
-    // );
-
-    // const actualSubjectResultForTerm = subjectResults.map((s) => {
-    //   const obj = s.toObject();
-    //   const termResult = obj.term_results.find((a) => a.term === term);
-
-    //   console.log("termResult:", termResult)
-
-    //   const { term_results, ...rest } = obj;
-
-    //   return {
-    //     ...rest,
-    //     ...termResult,
-    //   };
-    // });
-
+    // 📊 SUBJECT RESULT PER TERM
     const actualSubjectResultForTerm = subjectResults
       .map((s) => {
         const obj = s.toObject();
-        const termResult = obj.term_results.find((a) => a.term === term);
+        const termData = obj.term_results.find((a) => a.term === term);
 
-        if (!termResult) return null;
+        if (!termData) return null;
 
         const { term_results, ...rest } = obj;
 
         return {
           ...rest,
-          ...termResult,
+          ...termData,
         };
       })
       .filter(Boolean);
 
-    if (
-      !actualSubjectResultForTerm ||
-      actualSubjectResultForTerm === undefined ||
-      actualSubjectResultForTerm.length === 0
-    ) {
-      throw new AppError(
-        'There is not main result for this term for this student yet.',
-        404,
-      );
+    // ⚠️ OPTIONAL: don't crash if empty
+    if (!actualSubjectResultForTerm.length) {
+      console.log('No subject scores yet for this term');
     }
 
+    // ⚙️ TERM SETTINGS
     const termSettingExist = await TermSettings.findOne({
       session: sessionExist._id,
       term: term,
@@ -4279,12 +4264,14 @@ const fetchStudentSpecificResult = async (
       class_id: classExist._id,
       level: classExist.level,
       name: classExist.name,
-      students_in_class: enrollment && enrollment.students.length,
+      students_in_class: enrollment?.students.length || 0,
     };
 
     const headTeacher = await Teacher.findOne({
       'positions.title': 'head_teacher',
     }).select('first_name last_name signature');
+
+    const { subject_results, ...others } = termResult;
 
     const formattedResult = {
       ...others,
@@ -4294,7 +4281,6 @@ const fetchStudentSpecificResult = async (
     };
 
     const neededObj = {
-      // academic_session: sessionExist._id,
       student: remainingValues,
       class_teacher: classExist.class_teacher,
       head_teacher: headTeacher,
@@ -4310,6 +4296,257 @@ const fetchStudentSpecificResult = async (
     }
   }
 };
+
+// const fetchStudentSpecificResult = async (
+//   payload: StudentSpecificResultPayloadType,
+// ) => {
+//   try {
+//     const { student_id, session_id, term, userRole, userId } = payload;
+
+//     const student = new mongoose.Types.ObjectId(student_id);
+//     const session = new mongoose.Types.ObjectId(session_id);
+
+//     if (userRole === 'student') {
+//       if (userId.toString() !== student.toString()) {
+//         throw new AppError('You can only view your own result.', 403);
+//       }
+//     } else if (userRole === 'parent') {
+//       const parentDoc = await Parent.findById({
+//         _id: userId,
+//       });
+
+//       if (!parentDoc) {
+//         throw new AppError('Parent not found.', 404);
+//       }
+
+//       const allowed = parentDoc.children?.includes(student);
+//       if (!allowed) {
+//         throw new AppError('Access denied for this student.', 403);
+//       }
+//     } else {
+//       if (!student) {
+//         throw new AppError('Student is required.', 400);
+//       }
+//     }
+
+//     const sessionExist = await Session.findById({
+//       _id: session,
+//     });
+
+//     if (!sessionExist) {
+//       throw new AppError('Session does not exist.', 404);
+//     }
+
+//     const termExist = sessionExist.terms.find((t) => t.name === term);
+//     if (!termExist) {
+//       throw new AppError('Term does not exist in this session.', 400);
+//     }
+
+//     const classEnrolment = await ClassEnrolment.findOne(
+//       {
+//         academic_session_id: sessionExist,
+//         'students.student': student,
+//       },
+//       {
+//         students: { $elemMatch: { student: student } },
+//       },
+//     ).select('class');
+
+//     if (!classEnrolment) {
+//       throw new AppError(
+//         'Student not enrolled in this class for this session.',
+//         404,
+//       );
+//     }
+
+//     const classExist = await Class.findById({
+//       _id: classEnrolment.class,
+//     }).populate({
+//       path: 'class_teacher',
+//       select: 'first_name last_name signature',
+//     });
+
+//     if (!classExist) {
+//       throw new AppError('Class not found.', 404);
+//     }
+
+//     const studentSubjectEnrolled = classEnrolment?.students[0].subjects_offered;
+//     // 69a7115e1fc7750d1ba6f9fe livestock farming
+//     const subjectResults = await SubjectResult.find({
+//       student: student,
+//       session: sessionExist._id,
+//       class: classEnrolment?.class,
+
+//       subject: { $in: studentSubjectEnrolled }, // try removing this so that it can fetch subjects that have results already
+//     }).populate([{ path: 'subject' }]);
+
+//     if (!subjectResults || subjectResults.length === 0) {
+//       throw new AppError(
+//         'No result found for this student for this term.',
+//         404,
+//       );
+//     }
+
+//     //
+//      const resultExist = await Result.findOne(
+//       {
+//         student: student,
+//         academic_session_id: session._id,
+//       }
+//     );
+
+//      if (!resultExist) {
+//       throw new AppError('Specific term result not found.', 404);
+//     }
+
+//   let termResult = resultExist.term_results.find(
+//       (a) => a.term === term,
+//     );
+
+//     if(!termResult) {
+//         termResult = {
+//         term: term,
+//         punctuality: '',
+//         neatness: '',
+//         politeness: '',
+//         honesty: '',
+//         relationshipWithOthers: '',
+//         leadership: '',
+//         emotionalStability: '',
+//         health: '',
+//         attitudeToSchoolWork: '',
+//         attentiveness: '',
+//         perseverance: '',
+//         classTeacherComment: '',
+//         studentAttendance: 0,
+//         cumulative_score: 0,
+//         class_position: '',
+//         subject_results: [],
+//       };
+//     }
+
+//     //
+
+//     const studentResult = await Result.findOne(
+//       {
+//         student: student,
+//       },
+//       {
+//         term_results: { $elemMatch: { term: term } },
+//       },
+//     ).populate([
+//       { path: 'student', select: 'first_name last_name profile_image' },
+//     ]);
+//     // console.log('studentResult.term_results:', studentResult?.term_results);
+
+//     /**
+//      * first name, last name, image,
+//      */
+
+//     console.log('studentResult:', studentResult);
+
+//     if (!studentResult || !studentResult.term_results.length) {
+//       throw new AppError('Specific term result not found.', 404);
+//     }
+
+//     const studentType = studentResult.student as unknown as UserDocument;
+
+//     const studentObj = studentType.toObject();
+
+//     const { password, ...remainingValues } = studentObj;
+
+//     const studentResultObj = studentResult.toObject();
+//     const actualTermResult = studentResultObj.term_results[0];
+
+//     const { subject_results, ...others } = actualTermResult;
+
+//     // const actualSubjectResultForTerm = subjectResults.map((s) =>
+//     //   s.term_results.find((a) => a.term === term)
+//     // );
+
+//     // const actualSubjectResultForTerm = subjectResults.map((s) => {
+//     //   const obj = s.toObject();
+//     //   const termResult = obj.term_results.find((a) => a.term === term);
+
+//     //   console.log("termResult:", termResult)
+
+//     //   const { term_results, ...rest } = obj;
+
+//     //   return {
+//     //     ...rest,
+//     //     ...termResult,
+//     //   };
+//     // });
+
+//     const actualSubjectResultForTerm = subjectResults
+//       .map((s) => {
+//         const obj = s.toObject();
+//         const termResult = obj.term_results.find((a) => a.term === term);
+
+//         if (!termResult) return null;
+
+//         const { term_results, ...rest } = obj;
+
+//         return {
+//           ...rest,
+//           ...termResult,
+//         };
+//       })
+//       .filter(Boolean);
+
+//     if (
+//       !actualSubjectResultForTerm ||
+//       actualSubjectResultForTerm === undefined ||
+//       actualSubjectResultForTerm.length === 0
+//     ) {
+//       throw new AppError(
+//         'There is not main result for this term for this student yet.',
+//         404,
+//       );
+//     }
+
+//     const termSettingExist = await TermSettings.findOne({
+//       session: sessionExist._id,
+//       term: term,
+//     }).populate([{ path: 'session', select: 'academic_session' }]);
+
+//     const enrollment = await ClassEnrolment.findById(classEnrolment._id);
+
+//     const classDetails = {
+//       class_id: classExist._id,
+//       level: classExist.level,
+//       name: classExist.name,
+//       students_in_class: enrollment && enrollment.students.length,
+//     };
+
+//     const headTeacher = await Teacher.findOne({
+//       'positions.title': 'head_teacher',
+//     }).select('first_name last_name signature');
+
+//     const formattedResult = {
+//       ...others,
+//       classDetails,
+//       subject_results: actualSubjectResultForTerm,
+//       term_settings: termSettingExist,
+//     };
+
+//     const neededObj = {
+//       // academic_session: sessionExist._id,
+//       student: remainingValues,
+//       class_teacher: classExist.class_teacher,
+//       head_teacher: headTeacher,
+//       term_result: formattedResult,
+//     };
+
+//     return neededObj;
+//   } catch (error) {
+//     if (error instanceof AppError) {
+//       throw new AppError(error.message, error.statusCode);
+//     } else {
+//       throw new Error('Something happened');
+//     }
+//   }
+// };
 
 export {
   calculatePositionOfStudentsInClass,

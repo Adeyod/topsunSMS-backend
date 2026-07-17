@@ -2076,178 +2076,6 @@ const changingTeacherToSubject = async (
   }
 };
 
-const fetchStudentsInClassOfferingTeacherSubject = async (
-  payload: StudentSubjectType,
-) => {
-  try {
-    const {
-      class_id,
-      subject_id,
-      userRole,
-      userId,
-
-      academic_session_id,
-    } = payload;
-
-    const classExist = await Class.findById({
-      _id: class_id,
-    })
-      .populate(
-        'teacher_subject_assignments.teacher teacher_subject_assignments.subject',
-      )
-      .lean();
-
-    if (!classExist) {
-      throw new AppError(`Class with ID: ${class_id} does not exist.`, 404);
-    }
-
-    const subjectExist = await Subject.findById({
-      _id: subject_id,
-    });
-
-    if (!subjectExist) {
-      throw new AppError(`Subject with ID: ${subject_id} does not exist.`, 404);
-    }
-
-    if (userRole === 'teacher') {
-      const findTeacher = await Teacher.findById({
-        _id: userId,
-      });
-      if (!findTeacher || findTeacher.redundant === true) {
-        throw new AppError('Teacher not found.', 404);
-      }
-
-      // Check if teacher is assigned
-      const isAssigned = classExist.teacher_subject_assignments.some((s) => {
-        // return (
-        //   Object(s.subject)?.equals(subjectExist._id) &&
-        //   Object(s.teacher)?.equals(findTeacher._id.toString())
-        // );
-
-        return (
-          s.subject?._id.toString() === subjectExist._id.toString() &&
-          s.teacher?._id.toString() === findTeacher._id.toString()
-        );
-      });
-
-      if (!isAssigned) {
-        throw new AppError(
-          `You are not the teacher assigned to teach ${subjectExist.name} in ${classExist.name}.`,
-          400,
-        );
-      }
-    }
-
-    const sessionExist = await Session.findById({
-      _id: academic_session_id,
-    });
-
-    if (!sessionExist) {
-      throw new AppError(
-        `Session with ID: ${academic_session_id} does not exist.`,
-        404,
-      );
-    }
-
-    const activeTerm = sessionExist.terms.find(
-      (term) => term.is_active === true,
-    );
-
-    const classDetails = await ClassEnrolment.findOne({
-      class: classExist._id,
-      academic_session_id: sessionExist._id,
-    }).populate<{
-      students: {
-        student: StudentDocument;
-        subjects_offered: { _id: mongoose.Types.ObjectId }[];
-      }[];
-    }>('students.student students.subjects_offered', '-password');
-    // .lean();
-
-    if (!classDetails || !classDetails.students) {
-      throw new AppError(
-        `No students are enrolled in ${classExist.name} for the ${sessionExist.academic_session} academic session.`,
-        404,
-      );
-    }
-
-    const studentOfferingSubject = await Promise.all(
-      classDetails?.students
-        .filter((s) => {
-          return s.subjects_offered.some((p) => {
-            if (!p || !p._id) return false; // Ensure `p` exists and has `_id`
-            return p._id.toString() === subjectExist._id.toString();
-          });
-        })
-        .map(async (student) => {
-          const subjectIncluded = student.subjects_offered.find((p) =>
-            p._id.equals(subjectExist._id),
-          );
-
-          // const result = await Result.findOne({
-          //   enrolment: classDetails._id,
-          //   class: classExist._id,
-          //   academic_session_id: sessionExist._id,
-          //   // student: student.student,
-          //   student: student.student._id,
-          // });
-
-          // const currentTermResult = result?.term_results.find(
-          //   (term) => term.term === activeTerm?.name
-          // );
-
-          //   const subjectResult = currentTermResult?.subject_results.find((s) => {
-          //   const subject =
-          //     s.subject.toString() === subjectExist?._id.toString();
-          //   return subject;
-          // });
-
-          const result = await SubjectResult.findOne({
-            enrolment: classDetails._id,
-            student: student.student._id,
-            class: classExist._id,
-            session: sessionExist._id,
-            // student: student.student,
-            subject: subjectExist._id,
-          });
-
-          const currentTermResult = result?.term_results.find(
-            (term) => term.term === activeTerm?.name,
-          );
-
-          const subjectResult = currentTermResult;
-
-          return {
-            ...student.student.toObject(),
-            subject_result: subjectResult ? subjectResult : {},
-            subjects_offered: subjectIncluded,
-          };
-        }),
-    );
-
-    const subjectTeacherObj = classExist.teacher_subject_assignments.find(
-      (s) =>
-        s.subject && s.subject._id.toString() === subjectExist._id.toString(),
-    );
-
-    const subjectObj = {
-      students: studentOfferingSubject,
-      subject: subjectTeacherObj?.subject,
-      subject_teacher: subjectTeacherObj?.teacher,
-      class_enrolment_id: classDetails._id,
-    };
-
-    return subjectObj;
-  } catch (error) {
-    console.log('error:', error);
-    if (error instanceof AppError) {
-      throw new AppError(error.message, error.statusCode);
-    } else {
-      throw new Error('Something happened');
-    }
-  }
-};
-
 const fetchAllClassesTeacherTeachesByTeacherId = async (
   payload: TeacherSubjectType,
 ) => {
@@ -2770,6 +2598,356 @@ const fetchHeadTeacher = async () => {
     }
   }
 };
+
+const fetchStudentsInClassOfferingTeacherSubject = async (
+  payload: StudentSubjectType,
+) => {
+  try {
+    const {
+      class_id,
+      subject_id,
+      userRole,
+      userId,
+
+      academic_session_id,
+    } = payload;
+
+    const classExist = await Class.findById({
+      _id: class_id,
+    })
+      .populate(
+        'teacher_subject_assignments.teacher teacher_subject_assignments.subject',
+      )
+      .lean();
+
+    if (!classExist) {
+      throw new AppError(`Class with ID: ${class_id} does not exist.`, 404);
+    }
+
+    const subjectExist = await Subject.findById({
+      _id: subject_id,
+    });
+
+    if (!subjectExist) {
+      throw new AppError(`Subject with ID: ${subject_id} does not exist.`, 404);
+    }
+
+    if (userRole === 'teacher') {
+      const findTeacher = await Teacher.findById({
+        _id: userId,
+      });
+      if (!findTeacher || findTeacher.redundant === true) {
+        throw new AppError('Teacher not found.', 404);
+      }
+
+      // Check if teacher is assigned
+      const isAssigned = classExist.teacher_subject_assignments.some((s) => {
+        // return (
+        //   Object(s.subject)?.equals(subjectExist._id) &&
+        //   Object(s.teacher)?.equals(findTeacher._id.toString())
+        // );
+
+        return (
+          s.subject?._id.toString() === subjectExist._id.toString() &&
+          s.teacher?._id.toString() === findTeacher._id.toString()
+        );
+      });
+
+      if (!isAssigned) {
+        throw new AppError(
+          `You are not the teacher assigned to teach ${subjectExist.name} in ${classExist.name}.`,
+          400,
+        );
+      }
+    }
+
+    const sessionExist = await Session.findById({
+      _id: academic_session_id,
+    });
+
+    if (!sessionExist) {
+      throw new AppError(
+        `Session with ID: ${academic_session_id} does not exist.`,
+        404,
+      );
+    }
+
+    const activeTerm = sessionExist.terms.find(
+      (term) => term.is_active === true,
+    );
+
+    // const classDetails = await ClassEnrolment.findOne({
+    //   class: classExist._id,
+    //   academic_session_id: sessionExist._id,
+    // }).populate<{
+    //   students: {
+    //     student: StudentDocument;
+    //     subjects_offered: { _id: mongoose.Types.ObjectId }[];
+    //   }[];
+    // }>('students.student students.subjects_offered', '-password');
+
+    const classDetails = await ClassEnrolment.findOne({
+      class: classExist._id,
+      academic_session_id: sessionExist._id,
+    })
+      .populate<{
+        students: {
+          student: StudentDocument | null; // ⚠️ allow null
+          subjects_offered: { _id: mongoose.Types.ObjectId }[];
+        }[];
+      }>({
+        path: 'students.student',
+        match: { redundant: false }, // ✅ filter here
+        select: '-password',
+      })
+      .populate('students.subjects_offered');
+
+    if (!classDetails || !classDetails.students) {
+      throw new AppError(
+        `No students are enrolled in ${classExist.name} for the ${sessionExist.academic_session} academic session.`,
+        404,
+      );
+    }
+
+    const studentOfferingSubject = await Promise.all(
+      classDetails?.students
+        .filter(
+          (
+            s,
+          ): s is {
+            student: StudentDocument;
+            subjects_offered: { _id: mongoose.Types.ObjectId }[];
+          } => {
+            if (!s.student) return false;
+
+            return s.subjects_offered.some((p) => {
+              if (!p || !p._id) return false; // Ensure `p` exists and has `_id`
+              return p._id.toString() === subjectExist._id.toString();
+            });
+          },
+        )
+        .map(async (student) => {
+          const subjectIncluded = student.subjects_offered.find((p) =>
+            p._id.equals(subjectExist._id),
+          );
+
+          const result = await SubjectResult.findOne({
+            enrolment: classDetails._id,
+            student: student.student._id,
+            class: classExist._id,
+            session: sessionExist._id,
+            // student: student.student,
+            subject: subjectExist._id,
+          });
+
+          const currentTermResult = result?.term_results.find(
+            (term) => term.term === activeTerm?.name,
+          );
+
+          const subjectResult = currentTermResult;
+
+          return {
+            ...student.student.toObject(),
+            subject_result: subjectResult ? subjectResult : {},
+            subjects_offered: subjectIncluded,
+          };
+        }),
+    );
+
+    const subjectTeacherObj = classExist.teacher_subject_assignments.find(
+      (s) =>
+        s.subject && s.subject._id.toString() === subjectExist._id.toString(),
+    );
+
+    const subjectObj = {
+      students: studentOfferingSubject,
+      subject: subjectTeacherObj?.subject,
+      subject_teacher: subjectTeacherObj?.teacher,
+      class_enrolment_id: classDetails._id,
+    };
+
+    return subjectObj;
+  } catch (error) {
+    console.log('error:', error);
+    if (error instanceof AppError) {
+      throw new AppError(error.message, error.statusCode);
+    } else {
+      throw new Error('Something happened');
+    }
+  }
+};
+
+// const fetchStudentsInClassOfferingTeacherSubject = async (
+//   payload: StudentSubjectType,
+// ) => {
+//   try {
+//     const {
+//       class_id,
+//       subject_id,
+//       userRole,
+//       userId,
+
+//       academic_session_id,
+//     } = payload;
+
+//     const classExist = await Class.findById({
+//       _id: class_id,
+//     })
+//       .populate(
+//         'teacher_subject_assignments.teacher teacher_subject_assignments.subject',
+//       )
+//       .lean();
+
+//     if (!classExist) {
+//       throw new AppError(`Class with ID: ${class_id} does not exist.`, 404);
+//     }
+
+//     const subjectExist = await Subject.findById({
+//       _id: subject_id,
+//     });
+
+//     if (!subjectExist) {
+//       throw new AppError(`Subject with ID: ${subject_id} does not exist.`, 404);
+//     }
+
+//     if (userRole === 'teacher') {
+//       const findTeacher = await Teacher.findById({
+//         _id: userId,
+//       });
+//       if (!findTeacher || findTeacher.redundant === true) {
+//         throw new AppError('Teacher not found.', 404);
+//       }
+
+//       // Check if teacher is assigned
+//       const isAssigned = classExist.teacher_subject_assignments.some((s) => {
+//         // return (
+//         //   Object(s.subject)?.equals(subjectExist._id) &&
+//         //   Object(s.teacher)?.equals(findTeacher._id.toString())
+//         // );
+
+//         return (
+//           s.subject?._id.toString() === subjectExist._id.toString() &&
+//           s.teacher?._id.toString() === findTeacher._id.toString()
+//         );
+//       });
+
+//       if (!isAssigned) {
+//         throw new AppError(
+//           `You are not the teacher assigned to teach ${subjectExist.name} in ${classExist.name}.`,
+//           400,
+//         );
+//       }
+//     }
+
+//     const sessionExist = await Session.findById({
+//       _id: academic_session_id,
+//     });
+
+//     if (!sessionExist) {
+//       throw new AppError(
+//         `Session with ID: ${academic_session_id} does not exist.`,
+//         404,
+//       );
+//     }
+
+//     const activeTerm = sessionExist.terms.find(
+//       (term) => term.is_active === true,
+//     );
+
+//     const classDetails = await ClassEnrolment.findOne({
+//       class: classExist._id,
+//       academic_session_id: sessionExist._id,
+//     }).populate<{
+//       students: {
+//         student: StudentDocument;
+//         subjects_offered: { _id: mongoose.Types.ObjectId }[];
+//       }[];
+//     }>('students.student students.subjects_offered', '-password');
+//     // .lean();
+
+//     if (!classDetails || !classDetails.students) {
+//       throw new AppError(
+//         `No students are enrolled in ${classExist.name} for the ${sessionExist.academic_session} academic session.`,
+//         404,
+//       );
+//     }
+
+//     const studentOfferingSubject = await Promise.all(
+//       classDetails?.students
+//         .filter((s) => {
+//           return s.subjects_offered.some((p) => {
+//             if (!p || !p._id) return false; // Ensure `p` exists and has `_id`
+//             return p._id.toString() === subjectExist._id.toString();
+//           });
+//         })
+//         .map(async (student) => {
+//           const subjectIncluded = student.subjects_offered.find((p) =>
+//             p._id.equals(subjectExist._id),
+//           );
+
+//           // const result = await Result.findOne({
+//           //   enrolment: classDetails._id,
+//           //   class: classExist._id,
+//           //   academic_session_id: sessionExist._id,
+//           //   // student: student.student,
+//           //   student: student.student._id,
+//           // });
+
+//           // const currentTermResult = result?.term_results.find(
+//           //   (term) => term.term === activeTerm?.name
+//           // );
+
+//           //   const subjectResult = currentTermResult?.subject_results.find((s) => {
+//           //   const subject =
+//           //     s.subject.toString() === subjectExist?._id.toString();
+//           //   return subject;
+//           // });
+
+//           const result = await SubjectResult.findOne({
+//             enrolment: classDetails._id,
+//             student: student.student._id,
+//             class: classExist._id,
+//             session: sessionExist._id,
+//             // student: student.student,
+//             subject: subjectExist._id,
+//           });
+
+//           const currentTermResult = result?.term_results.find(
+//             (term) => term.term === activeTerm?.name,
+//           );
+
+//           const subjectResult = currentTermResult;
+
+//           return {
+//             ...student.student.toObject(),
+//             subject_result: subjectResult ? subjectResult : {},
+//             subjects_offered: subjectIncluded,
+//           };
+//         }),
+//     );
+
+//     const subjectTeacherObj = classExist.teacher_subject_assignments.find(
+//       (s) =>
+//         s.subject && s.subject._id.toString() === subjectExist._id.toString(),
+//     );
+
+//     const subjectObj = {
+//       students: studentOfferingSubject,
+//       subject: subjectTeacherObj?.subject,
+//       subject_teacher: subjectTeacherObj?.teacher,
+//       class_enrolment_id: classDetails._id,
+//     };
+
+//     return subjectObj;
+//   } catch (error) {
+//     console.log('error:', error);
+//     if (error instanceof AppError) {
+//       throw new AppError(error.message, error.statusCode);
+//     } else {
+//       throw new Error('Something happened');
+//     }
+//   }
+// };
 
 export {
   assigningTeacherToSubject,
