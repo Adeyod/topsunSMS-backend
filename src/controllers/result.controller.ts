@@ -1811,7 +1811,7 @@ const recordStudentEffectiveAreasForActiveTerm = catchErrors(
       attitudeToSchoolWork: attitudeToSchoolWork.trim().toUpperCase(),
       attentiveness: attentiveness.trim().toUpperCase(),
       perseverance: perseverance.trim().toUpperCase(),
-      studentAttendance: studentAttendance.trim(),
+      studentAttendance: studentAttendance,
       classTeacherComment: classTeacherComment.trim().toUpperCase(),
     };
 

@@ -3010,509 +3010,6 @@ const studentEffectiveAreasForActiveTermRecording = async (
   }
 };
 
-const studentsSubjectPositionInClass = async (
-  payload: StudentSubjectPositionType,
-) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-  try {
-    const { class_enrolment_id, subject_id, userId, userRole } = payload;
-
-    if (!userId || !userRole) {
-      throw new AppError(
-        'Please login as the subject teacher to proceed.',
-        400,
-      );
-    }
-
-    const classEnrolment = await ClassEnrolment.findById({
-      _id: class_enrolment_id,
-    })
-      .populate<{
-        students: {
-          student: UserDocument;
-          subjects_offered: mongoose.Types.ObjectId[];
-        }[];
-      }>('students.student', '-password')
-      .session(session);
-
-    if (!classEnrolment) {
-      throw new AppError(`Class Enrolment not found.`, 404);
-    }
-
-    if (classEnrolment.is_active !== true) {
-      throw new AppError(
-        `The session has ended and as such you can not perform this action on the document again.`,
-        400,
-      );
-    }
-
-    const activeSession = await Session.findById({
-      _id: classEnrolment.academic_session_id,
-    }).session(session);
-
-    if (!activeSession) {
-      throw new AppError('Session not found.', 404);
-    }
-
-    if (activeSession.is_active !== true) {
-      throw new AppError(
-        'You can only give position in an active session.',
-        400,
-      );
-    }
-
-    const activeTerm = activeSession.terms.find(
-      (term) => term.is_active === true,
-    );
-
-    if (!activeTerm) {
-      throw new AppError('There is no active term in the session,', 400);
-    }
-
-    const classExist = await Class.findById({
-      _id: classEnrolment.class,
-    }).session(session);
-
-    if (!classExist) {
-      throw new AppError('This class does not exist.', 400);
-    }
-
-    const subjectExist = await Subject.findById({
-      _id: subject_id,
-    }).session(session);
-
-    if (!subjectExist) {
-      throw new AppError('Subject does not exist.', 400);
-    }
-
-    const subjectTeacher = classExist.teacher_subject_assignments.find(
-      (assignment) => assignment.teacher?.equals(userId.toString()),
-    );
-
-    if (!subjectTeacher) {
-      throw new AppError(
-        `You are not the teacher assigned to teach ${subjectExist.name} in ${classExist.name} and as such you can not give subject position to students.`,
-        400,
-      );
-    }
-
-    // const studentsOfferingSubject = classEnrolment.students.map((s) => {
-    //   const info = s?.subjects_offered?.find((subject) =>
-    //     (subject as mongoose.Types.ObjectId).equals(subjectExist._id)
-    //   );
-
-    //   console.log('info:', info);
-    //   const studentObj = {
-    //     student: s.student,
-    //     subject: info,
-    //   };
-    //   return studentObj;
-    // });
-    //////////////////////////////////////////////////////1 at the top
-
-    // const studentsOfferingSubject = classEnrolment.students
-    //   .filter((s) =>
-    //     s?.subjects_offered?.some((subject) =>
-    //       (subject as mongoose.Types.ObjectId).equals(subjectExist._id)
-    //     )
-    //   )
-    //   .map((s) => {
-    //     const info = s.subjects_offered?.find((subject) =>
-    //       (subject as mongoose.Types.ObjectId).equals(subjectExist._id)
-    //     );
-
-    //     return {
-    //       student: s.student,
-    //       subject: info,
-    //     };
-    //   });
-    // console.log('studentsOfferingSubject:', studentsOfferingSubject);
-
-    const studentsOfferingSubject = classEnrolment.students.reduce(
-      (acc, s) => {
-        const info = s?.subjects_offered?.find((subject) =>
-          (subject as mongoose.Types.ObjectId).equals(subjectExist._id),
-        );
-
-        if (info) {
-          acc.push({
-            student: s.student,
-            subject: info,
-          });
-        }
-
-        return acc;
-      },
-      [] as { student: any; subject: any }[],
-    );
-
-    console.log('studentsOfferingSubject:', studentsOfferingSubject);
-
-    const studentResults = await Promise.all(
-      studentsOfferingSubject.map(async (student) => {
-        // ***** find student subject result and put the subject position there
-        const studentSubjectId = new mongoose.Types.ObjectId(student?.subject);
-
-        const sessionResult = await SubjectResult.findOne({
-          enrolment: classEnrolment._id,
-          student: student.student,
-          class: classExist._id,
-          session: classEnrolment.academic_session_id,
-          subject: studentSubjectId,
-        }).session(session);
-
-        const info = sessionResult?.term_results.find(
-          (term) => term.term === activeTerm.name,
-        );
-
-        // const actualSubject = info?.subject_results.find(
-        //   (r) =>
-        //     r?.subject instanceof mongoose.Types.ObjectId &&
-        //     r.subject.equals(studentSubjectId)
-        // );
-
-        const obj = {
-          studentId: student.student._id,
-          first_name: student.student.first_name,
-          last_name: student.student.last_name,
-          term: info?.term,
-          cumulative_score: info?.cumulative_average,
-          subjectObj: info,
-        };
-
-        return obj;
-      }),
-    );
-
-    const studentWhoEnrolledForSubjectButNoResultRecordings =
-      studentResults.filter((s) => s.subjectObj === undefined);
-
-    if (studentWhoEnrolledForSubjectButNoResultRecordings.length > 0) {
-      const affectedStudentsFullName =
-        studentWhoEnrolledForSubjectButNoResultRecordings.map(
-          (s) => `${s.first_name} ${s.last_name}`,
-        );
-
-      throw new AppError(
-        `The following students: ${affectedStudentsFullName.join(
-          ', ',
-        )} do not have result for the subject. Please record their scores before proceeding.`,
-        400,
-      );
-    }
-
-    const nullCumulativeAvg = studentResults.filter(
-      (s) =>
-        s?.subjectObj?.cumulative_average === null ||
-        s?.subjectObj?.cumulative_average === 0,
-    );
-
-    if (nullCumulativeAvg.length > 0) {
-      const studentFullName = nullCumulativeAvg.map(
-        (s) => `${s.first_name} ${s.last_name}`,
-      );
-      throw new AppError(
-        `The scores of following students: ${studentFullName.join(
-          ', ',
-        )} has not been totally updated. Please make sure you have filled in their scores so as to be to all have cumulative average.`,
-        400,
-      );
-    } else {
-      const ranking = assignPositions(studentResults);
-
-      const cums = studentResults
-        .map((a) => a.cumulative_score)
-        .filter((score): score is number => typeof score === 'number');
-
-      const minMax = getMinMax(cums);
-
-      const highestScore = minMax.highest;
-      const lowestScore = minMax.lowest;
-      const averageScore = minMax.average;
-
-      console.log('averageScore:', averageScore);
-      console.log('highestScore:', highestScore);
-      console.log('lowestScore:', lowestScore);
-      const studentReturns: SubjectPositionJobData[] = [];
-      await Promise.all(
-        ranking.map(async (student) => {
-          if (student.subjectObj) {
-            // await Result.updateOne(
-            //   {
-            //     student: student.studentId,
-            //     class: classExist._id,
-            //     enrolment: classEnrolment._id,
-            //     academic_session_id: activeSession._id,
-            //     'term_results.term': activeTerm.name,
-            //     'term_results.subject_results.subject':
-            //       student.subjectObj.subject,
-            //   },
-            //   {
-            //     $set: {
-            //       'term_results.$[].subject_results.$[subject].subject_position':
-            //         student.subjectObj.subject_position,
-            //     },
-            //   },
-            //   {
-            //     arrayFilters: [
-            //       { 'subject.subject': student.subjectObj.subject },
-            //     ],
-            //   }
-            // ).session(session);
-            await SubjectResult.updateOne(
-              {
-                enrolment: classEnrolment._id,
-                student: student.studentId,
-                class: classExist._id,
-                session: activeSession._id,
-                subject: subject_id,
-                'term_results.term': activeTerm.name,
-              },
-
-              {
-                $set: {
-                  'term_results.$[elem].subject_position':
-                    student.subjectObj.subject_position,
-                  'term_results.$[elem].class_highest_mark': highestScore,
-                  'term_results.$[elem].class_lowest_mark': lowestScore,
-                  'term_results.$[elem].class_average_mark': averageScore,
-                },
-              },
-              {
-                arrayFilters: [{ 'elem.term': activeTerm.name }],
-              },
-            ).session(session);
-
-            // await SubjectResult.updateOne(
-            //   {
-            //     enrolment: classEnrolment._id,
-            //     student: student.studentId,
-            //     class: classExist._id,
-            //     session: activeSession._id,
-            //     'term_results.term': activeTerm.name,
-            //   },
-            //   {
-            //     $set: {
-            //       'term_results.$.subject_position':
-            //         student.subjectObj.subject_position,
-            //     },
-            //   }
-            // ).session(session);
-
-            const studentReturn = {
-              student_id: student.studentId as string,
-              term: activeTerm.name,
-              subject_id: subjectExist._id,
-              class_id: classExist._id,
-              class_enrolment_id: classEnrolment._id,
-              session_id: classEnrolment.academic_session_id,
-              class_highest_mark: highestScore,
-              class_lowest_mark: lowestScore,
-              class_average_mark: averageScore,
-              subject_position: student.subjectObj.subject_position as string,
-            };
-
-            studentReturns.push(studentReturn);
-          }
-        }),
-      );
-
-      // const jobs = studentReturns.map((studentRes) => {
-      //   if (studentReturns.length !== 0) {
-      //     return {
-      //       name: 'subject-position',
-      //       data: {
-      //         student_id: studentRes.student_id,
-      //         term: studentRes.term,
-      //         subject_id: studentRes.subject_id,
-      //         class_id: studentRes.class_id,
-      //         class_enrolment_id: studentRes.class_enrolment_id,
-      //         session_id: studentRes.session_id,
-      //         subject_position: studentRes.subject_position,
-      //         class_highest_mark: studentRes.class_highest_mark,
-      //         class_lowest_mark: studentRes.class_lowest_mark,
-      //         class_average_mark: studentRes.class_average_mark,
-      //       },
-      //       opts: {
-      //         attempts: 5,
-      //         removeOnComplete: true,
-      //         // removeOnFail: { count: 3 },
-      //         backoff: {
-      //           type: 'exponential',
-      //           delay: 3000,
-      //         },
-      //       },
-      //     };
-      //   }
-      //   return null;
-      // });
-
-      // await studentResultQueue.addBulk(jobs as any);
-    }
-
-    await session.commitTransaction();
-    session.endSession();
-    return studentResults;
-  } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-    if (error instanceof AppError) {
-      throw new AppError(error.message, error.statusCode);
-    } else {
-      console.error(error);
-      throw new Error('Something happened.');
-    }
-  }
-};
-
-const calculatePositionOfStudentsInClass = async (
-  payload: StudentClassPayloadType,
-) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-  try {
-    const { class_id, userId, userRole } = payload;
-
-    const classExist = await Class.findById({
-      _id: class_id,
-    }).session(session);
-
-    if (!classExist) {
-      throw new AppError(`Class with ID: ${class_id} does not exist.`, 404);
-    }
-
-    if (userRole === 'teacher') {
-      const teacherExist = await Teacher.findById({
-        _id: userId,
-      }).session(session);
-
-      if (!teacherExist) {
-        throw new AppError(`Teacher with ID: ${userId} does not exist.`, 404);
-      }
-
-      if (
-        teacherExist._id.toString() !== classExist.class_teacher?.toString()
-      ) {
-        throw new AppError(
-          `You are not the class teacher of ${classExist.name}`,
-          403,
-        );
-      }
-    }
-
-    const activeSession = await Session.findOne({
-      is_active: true,
-    }).session(session);
-
-    if (!activeSession) {
-      throw new AppError(`There is no active session.`, 404);
-    }
-
-    const activeTerm = activeSession.terms.find(
-      (term) => term.is_active === true,
-    );
-
-    if (!activeTerm) {
-      throw new AppError(
-        `There is no active term found in the ${activeSession.academic_session} session.`,
-        404,
-      );
-    }
-
-    const classEnrolment = await ClassEnrolment.findOne({
-      academic_session_id: activeSession._id,
-      class: classExist._id,
-    }).session(session);
-
-    if (!classEnrolment) {
-      throw new AppError(
-        `There is no class enrolment found for ${classExist.name} in the ${activeSession.academic_session} session.`,
-        404,
-      );
-    }
-
-    const allStudentsResult = await Promise.all(
-      classEnrolment.students.map(async (s) => {
-        const result = (await Result.findOne({
-          enrolment: classEnrolment._id,
-          student: s.student._id,
-          class: classExist._id,
-          academic_session_id: activeSession._id,
-          'term_results.term': activeTerm.name,
-        })
-
-          .populate<{ student: UserDocument }>('student', '-password')
-          .session(session)
-          .lean()) as unknown as StudentResultPopulatedType;
-
-        const allCumm = result?.term_results.find(
-          (term) => term.term === activeTerm.name,
-        );
-
-        const obj = {
-          studentId: s.student._id,
-          first_name: result?.student?.first_name,
-          last_name: result?.student?.last_name,
-          allCummulatives: (allCumm ?? {
-            term: activeTerm.name,
-            cumulative_score: 0,
-            class_position: '',
-            subject_results: [] as SubjectResultType[],
-            _id: new mongoose.Types.ObjectId(),
-          }) as TermResult,
-        };
-
-        return obj;
-      }),
-    );
-
-    const updatedPositions = classPositionCalculation(allStudentsResult);
-
-    await Promise.all(
-      updatedPositions.map(async (student) => {
-        await Result.findOneAndUpdate(
-          {
-            enrolment: classEnrolment._id,
-            student: student.studentId,
-            class: classExist._id,
-            academic_session_id: activeSession._id,
-            'term_results.term': activeTerm.name,
-          },
-          {
-            $set: {
-              'term_results.$.cumulative_score':
-                student.allCummulatives.cumulative_score,
-              'term_results.$.class_position':
-                student.allCummulatives.class_position,
-              'term_results.$.subject_results':
-                student.allCummulatives.subject_results,
-            },
-          },
-          {
-            new: true,
-          },
-        ).session(session);
-      }),
-    );
-
-    await session.commitTransaction();
-    // session.endSession();
-
-    return updatedPositions;
-  } catch (error) {
-    await session.abortTransaction();
-    // session.endSession();
-    if (error instanceof AppError) {
-      throw new AppError(error.message, error.statusCode);
-    } else {
-      throw new Error('Something happened');
-    }
-  } finally {
-    session.endSession();
-  }
-};
-
 const recordManyStudentCbtExamScoresManually = async (
   payload: MultipleExamScoreParamType,
 ) => {
@@ -4165,16 +3662,42 @@ const fetchStudentSpecificResult = async (
       throw new AppError('Class not found.', 404);
     }
 
-    const studentSubjectEnrolled = classEnrolment?.students[0].subjects_offered;
+    const matchedStudent = classEnrolment.students.find(
+      (s: any) => s.student.toString() === student.toString(),
+    );
+
+    if (!matchedStudent) {
+      throw new AppError('Student not found in enrolment record.', 404);
+    }
+
+    const studentSubjectEnrolled = matchedStudent.subjects_offered;
+
+    console.log('matchedStudent:', matchedStudent);
+
+    console.log('studentSubjectEnrolled:', studentSubjectEnrolled);
+    console.log(
+      'studentSubjectEnrolled.length:',
+      studentSubjectEnrolled.length,
+    );
 
     // 📊 SUBJECT RESULTS
     const subjectResults = await SubjectResult.find({
       student: student,
       session: sessionExist._id,
       class: classEnrolment.class,
-      subject: { $in: studentSubjectEnrolled },
+      // subject: { $in: studentSubjectEnrolled },
     }).populate([{ path: 'subject' }]);
 
+    console.log('subjectResults:', subjectResults);
+    console.log('subjectResults:', subjectResults.length);
+
+    const allResults = await SubjectResult.find({
+      student: student,
+      session: sessionExist._id,
+      class: classEnrolment.class,
+    }).select('subject session class');
+
+    console.log('ALL RESULTS:', allResults);
     if (!subjectResults || subjectResults.length === 0) {
       throw new AppError(
         'No result found for this student for this term.',
@@ -4230,12 +3753,22 @@ const fetchStudentSpecificResult = async (
     const studentObj = studentType.toObject();
     const { password, ...remainingValues } = studentObj;
 
+    subjectResults.forEach((s) => {
+      const obj = s.toObject();
+      const hasTerm = obj.term_results.some((a) => a.term === term);
+
+      if (!hasTerm) {
+        console.log('❌ Missing term for subject:', obj.subject);
+      }
+    });
+
     // 📊 SUBJECT RESULT PER TERM
     const actualSubjectResultForTerm = subjectResults
       .map((s) => {
         const obj = s.toObject();
         const termData = obj.term_results.find((a) => a.term === term);
 
+        console.log('termData:', termData);
         if (!termData) return null;
 
         const { term_results, ...rest } = obj;
@@ -4246,6 +3779,7 @@ const fetchStudentSpecificResult = async (
         };
       })
       .filter(Boolean);
+    console.log('actualSubjectResultForTerm:', actualSubjectResultForTerm);
 
     // ⚠️ OPTIONAL: don't crash if empty
     if (!actualSubjectResultForTerm.length) {
@@ -4545,6 +4079,1032 @@ const fetchStudentSpecificResult = async (
 //     } else {
 //       throw new Error('Something happened');
 //     }
+//   }
+// };
+
+const calculatePositionOfStudentsInClass = async (
+  payload: StudentClassPayloadType,
+) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const { class_id, userId, userRole } = payload;
+
+    const classExist = await Class.findById({
+      _id: class_id,
+    }).session(session);
+
+    if (!classExist) {
+      throw new AppError(`Class with ID: ${class_id} does not exist.`, 404);
+    }
+
+    if (userRole === 'teacher') {
+      const teacherExist = await Teacher.findById({
+        _id: userId,
+      }).session(session);
+
+      if (!teacherExist) {
+        throw new AppError(`Teacher with ID: ${userId} does not exist.`, 404);
+      }
+
+      if (
+        teacherExist._id.toString() !== classExist.class_teacher?.toString()
+      ) {
+        throw new AppError(
+          `You are not the class teacher of ${classExist.name}`,
+          403,
+        );
+      }
+    }
+
+    const activeSession = await Session.findOne({
+      is_active: true,
+    }).session(session);
+
+    if (!activeSession) {
+      throw new AppError(`There is no active session.`, 404);
+    }
+
+    const activeTerm = activeSession.terms.find(
+      (term) => term.is_active === true,
+    );
+
+    if (!activeTerm) {
+      throw new AppError(
+        `There is no active term found in the ${activeSession.academic_session} session.`,
+        404,
+      );
+    }
+
+    const classEnrolment = await ClassEnrolment.findOne({
+      academic_session_id: activeSession._id,
+      class: classExist._id,
+    })
+      .populate<{
+        students: {
+          student: UserDocument | null;
+        }[];
+      }>({
+        path: 'students.student',
+        match: { redundant: false }, // ✅ filter here
+        select: 'first_name last_name',
+      })
+      .session(session);
+
+    if (!classEnrolment) {
+      throw new AppError(
+        `There is no class enrolment found for ${classExist.name} in the ${activeSession.academic_session} session.`,
+        404,
+      );
+    }
+
+    const allStudentsResult = await Promise.all(
+      classEnrolment.students
+        .filter(
+          (s): s is { student: UserDocument } => s.student !== null, // ✅ remove null + fix TS
+        )
+        .map(async (s) => {
+          const result = (await Result.findOne({
+            enrolment: classEnrolment._id,
+            student: s.student._id,
+            class: classExist._id,
+            academic_session_id: activeSession._id,
+            'term_results.term': activeTerm.name,
+          })
+
+            .populate<{ student: UserDocument }>('student', '-password')
+            .session(session)
+            .lean()) as unknown as StudentResultPopulatedType;
+
+          const allCumm = result?.term_results.find(
+            (term) => term.term === activeTerm.name,
+          );
+
+          const obj = {
+            studentId: s.student._id,
+            first_name: result?.student?.first_name,
+            last_name: result?.student?.last_name,
+            allCummulatives: (allCumm ?? {
+              term: activeTerm.name,
+              cumulative_score: 0,
+              class_position: '',
+              subject_results: [] as SubjectResultType[],
+              _id: new mongoose.Types.ObjectId(),
+            }) as TermResult,
+          };
+
+          return obj;
+        }),
+    );
+
+    const updatedPositions = classPositionCalculation(allStudentsResult);
+
+    await Promise.all(
+      updatedPositions.map(async (student) => {
+        await Result.findOneAndUpdate(
+          {
+            enrolment: classEnrolment._id,
+            student: student.studentId,
+            class: classExist._id,
+            academic_session_id: activeSession._id,
+            'term_results.term': activeTerm.name,
+          },
+          {
+            $set: {
+              'term_results.$.cumulative_score':
+                student.allCummulatives.cumulative_score,
+              'term_results.$.class_position':
+                student.allCummulatives.class_position,
+              'term_results.$.subject_results':
+                student.allCummulatives.subject_results,
+            },
+          },
+          {
+            new: true,
+          },
+        ).session(session);
+      }),
+    );
+
+    await session.commitTransaction();
+    // session.endSession();
+
+    return updatedPositions;
+  } catch (error) {
+    await session.abortTransaction();
+    // session.endSession();
+    if (error instanceof AppError) {
+      throw new AppError(error.message, error.statusCode);
+    } else {
+      throw new Error('Something happened');
+    }
+  } finally {
+    session.endSession();
+  }
+};
+
+// const studentsSubjectPositionInClass = async (
+//   payload: StudentSubjectPositionType,
+// ) => {
+//   const session = await mongoose.startSession();
+//   session.startTransaction();
+//   try {
+//     const { class_enrolment_id, subject_id, userId, userRole } = payload;
+
+//     if (!userId || !userRole) {
+//       throw new AppError(
+//         'Please login as the subject teacher to proceed.',
+//         400,
+//       );
+//     }
+
+//     const classEnrolment = await ClassEnrolment.findById({
+//       _id: class_enrolment_id,
+//     })
+//       .populate<{
+//         students: {
+//           student: UserDocument;
+//           subjects_offered: mongoose.Types.ObjectId[];
+//         }[];
+//       }>('students.student', '-password')
+//       .session(session);
+
+//     if (!classEnrolment) {
+//       throw new AppError(`Class Enrolment not found.`, 404);
+//     }
+
+//     if (classEnrolment.is_active !== true) {
+//       throw new AppError(
+//         `The session has ended and as such you can not perform this action on the document again.`,
+//         400,
+//       );
+//     }
+
+//     const activeSession = await Session.findById({
+//       _id: classEnrolment.academic_session_id,
+//     }).session(session);
+
+//     if (!activeSession) {
+//       throw new AppError('Session not found.', 404);
+//     }
+
+//     if (activeSession.is_active !== true) {
+//       throw new AppError(
+//         'You can only give position in an active session.',
+//         400,
+//       );
+//     }
+
+//     const activeTerm = activeSession.terms.find(
+//       (term) => term.is_active === true,
+//     );
+
+//     if (!activeTerm) {
+//       throw new AppError('There is no active term in the session,', 400);
+//     }
+
+//     const classExist = await Class.findById({
+//       _id: classEnrolment.class,
+//     }).session(session);
+
+//     if (!classExist) {
+//       throw new AppError('This class does not exist.', 400);
+//     }
+
+//     const subjectExist = await Subject.findById({
+//       _id: subject_id,
+//     }).session(session);
+
+//     if (!subjectExist) {
+//       throw new AppError('Subject does not exist.', 400);
+//     }
+
+//     const subjectTeacher = classExist.teacher_subject_assignments.find(
+//       (assignment) => assignment.teacher?.equals(userId.toString()),
+//     );
+
+//     if (!subjectTeacher) {
+//       throw new AppError(
+//         `You are not the teacher assigned to teach ${subjectExist.name} in ${classExist.name} and as such you can not give subject position to students.`,
+//         400,
+//       );
+//     }
+
+//     // const studentsOfferingSubject = classEnrolment.students.map((s) => {
+//     //   const info = s?.subjects_offered?.find((subject) =>
+//     //     (subject as mongoose.Types.ObjectId).equals(subjectExist._id)
+//     //   );
+
+//     //   console.log('info:', info);
+//     //   const studentObj = {
+//     //     student: s.student,
+//     //     subject: info,
+//     //   };
+//     //   return studentObj;
+//     // });
+//     //////////////////////////////////////////////////////1 at the top
+
+//     // const studentsOfferingSubject = classEnrolment.students
+//     //   .filter((s) =>
+//     //     s?.subjects_offered?.some((subject) =>
+//     //       (subject as mongoose.Types.ObjectId).equals(subjectExist._id)
+//     //     )
+//     //   )
+//     //   .map((s) => {
+//     //     const info = s.subjects_offered?.find((subject) =>
+//     //       (subject as mongoose.Types.ObjectId).equals(subjectExist._id)
+//     //     );
+
+//     //     return {
+//     //       student: s.student,
+//     //       subject: info,
+//     //     };
+//     //   });
+//     // console.log('studentsOfferingSubject:', studentsOfferingSubject);
+
+//     const studentsOfferingSubject = classEnrolment.students.reduce(
+//       (acc, s) => {
+//         const info = s?.subjects_offered?.find((subject) =>
+//           (subject as mongoose.Types.ObjectId).equals(subjectExist._id),
+//         );
+
+//         if (info) {
+//           acc.push({
+//             student: s.student,
+//             subject: info,
+//           });
+//         }
+
+//         return acc;
+//       },
+//       [] as { student: any; subject: any }[],
+//     );
+
+//     console.log('studentsOfferingSubject:', studentsOfferingSubject);
+
+//     const studentResults = await Promise.all(
+//       studentsOfferingSubject.map(async (student) => {
+//         // ***** find student subject result and put the subject position there
+//         const studentSubjectId = new mongoose.Types.ObjectId(student?.subject);
+
+//         const sessionResult = await SubjectResult.findOne({
+//           enrolment: classEnrolment._id,
+//           student: student.student,
+//           class: classExist._id,
+//           session: classEnrolment.academic_session_id,
+//           subject: studentSubjectId,
+//         }).session(session);
+
+//         const info = sessionResult?.term_results.find(
+//           (term) => term.term === activeTerm.name,
+//         );
+
+//         // const actualSubject = info?.subject_results.find(
+//         //   (r) =>
+//         //     r?.subject instanceof mongoose.Types.ObjectId &&
+//         //     r.subject.equals(studentSubjectId)
+//         // );
+
+//         const obj = {
+//           studentId: student.student._id,
+//           first_name: student.student.first_name,
+//           last_name: student.student.last_name,
+//           term: info?.term,
+//           cumulative_score: info?.cumulative_average,
+//           subjectObj: info,
+//         };
+
+//         return obj;
+//       }),
+//     );
+
+//     const studentWhoEnrolledForSubjectButNoResultRecordings =
+//       studentResults.filter((s) => s.subjectObj === undefined);
+
+//     if (studentWhoEnrolledForSubjectButNoResultRecordings.length > 0) {
+//       const affectedStudentsFullName =
+//         studentWhoEnrolledForSubjectButNoResultRecordings.map(
+//           (s) => `${s.first_name} ${s.last_name}`,
+//         );
+
+//       throw new AppError(
+//         `The following students: ${affectedStudentsFullName.join(
+//           ', ',
+//         )} do not have result for the subject. Please record their scores before proceeding.`,
+//         400,
+//       );
+//     }
+
+//     const nullCumulativeAvg = studentResults.filter(
+//       (s) =>
+//         s?.subjectObj?.cumulative_average === null ||
+//         s?.subjectObj?.cumulative_average === 0,
+//     );
+
+//     if (nullCumulativeAvg.length > 0) {
+//       const studentFullName = nullCumulativeAvg.map(
+//         (s) => `${s.first_name} ${s.last_name}`,
+//       );
+//       throw new AppError(
+//         `The scores of following students: ${studentFullName.join(
+//           ', ',
+//         )} has not been totally updated. Please make sure you have filled in their scores so as to be to all have cumulative average.`,
+//         400,
+//       );
+//     } else {
+//       const ranking = assignPositions(studentResults);
+
+//       const cums = studentResults
+//         .map((a) => a.cumulative_score)
+//         .filter((score): score is number => typeof score === 'number');
+
+//       const minMax = getMinMax(cums);
+
+//       const highestScore = minMax.highest;
+//       const lowestScore = minMax.lowest;
+//       const averageScore = minMax.average;
+
+//       console.log('averageScore:', averageScore);
+//       console.log('highestScore:', highestScore);
+//       console.log('lowestScore:', lowestScore);
+//       const studentReturns: SubjectPositionJobData[] = [];
+//       await Promise.all(
+//         ranking.map(async (student) => {
+//           if (student.subjectObj) {
+//             // await Result.updateOne(
+//             //   {
+//             //     student: student.studentId,
+//             //     class: classExist._id,
+//             //     enrolment: classEnrolment._id,
+//             //     academic_session_id: activeSession._id,
+//             //     'term_results.term': activeTerm.name,
+//             //     'term_results.subject_results.subject':
+//             //       student.subjectObj.subject,
+//             //   },
+//             //   {
+//             //     $set: {
+//             //       'term_results.$[].subject_results.$[subject].subject_position':
+//             //         student.subjectObj.subject_position,
+//             //     },
+//             //   },
+//             //   {
+//             //     arrayFilters: [
+//             //       { 'subject.subject': student.subjectObj.subject },
+//             //     ],
+//             //   }
+//             // ).session(session);
+//             await SubjectResult.updateOne(
+//               {
+//                 enrolment: classEnrolment._id,
+//                 student: student.studentId,
+//                 class: classExist._id,
+//                 session: activeSession._id,
+//                 subject: subject_id,
+//                 'term_results.term': activeTerm.name,
+//               },
+
+//               {
+//                 $set: {
+//                   'term_results.$[elem].subject_position':
+//                     student.subjectObj.subject_position,
+//                   'term_results.$[elem].class_highest_mark': highestScore,
+//                   'term_results.$[elem].class_lowest_mark': lowestScore,
+//                   'term_results.$[elem].class_average_mark': averageScore,
+//                 },
+//               },
+//               {
+//                 arrayFilters: [{ 'elem.term': activeTerm.name }],
+//               },
+//             ).session(session);
+
+//             // await SubjectResult.updateOne(
+//             //   {
+//             //     enrolment: classEnrolment._id,
+//             //     student: student.studentId,
+//             //     class: classExist._id,
+//             //     session: activeSession._id,
+//             //     'term_results.term': activeTerm.name,
+//             //   },
+//             //   {
+//             //     $set: {
+//             //       'term_results.$.subject_position':
+//             //         student.subjectObj.subject_position,
+//             //     },
+//             //   }
+//             // ).session(session);
+
+//             const studentReturn = {
+//               student_id: student.studentId as string,
+//               term: activeTerm.name,
+//               subject_id: subjectExist._id,
+//               class_id: classExist._id,
+//               class_enrolment_id: classEnrolment._id,
+//               session_id: classEnrolment.academic_session_id,
+//               class_highest_mark: highestScore,
+//               class_lowest_mark: lowestScore,
+//               class_average_mark: averageScore,
+//               subject_position: student.subjectObj.subject_position as string,
+//             };
+
+//             studentReturns.push(studentReturn);
+//           }
+//         }),
+//       );
+
+//       // const jobs = studentReturns.map((studentRes) => {
+//       //   if (studentReturns.length !== 0) {
+//       //     return {
+//       //       name: 'subject-position',
+//       //       data: {
+//       //         student_id: studentRes.student_id,
+//       //         term: studentRes.term,
+//       //         subject_id: studentRes.subject_id,
+//       //         class_id: studentRes.class_id,
+//       //         class_enrolment_id: studentRes.class_enrolment_id,
+//       //         session_id: studentRes.session_id,
+//       //         subject_position: studentRes.subject_position,
+//       //         class_highest_mark: studentRes.class_highest_mark,
+//       //         class_lowest_mark: studentRes.class_lowest_mark,
+//       //         class_average_mark: studentRes.class_average_mark,
+//       //       },
+//       //       opts: {
+//       //         attempts: 5,
+//       //         removeOnComplete: true,
+//       //         // removeOnFail: { count: 3 },
+//       //         backoff: {
+//       //           type: 'exponential',
+//       //           delay: 3000,
+//       //         },
+//       //       },
+//       //     };
+//       //   }
+//       //   return null;
+//       // });
+
+//       // await studentResultQueue.addBulk(jobs as any);
+//     }
+
+//     await session.commitTransaction();
+//     session.endSession();
+//     return studentResults;
+//   } catch (error) {
+//     await session.abortTransaction();
+//     session.endSession();
+//     if (error instanceof AppError) {
+//       throw new AppError(error.message, error.statusCode);
+//     } else {
+//       console.error(error);
+//       throw new Error('Something happened.');
+//     }
+//   }
+// };
+
+const studentsSubjectPositionInClass = async (
+  payload: StudentSubjectPositionType,
+) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const { class_enrolment_id, subject_id, userId, userRole } = payload;
+
+    if (!userId || !userRole) {
+      throw new AppError(
+        'Please login as the subject teacher to proceed.',
+        400,
+      );
+    }
+
+    const classEnrolment = await ClassEnrolment.findById({
+      _id: class_enrolment_id,
+    })
+      .populate<{
+        students: {
+          student: UserDocument | null;
+          subjects_offered: mongoose.Types.ObjectId[];
+        }[];
+      }>({
+        path: 'students.student',
+        match: { redundant: false }, // ✅ filter here
+        select: '-password',
+      })
+      .session(session);
+
+    if (!classEnrolment) {
+      throw new AppError(`Class Enrolment not found.`, 404);
+    }
+
+    if (classEnrolment.is_active !== true) {
+      throw new AppError(
+        `The session has ended and as such you can not perform this action on the document again.`,
+        400,
+      );
+    }
+
+    const activeSession = await Session.findById({
+      _id: classEnrolment.academic_session_id,
+    }).session(session);
+
+    if (!activeSession) {
+      throw new AppError('Session not found.', 404);
+    }
+
+    if (activeSession.is_active !== true) {
+      throw new AppError(
+        'You can only give position in an active session.',
+        400,
+      );
+    }
+
+    const activeTerm = activeSession.terms.find(
+      (term) => term.is_active === true,
+    );
+
+    if (!activeTerm) {
+      throw new AppError('There is no active term in the session,', 400);
+    }
+
+    const classExist = await Class.findById({
+      _id: classEnrolment.class,
+    }).session(session);
+
+    if (!classExist) {
+      throw new AppError('This class does not exist.', 400);
+    }
+
+    const subjectExist = await Subject.findById({
+      _id: subject_id,
+    }).session(session);
+
+    if (!subjectExist) {
+      throw new AppError('Subject does not exist.', 400);
+    }
+
+    const subjectTeacher = classExist.teacher_subject_assignments.find(
+      (assignment) => assignment.teacher?.equals(userId.toString()),
+    );
+
+    if (!subjectTeacher) {
+      throw new AppError(
+        `You are not the teacher assigned to teach ${subjectExist.name} in ${classExist.name} and as such you can not give subject position to students.`,
+        400,
+      );
+    }
+
+    // const studentsOfferingSubject = classEnrolment.students.map((s) => {
+    //   const info = s?.subjects_offered?.find((subject) =>
+    //     (subject as mongoose.Types.ObjectId).equals(subjectExist._id)
+    //   );
+
+    //   console.log('info:', info);
+    //   const studentObj = {
+    //     student: s.student,
+    //     subject: info,
+    //   };
+    //   return studentObj;
+    // });
+    //////////////////////////////////////////////////////1 at the top
+
+    // const studentsOfferingSubject = classEnrolment.students
+    //   .filter((s) =>
+    //     s?.subjects_offered?.some((subject) =>
+    //       (subject as mongoose.Types.ObjectId).equals(subjectExist._id)
+    //     )
+    //   )
+    //   .map((s) => {
+    //     const info = s.subjects_offered?.find((subject) =>
+    //       (subject as mongoose.Types.ObjectId).equals(subjectExist._id)
+    //     );
+
+    //     return {
+    //       student: s.student,
+    //       subject: info,
+    //     };
+    //   });
+    // console.log('studentsOfferingSubject:', studentsOfferingSubject);
+
+    const studentsOfferingSubject = classEnrolment.students.reduce(
+      (acc, s) => {
+        if (!s.student) return acc;
+
+        const info = s?.subjects_offered?.find((subject) =>
+          (subject as mongoose.Types.ObjectId).equals(subjectExist._id),
+        );
+
+        if (info) {
+          acc.push({
+            student: s.student,
+            subject: info,
+          });
+        }
+
+        return acc;
+      },
+      [] as { student: UserDocument; subject: any }[],
+    );
+
+    console.log('studentsOfferingSubject:', studentsOfferingSubject);
+
+    const studentResults = await Promise.all(
+      studentsOfferingSubject.map(async (student) => {
+        // ***** find student subject result and put the subject position there
+        const studentSubjectId = new mongoose.Types.ObjectId(student?.subject);
+
+        const sessionResult = await SubjectResult.findOne({
+          enrolment: classEnrolment._id,
+          student: student.student,
+          class: classExist._id,
+          session: classEnrolment.academic_session_id,
+          subject: studentSubjectId,
+        }).session(session);
+
+        const info = sessionResult?.term_results.find(
+          (term) => term.term === activeTerm.name,
+        );
+
+        // const actualSubject = info?.subject_results.find(
+        //   (r) =>
+        //     r?.subject instanceof mongoose.Types.ObjectId &&
+        //     r.subject.equals(studentSubjectId)
+        // );
+
+        const obj = {
+          studentId: student.student._id,
+          first_name: student.student.first_name,
+          last_name: student.student.last_name,
+          term: info?.term,
+          cumulative_score: info?.cumulative_average,
+          subjectObj: info,
+        };
+
+        return obj;
+      }),
+    );
+
+    const studentWhoEnrolledForSubjectButNoResultRecordings =
+      studentResults.filter((s) => s.subjectObj === undefined);
+
+    if (studentWhoEnrolledForSubjectButNoResultRecordings.length > 0) {
+      const affectedStudentsFullName =
+        studentWhoEnrolledForSubjectButNoResultRecordings.map(
+          (s) => `${s.first_name} ${s.last_name}`,
+        );
+
+      throw new AppError(
+        `The following students: ${affectedStudentsFullName.join(
+          ', ',
+        )} do not have result for the subject. Please record their scores before proceeding.`,
+        400,
+      );
+    }
+
+    const nullCumulativeAvg = studentResults.filter(
+      (s) =>
+        s?.subjectObj?.cumulative_average === null ||
+        s?.subjectObj?.cumulative_average === 0,
+    );
+
+    if (nullCumulativeAvg.length > 0) {
+      const studentFullName = nullCumulativeAvg.map(
+        (s) => `${s.first_name} ${s.last_name}`,
+      );
+      throw new AppError(
+        `The scores of following students: ${studentFullName.join(
+          ', ',
+        )} has not been totally updated. Please make sure you have filled in their scores so as to be to all have cumulative average.`,
+        400,
+      );
+    } else {
+      const ranking = assignPositions(studentResults);
+
+      const cums = studentResults
+        .map((a) => a.cumulative_score)
+        .filter((score): score is number => typeof score === 'number');
+
+      const minMax = getMinMax(cums);
+
+      const highestScore = minMax.highest;
+      const lowestScore = minMax.lowest;
+      const averageScore = minMax.average;
+
+      console.log('averageScore:', averageScore);
+      console.log('highestScore:', highestScore);
+      console.log('lowestScore:', lowestScore);
+      const studentReturns: SubjectPositionJobData[] = [];
+      await Promise.all(
+        ranking.map(async (student) => {
+          if (student.subjectObj) {
+            // await Result.updateOne(
+            //   {
+            //     student: student.studentId,
+            //     class: classExist._id,
+            //     enrolment: classEnrolment._id,
+            //     academic_session_id: activeSession._id,
+            //     'term_results.term': activeTerm.name,
+            //     'term_results.subject_results.subject':
+            //       student.subjectObj.subject,
+            //   },
+            //   {
+            //     $set: {
+            //       'term_results.$[].subject_results.$[subject].subject_position':
+            //         student.subjectObj.subject_position,
+            //     },
+            //   },
+            //   {
+            //     arrayFilters: [
+            //       { 'subject.subject': student.subjectObj.subject },
+            //     ],
+            //   }
+            // ).session(session);
+            await SubjectResult.updateOne(
+              {
+                enrolment: classEnrolment._id,
+                student: student.studentId,
+                class: classExist._id,
+                session: activeSession._id,
+                subject: subject_id,
+                'term_results.term': activeTerm.name,
+              },
+
+              {
+                $set: {
+                  'term_results.$[elem].subject_position':
+                    student.subjectObj.subject_position,
+                  'term_results.$[elem].class_highest_mark': highestScore,
+                  'term_results.$[elem].class_lowest_mark': lowestScore,
+                  'term_results.$[elem].class_average_mark': averageScore,
+                },
+              },
+              {
+                arrayFilters: [{ 'elem.term': activeTerm.name }],
+              },
+            ).session(session);
+
+            // await SubjectResult.updateOne(
+            //   {
+            //     enrolment: classEnrolment._id,
+            //     student: student.studentId,
+            //     class: classExist._id,
+            //     session: activeSession._id,
+            //     'term_results.term': activeTerm.name,
+            //   },
+            //   {
+            //     $set: {
+            //       'term_results.$.subject_position':
+            //         student.subjectObj.subject_position,
+            //     },
+            //   }
+            // ).session(session);
+
+            const studentReturn = {
+              student_id: student.studentId as string,
+              term: activeTerm.name,
+              subject_id: subjectExist._id,
+              class_id: classExist._id,
+              class_enrolment_id: classEnrolment._id,
+              session_id: classEnrolment.academic_session_id,
+              class_highest_mark: highestScore,
+              class_lowest_mark: lowestScore,
+              class_average_mark: averageScore,
+              subject_position: student.subjectObj.subject_position as string,
+            };
+
+            studentReturns.push(studentReturn);
+          }
+        }),
+      );
+
+      // const jobs = studentReturns.map((studentRes) => {
+      //   if (studentReturns.length !== 0) {
+      //     return {
+      //       name: 'subject-position',
+      //       data: {
+      //         student_id: studentRes.student_id,
+      //         term: studentRes.term,
+      //         subject_id: studentRes.subject_id,
+      //         class_id: studentRes.class_id,
+      //         class_enrolment_id: studentRes.class_enrolment_id,
+      //         session_id: studentRes.session_id,
+      //         subject_position: studentRes.subject_position,
+      //         class_highest_mark: studentRes.class_highest_mark,
+      //         class_lowest_mark: studentRes.class_lowest_mark,
+      //         class_average_mark: studentRes.class_average_mark,
+      //       },
+      //       opts: {
+      //         attempts: 5,
+      //         removeOnComplete: true,
+      //         // removeOnFail: { count: 3 },
+      //         backoff: {
+      //           type: 'exponential',
+      //           delay: 3000,
+      //         },
+      //       },
+      //     };
+      //   }
+      //   return null;
+      // });
+
+      // await studentResultQueue.addBulk(jobs as any);
+    }
+
+    await session.commitTransaction();
+    session.endSession();
+    return studentResults;
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    if (error instanceof AppError) {
+      throw new AppError(error.message, error.statusCode);
+    } else {
+      console.error(error);
+      throw new Error('Something happened.');
+    }
+  }
+};
+
+// const calculatePositionOfStudentsInClass = async (
+//   payload: StudentClassPayloadType,
+// ) => {
+//   const session = await mongoose.startSession();
+//   session.startTransaction();
+//   try {
+//     const { class_id, userId, userRole } = payload;
+
+//     const classExist = await Class.findById({
+//       _id: class_id,
+//     }).session(session);
+
+//     if (!classExist) {
+//       throw new AppError(`Class with ID: ${class_id} does not exist.`, 404);
+//     }
+
+//     if (userRole === 'teacher') {
+//       const teacherExist = await Teacher.findById({
+//         _id: userId,
+//       }).session(session);
+
+//       if (!teacherExist) {
+//         throw new AppError(`Teacher with ID: ${userId} does not exist.`, 404);
+//       }
+
+//       if (
+//         teacherExist._id.toString() !== classExist.class_teacher?.toString()
+//       ) {
+//         throw new AppError(
+//           `You are not the class teacher of ${classExist.name}`,
+//           403,
+//         );
+//       }
+//     }
+
+//     const activeSession = await Session.findOne({
+//       is_active: true,
+//     }).session(session);
+
+//     if (!activeSession) {
+//       throw new AppError(`There is no active session.`, 404);
+//     }
+
+//     const activeTerm = activeSession.terms.find(
+//       (term) => term.is_active === true,
+//     );
+
+//     if (!activeTerm) {
+//       throw new AppError(
+//         `There is no active term found in the ${activeSession.academic_session} session.`,
+//         404,
+//       );
+//     }
+
+//     const classEnrolment = await ClassEnrolment.findOne({
+//       academic_session_id: activeSession._id,
+//       class: classExist._id,
+//     }).session(session);
+
+//     if (!classEnrolment) {
+//       throw new AppError(
+//         `There is no class enrolment found for ${classExist.name} in the ${activeSession.academic_session} session.`,
+//         404,
+//       );
+//     }
+
+//     const allStudentsResult = await Promise.all(
+//       classEnrolment.students.map(async (s) => {
+//         const result = (await Result.findOne({
+//           enrolment: classEnrolment._id,
+//           student: s.student._id,
+//           class: classExist._id,
+//           academic_session_id: activeSession._id,
+//           'term_results.term': activeTerm.name,
+//         })
+
+//           .populate<{ student: UserDocument }>('student', '-password')
+//           .session(session)
+//           .lean()) as unknown as StudentResultPopulatedType;
+
+//         const allCumm = result?.term_results.find(
+//           (term) => term.term === activeTerm.name,
+//         );
+
+//         const obj = {
+//           studentId: s.student._id,
+//           first_name: result?.student?.first_name,
+//           last_name: result?.student?.last_name,
+//           allCummulatives: (allCumm ?? {
+//             term: activeTerm.name,
+//             cumulative_score: 0,
+//             class_position: '',
+//             subject_results: [] as SubjectResultType[],
+//             _id: new mongoose.Types.ObjectId(),
+//           }) as TermResult,
+//         };
+
+//         return obj;
+//       }),
+//     );
+
+//     const updatedPositions = classPositionCalculation(allStudentsResult);
+
+//     await Promise.all(
+//       updatedPositions.map(async (student) => {
+//         await Result.findOneAndUpdate(
+//           {
+//             enrolment: classEnrolment._id,
+//             student: student.studentId,
+//             class: classExist._id,
+//             academic_session_id: activeSession._id,
+//             'term_results.term': activeTerm.name,
+//           },
+//           {
+//             $set: {
+//               'term_results.$.cumulative_score':
+//                 student.allCummulatives.cumulative_score,
+//               'term_results.$.class_position':
+//                 student.allCummulatives.class_position,
+//               'term_results.$.subject_results':
+//                 student.allCummulatives.subject_results,
+//             },
+//           },
+//           {
+//             new: true,
+//           },
+//         ).session(session);
+//       }),
+//     );
+
+//     await session.commitTransaction();
+//     // session.endSession();
+
+//     return updatedPositions;
+//   } catch (error) {
+//     await session.abortTransaction();
+//     // session.endSession();
+//     if (error instanceof AppError) {
+//       throw new AppError(error.message, error.statusCode);
+//     } else {
+//       throw new Error('Something happened');
+//     }
+//   } finally {
+//     session.endSession();
 //   }
 // };
 

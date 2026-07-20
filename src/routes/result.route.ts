@@ -32,13 +32,13 @@ router.use(verifyAccessToken);
 router.get(
   '/get-result-setting',
   permission(['teacher', 'admin', 'super_admin', 'student', 'parent']),
-  getResultSettings
+  getResultSettings,
 );
 
 router.get(
   '/get-level-result-setting-in-a-school/:level',
   permission(['teacher', 'admin', 'super_admin', 'student', 'parent']),
-  getLevelResultSetting
+  getLevelResultSetting,
 );
 
 // router.get(
@@ -50,113 +50,113 @@ router.get(
 router.get(
   '/get-all-results-of-a-student/:student_id',
   permission(['teacher', 'admin', 'super_admin', 'student', 'parent']),
-  getAllResultsOfAStudent
+  getAllResultsOfAStudent,
   // populate subject and subject teacher
 );
 
 router.get(
   '/get-student-result-by-result_id/:student_id/:result_id',
   permission(['teacher', 'admin', 'super_admin', 'student', 'parent']),
-  getStudentResultByResultId
+  getStudentResultByResultId,
   // populate subject and subject teacher
 );
 
 router.get(
   '/get-student-result/:student_id/:session_id/:term',
   permission(['teacher', 'admin', 'super_admin', 'student', 'parent']),
-  getStudentSpecificResult
+  getStudentSpecificResult,
 );
 
 router.put(
   '/record-student-score-per-term',
   permission(['teacher']),
-  recordStudentScorePerTerm
+  recordStudentScorePerTerm,
 );
 
 router.put(
   '/record-all-students-score-per-term',
   permission(['teacher']),
-  recordAllStudentsScoresPerTerm
+  recordAllStudentsScoresPerTerm,
 );
 
 router.put(
   '/record-all-students-last-term-cum',
   permission(['teacher']),
-  recordAllStudentsLastTermCumPerTerm
+  recordAllStudentsLastTermCumPerTerm,
 );
 
 router.put(
   '/record-all-students-exam-score-per-term',
   permission(['teacher']),
-  recordAllStudentsExamScoresPerTerm
+  recordAllStudentsExamScoresPerTerm,
 );
 
 router.post(
   '/get-all-scores-per-subject',
   permission(['teacher', 'admin', 'super_admin']),
-  getAllSubjectResultOfStudentsInClass
+  getAllSubjectResultOfStudentsInClass,
 );
 
 router.post(
   '/get-student-subject-result',
   permission(['teacher', 'admin', 'super_admin', 'student', 'parent']),
-  getStudentSubjectResultInAClass
+  getStudentSubjectResultInAClass,
 );
 
 router.get(
   '/get-student-term-result/:student_id/:academic_session_id/:term',
   permission(['teacher', 'admin', 'super_admin', 'student', 'parent']),
-  getStudentTermResult
+  getStudentTermResult,
   // populate subject and subject teacher
 );
 
 router.put(
   '/record-student-effective-areas-result/:student_id/:session_id/:term',
   permission(['teacher']),
-  recordStudentEffectiveAreasForActiveTerm
+  recordStudentEffectiveAreasForActiveTerm,
   // populate subject and subject teacher
 );
 
 router.get(
   '/get-student-session-results/:student_id/:academic_session_id',
   permission(['teacher', 'admin', 'super_admin', 'student', 'parent']),
-  getStudentSessionResults
+  getStudentSessionResults,
 );
 
 router.put(
   '/subject-position-grading-in-class/:class_enrolment_id/:subject_id',
   permission(['teacher']),
-  subjectPositionGradingInClass
+  subjectPositionGradingInClass,
 );
 
 router.put(
   '/calculate-subject-result-total/:class_enrolment_id/:class_id/:subject_id/:session_id',
   permission(['teacher']),
-  subjectResultTotalCalculation
+  subjectResultTotalCalculation,
 );
 
 router.put(
   '/students-class-position/:class_id',
   permission(['teacher']),
-  calculateStudentsClassPosition
+  calculateStudentsClassPosition,
 );
 
 router.put(
   '/update-score',
   permission(['super_admin']),
-  updateStudentsSubjectScoreInAClass
+  updateStudentsSubjectScoreInAClass,
 );
 
 router.get(
   '/all-student-results-in-class-for-the-session/:class_id/:academic_session_id/:term',
   permission(['teacher', 'admin', 'super_admin']),
-  getAllStudentResultsInClassForActiveTermByClassId
+  getAllStudentResultsInClassForActiveTermByClassId,
 );
 
 router.put(
   '/manual-cbt-recording-per-student-per-term',
   permission(['super_admin']),
-  manualCbtRecordingPerStudentPerTerm
+  manualCbtRecordingPerStudentPerTerm,
 );
 
 // teacher onboarding
