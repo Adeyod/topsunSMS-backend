@@ -3805,7 +3805,12 @@ const fetchStudentSpecificResult = async (
       'positions.title': 'head_teacher',
     }).select('first_name last_name signature');
 
-    const { subject_results, ...others } = termResult;
+    const termResultObj = (termResult as any).toObject?.() ?? termResult;
+    // const termResultObj = termResult.toObject();
+
+    const { subject_results, ...others } = termResultObj;
+
+    // const { subject_results, ...others } = termResult;
 
     const formattedResult = {
       ...others,
@@ -3813,6 +3818,8 @@ const fetchStudentSpecificResult = async (
       subject_results: actualSubjectResultForTerm,
       term_settings: termSettingExist,
     };
+
+    console.log('formattedResult.others:', formattedResult.others);
 
     const neededObj = {
       student: remainingValues,
